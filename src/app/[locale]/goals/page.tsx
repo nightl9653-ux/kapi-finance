@@ -1,0 +1,392 @@
+import { getTranslations } from "next-intl/server";
+import { revalidatePath } from "next/cache";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import type { Locale } from "@/i18n/locales";
+import { isSupabaseConfigured } from "@/lib/env";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { GoalTypePicker } from "@/components/goals/GoalTypePicker";
+
+function formatDateInput(value: string | null | undefined): string {
+  if (!value) return "";
+  const s = String(value);
+  return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
+function coerceGoalType(typeRaw: string, typeCustomRaw: string): string {
+  const type = String(typeRaw ?? "").trim();
+  if (type === "custom") return String(typeCustomRaw ?? "").trim();
+  return type;
+}
+
+function goalTypeLabel(t: (k: string) => string, type: string): string {
+  const emoji = {
+    housing: "🏠",
+    travel: "✈️",
+    retirement: "🌴",
+    emergency: "🛡️",
+    education: "🎓",
+    car: "🚗",
+    debt: "💳",
+    medical: "🏥",
+  } as const;
+
+  const key = type as keyof typeof emoji;
+  if (!emoji[key]) return type;
+  return `${emoji[key]} ${t(type)}`;
+}
+
+async function updateGoal(formData: FormData) {
+  "use server";
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) throw new Error("Not authenticated");
+
+  const locale = String(formData.get("locale") ?? "en") as Locale;
+  const id = String(formData.get("id") ?? "");
+  if (!id) redirect(`/${locale}/goals?error=missing_id`);
+
+  const name = String(formData.get("name") ?? "").trim();
+  const type = coerceGoalType(String(formData.get("type") ?? ""), String(formData.get("type_custom") ?? ""));
+  const targetAmount = Number(formData.get("target_amount") ?? 0);
+  const currentAmount = Number(formData.get("current_amount") ?? 0);
+  const priority = Number(formData.get("priority") ?? 2);
+  const deadlineRaw = String(formData.get("deadline") ?? "").trim();
+
+  if (
+    !name ||
+    !type ||
+    !Number.isFinite(targetAmount) ||
+    targetAmount <= 0 ||
+    !Number.isFinite(currentAmount) ||
+    currentAmount < 0 ||
+    !Number.isFinite(priority)
+  ) {
+    redirect(`/${locale}/goals?error=invalid_input`);
+  }
+
+  const deadline = deadlineRaw ? deadlineRaw : null;
+  const { error } = await supabase
+    .from("financial_goals")
+    .update({
+      name,
+      type,
+      target_amount: targetAmount,
+      current_amount: currentAmount,
+      priority,
+      deadline,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) redirect(`/${locale}/goals?error=unknown`);
+  revalidatePath(`/${locale}/goals`);
+  redirect(`/${locale}/goals?success=updated`);
+}
+
+async function createGoal(formData: FormData) {
+  "use server";
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) throw new Error("Not authenticated");
+
+  const locale = String(formData.get("locale") ?? "en") as Locale;
+  const name = String(formData.get("name") ?? "").trim();
+  const type = coerceGoalType(String(formData.get("type") ?? ""), String(formData.get("type_custom") ?? ""));
+  const targetAmount = Number(formData.get("target_amount") ?? 0);
+  const priority = Number(formData.get("priority") ?? 2);
+  const deadlineRaw = String(formData.get("deadline") ?? "").trim();
+
+  if (
+    !name ||
+    !type ||
+    !Number.isFinite(targetAmount) ||
+    targetAmount <= 0 ||
+    !Number.isFinite(priority)
+  ) {
+    redirect(`/${locale}/goals?error=invalid_input`);
+  }
+
+  const deadline = deadlineRaw ? deadlineRaw : null;
+
+  const { error } = await supabase.from("financial_goals").insert({
+    user_id: data.user.id,
+    name,
+    type,
+    target_amount: targetAmount,
+    priority,
+    deadline,
+  });
+
+  if (error) {
+    const msg = (error.message ?? "").toLowerCase();
+    if (msg.includes("free plan goal limit reached")) {
+      redirect(`/${locale}/goals?error=goal_limit`);
+    }
+    redirect(`/${locale}/goals?error=unknown`);
+  }
+  revalidatePath(`/${locale}/goals`);
+  redirect(`/${locale}/goals?success=created`);
+}
+
+async function deleteGoal(formData: FormData) {
+  "use server";
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) throw new Error("Not authenticated");
+
+  const locale = String(formData.get("locale") ?? "en") as Locale;
+  const id = String(formData.get("id") ?? "");
+  if (!id) redirect(`/${locale}/goals?error=missing_id`);
+
+  const { error } = await supabase.from("financial_goals").delete().eq("id", id);
+  if (error) redirect(`/${locale}/goals?error=unknown`);
+  revalidatePath(`/${locale}/goals`);
+  redirect(`/${locale}/goals?success=deleted`);
+}
+
+export default async function GoalsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { locale: raw } = await params;
+  const locale = (raw === "zh" ? "zh" : "en") as Locale;
+  const nav = await getTranslations("nav");
+  const t = await getTranslations("goals");
+  const common = await getTranslations("common");
+  const sp = searchParams ? await searchParams : {};
+  const errorKey = typeof sp.error === "string" ? sp.error : undefined;
+  const successKey = typeof sp.success === "string" ? sp.success : undefined;
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold">{nav("goals")}</h1>
+          <p className="text-sm text-muted-foreground">{common("supabaseEnvMissing")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: auth, error: authError } = await supabase.auth.getUser();
+  if (authError || !auth.user) {
+    redirect(`/${locale}/auth?next=${encodeURIComponent(`/${locale}/goals`)}`);
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_plus_member")
+    .eq("id", auth.user.id)
+    .maybeSingle();
+
+  const { data: goals, error } = await supabase
+    .from("financial_goals")
+    .select("id,name,type,target_amount,current_amount,deadline,priority,created_at")
+    .eq("user_id", auth.user.id)
+    .order("created_at", { ascending: false });
+  if (error) {
+    redirect(`/${locale}/goals?error=unknown`);
+  }
+
+  const isPlus = Boolean(profile?.is_plus_member);
+  const usedCount = goals?.length ?? 0;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold">{nav("goals")}</h1>
+        <p className="text-sm text-muted-foreground">
+          {t("subtitle")}
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          <span className="rounded-full border bg-white px-3 py-1">
+            {isPlus ? t("planPlus") : t("planFree")}
+          </span>
+          <span className="text-muted-foreground">
+            {isPlus ? t("quotaUnlimited") : t("quota", { used: usedCount, limit: 2 })}
+          </span>
+        </div>
+      </div>
+
+      {errorKey ? (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          {errorKey === "goal_limit"
+            ? t("errorGoalLimit")
+            : errorKey === "invalid_input"
+              ? t("errorInvalidInput")
+              : common("error")}
+        </div>
+      ) : null}
+
+      {successKey ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          {successKey === "created"
+            ? t("successCreated")
+            : successKey === "deleted"
+              ? t("successDeleted")
+              : successKey === "updated"
+                ? t("successUpdated")
+                : t("success")}
+        </div>
+      ) : null}
+
+      <div className="rounded-2xl border bg-white/70 p-6">
+        <h2 className="text-base font-medium">{t("create")}</h2>
+        <form action={createGoal} className="mt-4 grid gap-4 sm:grid-cols-2">
+          <input type="hidden" name="locale" value={locale} />
+          <div className="space-y-2">
+            <Label htmlFor="name">{t("name")}</Label>
+            <Input id="name" name="name" placeholder={t("namePlaceholder")} required />
+          </div>
+          <GoalTypePicker />
+          <div className="space-y-2">
+            <Label htmlFor="target_amount">{t("targetAmount")}</Label>
+            <Input id="target_amount" name="target_amount" type="number" min="0" step="0.01" required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="deadline">{t("deadline")}</Label>
+            <Input id="deadline" name="deadline" type="date" />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="priority-create">{t("priority")}</Label>
+              <span className="text-right text-xs text-muted-foreground">{t("priorityHint")}</span>
+            </div>
+            <Input
+              id="priority-create"
+              name="priority"
+              type="number"
+              min="1"
+              step="1"
+              defaultValue={2}
+              required
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Button type="submit" className="rounded-full">
+              {t("create")}
+            </Button>
+          </div>
+        </form>
+      </div>
+
+      <div className="rounded-2xl border bg-white/70 p-6">
+        <h2 className="text-base font-medium">{nav("goals")}</h2>
+        <div className="mt-4 space-y-3">
+          {goals?.length ? (
+            goals.map((g) => (
+              <div key={g.id} className="rounded-xl border bg-white p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="font-medium">{g.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {goalTypeLabel(t, String(g.type ?? ""))} · {t("currentAmount")}: {g.current_amount ?? 0} /{" "}
+                      {t("targetAmount")}: {g.target_amount}
+                      {g.deadline ? ` · ${t("deadline")}: ${formatDateInput(g.deadline as string)}` : ""}
+                      {g.priority != null ? ` · ${t("priority")}: ${g.priority}` : ""}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`#edit-${g.id}`}
+                      scroll={false}
+                      className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "rounded-full")}
+                    >
+                      {t("edit")}
+                    </Link>
+                    <form action={deleteGoal}>
+                      <input type="hidden" name="locale" value={locale} />
+                      <input type="hidden" name="id" value={g.id} />
+                      <Button type="submit" variant="secondary" className="rounded-full">
+                        {t("delete")}
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+
+                <div id={`edit-${g.id}`} className="mt-4 rounded-xl border bg-white/60 p-4">
+                  <div className="text-sm font-medium">{t("edit")}</div>
+                  <form action={updateGoal} className="mt-3 grid gap-4 sm:grid-cols-2">
+                    <input type="hidden" name="locale" value={locale} />
+                    <input type="hidden" name="id" value={g.id} />
+                    <div className="space-y-2">
+                      <Label htmlFor={`name-${g.id}`}>{t("name")}</Label>
+                      <Input id={`name-${g.id}`} name="name" defaultValue={g.name} required />
+                    </div>
+                    <GoalTypePicker defaultType={String(g.type ?? "")} />
+                    <div className="space-y-2">
+                      <Label htmlFor={`target-${g.id}`}>{t("targetAmount")}</Label>
+                      <Input
+                        id={`target-${g.id}`}
+                        name="target_amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        defaultValue={Number(g.target_amount ?? 0)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`current-${g.id}`}>{t("currentAmount")}</Label>
+                      <Input
+                        id={`current-${g.id}`}
+                        name="current_amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        defaultValue={Number(g.current_amount ?? 0)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`deadline-${g.id}`}>{t("deadline")}</Label>
+                      <Input
+                        id={`deadline-${g.id}`}
+                        name="deadline"
+                        type="date"
+                        defaultValue={formatDateInput(g.deadline as string | null)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <Label htmlFor={`priority-${g.id}`}>{t("priority")}</Label>
+                        <span className="text-right text-xs text-muted-foreground">{t("priorityHint")}</span>
+                      </div>
+                      <Input
+                        id={`priority-${g.id}`}
+                        name="priority"
+                        type="number"
+                        min="1"
+                        step="1"
+                        defaultValue={Number(g.priority ?? 2)}
+                        required
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Button type="submit" className="rounded-full">
+                        {common("save")}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-sm text-muted-foreground">{t("empty")}</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
