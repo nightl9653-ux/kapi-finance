@@ -20,16 +20,16 @@ export const env = {
 
 export const isSupabaseConfigured = Boolean(NEXT_PUBLIC_SUPABASE_URL) && Boolean(NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
-/** 扫单每日次数上限（服务端；默认 3） */
+/** 扫单每日次数上限（服务端；默认 10） */
 export const scanReceiptDailyLimit = (() => {
-  const n = Number(process.env.SCAN_RECEIPT_DAILY_LIMIT ?? "3");
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 3;
+  const n = Number(process.env.SCAN_RECEIPT_DAILY_LIMIT ?? "10");
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 10;
 })();
 
-/** 语音记账每日次数上限（服务端；默认 3） */
+/** 语音记账每日次数上限（服务端；默认 5） */
 export const voiceDailyLimit = (() => {
-  const n = Number(process.env.VOICE_DAILY_LIMIT ?? "3");
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 3;
+  const n = Number(process.env.VOICE_DAILY_LIMIT ?? "5");
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 5;
 })();
 
 export const scanOcrProvider = (() => {

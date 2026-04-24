@@ -161,6 +161,7 @@ function buildUserTextPrompt(locale: string, text: string): string {
           "关键规则：",
           '- 一句话里可能有多笔（例如“早餐20，地铁3，咖啡18”）——必须拆成多条 transactions。',
           "- 每条交易都要有 amount；type/occurred_on/category_key/merchant/note 尽量补全，不确定可省略，但不要编造。",
+          "- 若文本里包含用途/商品/项目名称（如“包子/早餐/地铁/咖啡”），请优先写入 note（或 merchant），不要丢失这些关键信息。",
           "- 只有相对日期（今天/昨天/上周五）时，尽量换算为具体 YYYY-MM-DD；无法确定就不写日期（系统会按今天处理）。",
           "",
           "示例（仅示意输出结构，不要输出示例文字）：",
@@ -174,6 +175,7 @@ function buildUserTextPrompt(locale: string, text: string): string {
           "Key rules:",
           '- One sentence may contain multiple transactions (e.g., "breakfast 20, metro 3, coffee 18") — split into multiple objects in `transactions`.',
           "- Each transaction must have `amount`. Fill `type/occurred_on/category_key/merchant/note` when confident; if uncertain, omit rather than invent.",
+          '- If the text includes an item/purpose (e.g., "dumplings", "breakfast", "metro", "coffee"), prefer putting it in `note` (or `merchant`) rather than dropping it.',
           '- Resolve relative dates like "today/yesterday/last Friday" into a concrete YYYY-MM-DD when possible; otherwise omit the date (system will default to today).',
           "",
           "Example (structure only, do not output this example text):",
@@ -327,18 +329,41 @@ export async function extractTransactionsFromText(params: {
   if (!decoded.success) throw new Error("schema_mismatch");
   if (!decoded.data.transactions.length) throw new Error("no_transactions");
 
+  const fallbackNoteFromTranscript = (() => {
+    const t = params.text.trim().replace(/\s+/g, " ");
+    if (!t) return "";
+    return t.length > 80 ? `${t.slice(0, 77)}...` : t;
+  })();
+
+  const transcriptHasExplicitDateHint = (() => {
+    const t = params.text.trim();
+    if (!t) return false;
+    // 明确日期：2026-04-24 / 2026/4/24 / 2026.4.24 / 2026年4月24日
+    if (/\b20\d{2}\s*[-/.]\s*\d{1,2}\s*[-/.]\s*\d{1,2}\b/.test(t)) return true;
+    if (/20\d{2}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日?/.test(t)) return true;
+    // 常见中文相对日期
+    if (/(今天|昨日|昨天|前天|明天|后天|上周|下周|上个月|本月|这周|周[一二三四五六日天])/.test(t)) return true;
+    return false;
+  })();
+
   const rows: ScanReceiptBulkRow[] = decoded.data.transactions.map((t) => {
     const type: "expense" | "income" = t.type === "income" ? "income" : "expense";
     const catKey = normalizeCategoryKey(t.category_key, type);
     const { preset, custom } = parseCategoryUiState(catKey, type);
     const merchant = String(t.merchant ?? "").trim();
-    const noteRaw = String(t.note ?? "").trim();
+    const noteRawModel = String(t.note ?? "").trim();
+    const noteRaw =
+      noteRawModel ||
+      // 语音里只说了一笔且模型没给 note/merchant 时，用转写做兜底，避免“包子/早餐”等信息丢失
+      (!merchant && decoded.data.transactions.length === 1 ? fallbackNoteFromTranscript : "");
     const zh = params.locale.toLowerCase().startsWith("zh");
     const merchantPart = merchant ? (zh ? `商户：${merchant}` : `Merchant: ${merchant}`) : "";
     const noteMerged = [merchantPart, noteRaw].filter(Boolean).join(zh ? " · " : " · ");
 
     return {
-      occurred_on: t.occurred_on ?? todayISO(),
+      // 语音文本里如果没有任何日期线索，发生日期默认今天；
+      // 避免模型“编造”一个历史日期（例如 2023）导致用户困惑
+      occurred_on: transcriptHasExplicitDateHint ? t.occurred_on ?? todayISO() : todayISO(),
       type,
       amount: String(t.amount),
       categoryPreset: preset,

@@ -409,7 +409,15 @@ export default async function TransactionsPage({
           {datePrefill ? <input type="hidden" name="context_date" value={datePrefill} /> : null}
           <div className="space-y-2">
             <Label htmlFor="amount">{t("amount")}</Label>
-            <Input id="amount" name="amount" type="number" min="0.01" step="0.01" required />
+            <Input
+              id="amount"
+              name="amount"
+              type="number"
+              min="0.01"
+              step="0.01"
+              required
+              className="border-input border-l-2 border-l-pink-300 focus-visible:border-input focus-visible:border-l-pink-500 focus-visible:ring-pink-400/25 dark:border-l-pink-700"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="type">{t("typeLabel")}</Label>
@@ -503,6 +511,7 @@ export default async function TransactionsPage({
                         step="0.01"
                         required
                         defaultValue={String(row.amount)}
+                        className="border-input border-l-2 border-l-pink-300 focus-visible:border-input focus-visible:border-l-pink-500 focus-visible:ring-pink-400/25 dark:border-l-pink-700"
                       />
                     </div>
                     <div className="space-y-2">

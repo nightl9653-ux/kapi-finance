@@ -538,6 +538,7 @@ export function BulkTransactionsForm({
                     type="number"
                     min="0.01"
                     step="0.01"
+                    className="border-input border-l-2 border-l-pink-300 focus-visible:border-input focus-visible:border-l-pink-500 focus-visible:ring-pink-400/25 dark:border-l-pink-700"
                     value={row.amount}
                     onChange={(e) =>
                       setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, amount: e.target.value } : r)))
