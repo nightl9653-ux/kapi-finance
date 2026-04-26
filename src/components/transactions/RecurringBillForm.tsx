@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 
 import Link from "next/link";
 
@@ -10,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TransactionCategoryFields } from "@/components/transactions/TransactionCategoryFields";
 import { cn } from "@/lib/utils";
-import { coerceCurrency } from "@/lib/fx";
+import { BASE_CURRENCY, coerceCurrency, type Currency } from "@/lib/fx";
 
 type Cadence = "daily" | "monthly" | "quarterly" | "yearly";
 type FxMode = "auto" | "manual";
@@ -33,6 +34,12 @@ export function RecurringBillForm({
 }) {
   const t = useTranslations("transactions");
   const common = useTranslations("common");
+  const sp = useSearchParams();
+  const displayCurrency = useMemo<Currency>(() => {
+    const raw = sp?.get("dc") ?? "";
+    return coerceCurrency(raw || BASE_CURRENCY);
+  }, [sp]);
+  const [usdToDisplay, setUsdToDisplay] = useState<number>(1);
 
   const [cadence, setCadence] = useState<Cadence>("monthly");
   const [monthOfYear, setMonthOfYear] = useState("5");
@@ -40,8 +47,6 @@ export function RecurringBillForm({
   const [currency, setCurrency] = useState("USD");
   const [fxMode, setFxMode] = useState<FxMode>("auto");
   const [fxRate, setFxRate] = useState("1");
-  const [displayCurrency, setDisplayCurrency] = useState("USD");
-  const [displayRate, setDisplayRate] = useState("1"); // 1 USD = ? displayCurrency
   const [amountSnapshot, setAmountSnapshot] = useState<number | null>(null);
 
   useEffect(() => {
@@ -60,11 +65,6 @@ export function RecurringBillForm({
     };
   }, []);
 
-  const usdToDisplay = useMemo(() => {
-    const n = Number(displayRate);
-    return Number.isFinite(n) && n > 0 ? n : null;
-  }, [displayRate]);
-
   const fxRateNum = useMemo(() => {
     const n = Number(fxRate);
     return Number.isFinite(n) && n > 0 ? n : null;
@@ -78,8 +78,26 @@ export function RecurringBillForm({
     return amt! * fxRateNum;
   }, [amountSnapshot, currency, fxRateNum]);
 
+  useEffect(() => {
+    if (displayCurrency === BASE_CURRENCY) {
+      setUsdToDisplay(1);
+      return;
+    }
+    let cancelled = false;
+    fetchRate("USD", displayCurrency)
+      .then((r) => {
+        if (!cancelled) setUsdToDisplay(r);
+      })
+      .catch(() => {
+        if (!cancelled) setUsdToDisplay(1);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [displayCurrency]);
+
   const displayAmount = useMemo(() => {
-    if (amountBase == null || usdToDisplay == null) return null;
+    if (amountBase == null) return null;
     return amountBase * usdToDisplay;
   }, [amountBase, usdToDisplay]);
 
@@ -247,39 +265,6 @@ export function RecurringBillForm({
         <div className="sm:col-span-2 rounded-xl border bg-white p-4">
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="rb_display_currency">{t("fxDisplayCurrency")}</Label>
-              <select
-                id="rb_display_currency"
-                value={displayCurrency}
-                onChange={async (e) => {
-                  const next = coerceCurrency(e.target.value);
-                  setDisplayCurrency(next);
-                  if (next === "USD") {
-                    setDisplayRate("1");
-                    return;
-                  }
-                  if (fxMode !== "auto") return;
-                  try {
-                    const r = await fetchRate("USD", next);
-                    setDisplayRate(String(r));
-                  } catch {
-                    setDisplayRate("");
-                  }
-                }}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="CNY">CNY</option>
-                <option value="JPY">JPY</option>
-                <option value="GBP">GBP</option>
-                <option value="HKD">HKD</option>
-                <option value="AUD">AUD</option>
-                <option value="CAD">CAD</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="rb_fx_mode">{t("fxMode")}</Label>
               <select
                 id="rb_fx_mode"
@@ -300,17 +285,6 @@ export function RecurringBillForm({
                       setFxRate("");
                     }
                   }
-
-                  if (displayCurrency === "USD") {
-                    setDisplayRate("1");
-                  } else {
-                    try {
-                      const r = await fetchRate("USD", displayCurrency);
-                      setDisplayRate(String(r));
-                    } catch {
-                      setDisplayRate("");
-                    }
-                  }
                 }}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
@@ -318,9 +292,7 @@ export function RecurringBillForm({
                 <option value="manual">{t("fxModeManual")}</option>
               </select>
             </div>
-          </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="rb_fx">
                 {t("fxRateToUsd")}
@@ -339,42 +311,33 @@ export function RecurringBillForm({
                 placeholder="1.0"
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="rb_display_rate">
-                {t("fxDisplayRateFromUsd")}
-                <span className="ml-1 text-[11px] text-emerald-700/70">({t("fxDisplayRateHint")})</span>
-              </Label>
-              <Input
-                id="rb_display_rate"
-                type="number"
-                min="0"
-                step="0.0001"
-                value={displayCurrency === "USD" ? "1" : displayRate}
-                onChange={(e) => setDisplayRate(e.target.value)}
-                disabled={displayCurrency === "USD" || fxMode === "auto"}
-                placeholder="1.0"
-              />
-            </div>
           </div>
 
           <div className="mt-4 text-sm">
             <div className="text-muted-foreground">{t("fxPreviewTitle")}</div>
             <div className="mt-1 font-medium">
-              {displayAmount == null ? (
+              {amountBase == null ? (
                 <span className="text-muted-foreground">{t("fxPreviewEmpty")}</span>
               ) : (
                 <>
-                  {displayAmount.toLocaleString("en-US", {
+                  {amountBase.toLocaleString("en-US", {
                     style: "currency",
-                    currency: displayCurrency,
+                    currency: "USD",
                     currencyDisplay: "code",
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
-                  {currency !== "USD" && amountBase != null && amountSnapshot != null ? (
+                  {displayCurrency !== "USD" && displayAmount != null ? (
                     <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      (USD {amountBase.toFixed(2)} · {currency} {amountSnapshot.toFixed(2)})
+                      (·{" "}
+                      {displayAmount.toLocaleString(locale.toLowerCase().startsWith("zh") ? "zh-CN" : "en-US", {
+                        style: "currency",
+                        currency: displayCurrency,
+                        currencyDisplay: "code",
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                      )
                     </span>
                   ) : null}
                 </>

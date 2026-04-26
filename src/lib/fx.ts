@@ -1,6 +1,27 @@
 export const BASE_CURRENCY = "USD" as const;
 
-export type Currency = "USD" | "EUR" | "CNY" | "JPY" | "GBP" | "HKD" | "AUD" | "CAD";
+export type Currency =
+  | "USD"
+  | "EUR"
+  | "CNY"
+  | "JPY"
+  | "GBP"
+  | "HKD"
+  | "AUD"
+  | "CAD"
+  | "KRW"
+  | "SGD"
+  | "TWD"
+  | "THB"
+  | "CHF"
+  | "SEK"
+  | "NOK"
+  | "NZD"
+  | "INR"
+  | "IDR"
+  | "MYR"
+  | "PHP"
+  | "VND";
 
 export function coerceCurrency(raw: unknown): Currency {
   const v = String(raw ?? "")
@@ -15,6 +36,19 @@ export function coerceCurrency(raw: unknown): Currency {
     case "HKD":
     case "AUD":
     case "CAD":
+    case "KRW":
+    case "SGD":
+    case "TWD":
+    case "THB":
+    case "CHF":
+    case "SEK":
+    case "NOK":
+    case "NZD":
+    case "INR":
+    case "IDR":
+    case "MYR":
+    case "PHP":
+    case "VND":
       return v;
     default:
       return BASE_CURRENCY;

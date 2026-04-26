@@ -30,6 +30,17 @@ function isPublicPath(pathname: string, locale: "en" | "zh") {
 export default async function proxy(request: NextRequest) {
   const intlResponse = intlProxy(request);
 
+  // Debug helper (opt-in) to inspect intl proxy decisions.
+  // Example: /zh/auth?__debugProxy=1
+  if (request.nextUrl.searchParams.get("__debugProxy") === "1") {
+    return NextResponse.json({
+      pathname: request.nextUrl.pathname,
+      search: request.nextUrl.search,
+      location: intlResponse.headers.get("location"),
+      rewrite: intlResponse.headers.get("x-middleware-rewrite"),
+    });
+  }
+
   // If intl already issued a redirect/rewrite, let it happen first.
   const location = intlResponse.headers.get("location");
   if (location) return intlResponse;

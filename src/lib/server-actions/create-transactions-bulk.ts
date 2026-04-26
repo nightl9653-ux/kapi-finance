@@ -28,6 +28,7 @@ type BulkRow = {
   currency?: string;
   fx_rate?: string | number;
   category: string;
+  merchant?: string;
   note?: string;
 };
 
@@ -62,6 +63,7 @@ export async function createTransactionsBulk(formData: FormData) {
       currency: coerceCurrency((r as { currency?: unknown }).currency),
       fxRate: Number((r as { fx_rate?: unknown }).fx_rate),
       category: String(r.category ?? "").trim(),
+      merchant: String((r as { merchant?: unknown }).merchant ?? "").trim(),
       note: String(r.note ?? "").trim(),
     }))
     .filter((r) => r.occurred_on || r.category || Number.isFinite(r.amount));
@@ -104,6 +106,7 @@ export async function createTransactionsBulk(formData: FormData) {
       amount_base: fx.amountBase,
       type: r.type,
       category: r.category,
+      merchant: r.merchant || null,
       note: r.note || null,
       occurred_on: r.occurred_on,
       timestamp: Number.isNaN(ts.getTime()) ? new Date().toISOString() : ts.toISOString(),

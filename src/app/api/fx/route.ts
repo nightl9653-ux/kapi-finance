@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 const TTL_MS = 5 * 60 * 1000;
 const cache = new Map<string, { rate: number; expiresAt: number }>();
 
-function key(from: string, to: string) {
-  return `${from}->${to}`.toUpperCase();
+function key(from: string, to: string, date: string | null) {
+  return `${from}->${to}@${date ?? "latest"}`.toUpperCase();
 }
 
 function isCode(v: string) {
@@ -19,20 +19,22 @@ export async function GET(req: Request) {
   const to = String(url.searchParams.get("to") ?? "")
     .trim()
     .toUpperCase();
+  const dateRaw = String(url.searchParams.get("date") ?? "").trim();
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(dateRaw) ? dateRaw : null;
 
   if (!isCode(from) || !isCode(to) || from === to) {
     return NextResponse.json({ ok: false, error: "bad_params" }, { status: 400 });
   }
 
-  const k = key(from, to);
+  const k = key(from, to, date);
   const now = Date.now();
   const hit = cache.get(k);
   if (hit && hit.expiresAt > now) {
-    return NextResponse.json({ ok: true, from, to, rate: hit.rate, cached: true });
+    return NextResponse.json({ ok: true, from, to, date: date ?? "latest", rate: hit.rate, cached: true });
   }
 
   // Frankfurter: free, no key for latest rates
-  const api = new URL("https://api.frankfurter.app/latest");
+  const api = new URL(`https://api.frankfurter.app/${date ?? "latest"}`);
   api.searchParams.set("from", from);
   api.searchParams.set("to", to);
 
@@ -47,6 +49,6 @@ export async function GET(req: Request) {
   }
 
   cache.set(k, { rate, expiresAt: now + TTL_MS });
-  return NextResponse.json({ ok: true, from, to, rate, cached: false });
+  return NextResponse.json({ ok: true, from, to, date: date ?? "latest", rate, cached: false });
 }
 

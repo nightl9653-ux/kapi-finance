@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ import {
   formatCategoryLabel,
   INCOME_CATEGORY_KEYS,
 } from "@/lib/transaction-categories";
-import { coerceCurrency } from "@/lib/fx";
+import { BASE_CURRENCY, coerceCurrency, type Currency } from "@/lib/fx";
 
 type BulkRow = {
   occurred_on: string;
@@ -76,6 +77,7 @@ export function BulkTransactionsForm({
   const t = useTranslations("transactions");
   const common = useTranslations("common");
   const isZh = locale.toLowerCase().startsWith("zh");
+  const sp = useSearchParams();
   const [rows, setRows] = useState<BulkRow[]>(() =>
     initialRows?.length
       ? initialRows.map((r) => ({ ...r, currency: "USD", fx_mode: "auto", fx_rate: "" } as BulkRow))
@@ -83,9 +85,7 @@ export function BulkTransactionsForm({
   );
   const [error, setError] = useState<string | null>(null);
   const [rowErrors, setRowErrors] = useState<RowFieldErrors[]>([]);
-  const [displayCurrency, setDisplayCurrency] = useState("USD");
   const [fxMode, setFxMode] = useState<"auto" | "manual">("auto");
-  const [displayRate, setDisplayRate] = useState<string>("1"); // 1 USD = ? displayCurrency
   const [dupOpen, setDupOpen] = useState<Set<number>>(() => new Set());
   const rowRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const [flashRow, setFlashRow] = useState<number | null>(null);
@@ -253,32 +253,33 @@ export function BulkTransactionsForm({
     });
   }, [rows.length]);
 
+  // 显示币种：从页面顶部（URL 参数 dc）读取，批量补录仅做“≈显示币种”展示，不提供独立选择
+  const displayCurrency = useMemo<Currency>(() => {
+    const raw = sp?.get("dc") ?? "";
+    return coerceCurrency(raw || BASE_CURRENCY);
+  }, [sp]);
+  const [usdToDisplay, setUsdToDisplay] = useState<number>(1);
+
   useEffect(() => {
-    if (displayCurrency === "USD") {
-      setDisplayRate("1");
+    if (displayCurrency === BASE_CURRENCY) {
+      setUsdToDisplay(1);
       return;
     }
-    if (fxMode !== "auto") return;
     let cancelled = false;
     fetch(`/api/fx?from=USD&to=${encodeURIComponent(displayCurrency)}`)
       .then((r) => r.json().catch(() => ({})))
       .then((d: unknown) => {
         if (cancelled) return;
-        const rate = Number((d as FxApiResponse | null | undefined)?.rate);
-        setDisplayRate(Number.isFinite(rate) && rate > 0 ? String(rate) : "");
+        const rate = Number((d as { rate?: unknown } | null | undefined)?.rate);
+        setUsdToDisplay(Number.isFinite(rate) && rate > 0 ? rate : 1);
       })
       .catch(() => {
-        if (!cancelled) setDisplayRate("");
+        if (!cancelled) setUsdToDisplay(1);
       });
     return () => {
       cancelled = true;
     };
-  }, [displayCurrency, fxMode]);
-
-  const usdToDisplay = useMemo(() => {
-    const n = Number(displayRate);
-    return Number.isFinite(n) && n > 0 ? n : null;
-  }, [displayRate]);
+  }, [displayCurrency]);
 
   useEffect(() => {
     if (fxMode !== "auto") return;
@@ -627,23 +628,7 @@ export function BulkTransactionsForm({
                   </select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="bulk_display_currency">{t("fxDisplayCurrency")}</Label>
-                  <select
-                    value={displayCurrency}
-                    onChange={(e) => setDisplayCurrency(coerceCurrency(e.target.value))}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="CNY">CNY</option>
-                    <option value="JPY">JPY</option>
-                    <option value="GBP">GBP</option>
-                    <option value="HKD">HKD</option>
-                    <option value="AUD">AUD</option>
-                    <option value="CAD">CAD</option>
-                  </select>
-                </div>
+                {/* 显示币种折算已移除（统一在页面顶部设置显示币种） */}
 
                 <div className="space-y-2">
                   <Label htmlFor={`fx_mode_${idx}`}>{t("fxMode")}</Label>
@@ -678,27 +663,7 @@ export function BulkTransactionsForm({
                   />
                 </div>
 
-                <div className="space-y-2 sm:col-span-2 lg:col-span-1">
-                  <Label htmlFor={`bulk_display_rate_${idx}`}>
-                    {t("fxDisplayRateFromUsd")}
-                    <span className="ml-1 text-[11px] text-emerald-700/70">({t("fxDisplayRateHint")})</span>
-                  </Label>
-                  {displayCurrency === "USD" ? (
-                    <Input id={`bulk_display_rate_${idx}`} value="1" disabled className="h-9" />
-                  ) : (
-                    <Input
-                      id={`bulk_display_rate_${idx}`}
-                      type="number"
-                      min="0"
-                      step="0.0001"
-                      value={displayRate}
-                      onChange={(e) => setDisplayRate(e.target.value)}
-                      disabled={fxMode === "auto"}
-                      placeholder="1.0"
-                      className="h-9"
-                    />
-                  )}
-                </div>
+                {/* 显示币种汇率已移除 */}
 
               </div>
 
@@ -707,21 +672,25 @@ export function BulkTransactionsForm({
                 <div className="mt-1 font-medium">
                   {(() => {
                     const amt = Number(row.amount);
-                    if (!Number.isFinite(amt) || amt <= 0 || usdToDisplay == null) return <span className="text-muted-foreground">{t("fxPreviewEmpty")}</span>;
+                    if (!Number.isFinite(amt) || amt <= 0) return <span className="text-muted-foreground">{t("fxPreviewEmpty")}</span>;
                     const fx = row.currency === "USD" ? 1 : Number(row.fx_rate);
                     if (!Number.isFinite(fx) || fx <= 0) return <span className="text-muted-foreground">{t("fxPreviewEmpty")}</span>;
                     const usd = amt * fx;
-                    const out = usd * usdToDisplay;
+                    const display = usd * usdToDisplay;
                     return (
                       <>
-                        {out.toLocaleString("en-US", {
-                          style: "currency",
-                          currency: displayCurrency,
-                          currencyDisplay: "code",
-                        })}
-                        {row.currency !== "USD" ? (
+                        {usd.toLocaleString("en-US", { style: "currency", currency: "USD", currencyDisplay: "code" })}
+                        {displayCurrency !== "USD" ? (
                           <span className="ml-2 text-xs font-normal text-muted-foreground">
-                            (USD {usd.toFixed(2)} · {row.currency} {amt.toFixed(2)})
+                            (·{" "}
+                            {display.toLocaleString(isZh ? "zh-CN" : "en-US", {
+                              style: "currency",
+                              currency: displayCurrency,
+                              currencyDisplay: "code",
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                            )
                           </span>
                         ) : null}
                       </>
@@ -730,56 +699,56 @@ export function BulkTransactionsForm({
                 </div>
               </div>
 
-              <div className="mt-4 space-y-2">
-                <Label htmlFor={`category_${idx}`}>{t("category")}</Label>
-                <select
-                  id={`category_${idx}`}
-                  value={row.categoryPreset}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setRows((prev) =>
-                      prev.map((r, i) =>
-                        i === idx
-                          ? { ...r, categoryPreset: v, categoryCustom: v === CATEGORY_CUSTOM ? r.categoryCustom : "" }
-                          : r,
-                      ),
-                    );
-                  }}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  aria-invalid={Boolean(rowErrors[idx]?.category)}
-                >
-                  {(row.type === "income" ? INCOME_CATEGORY_KEYS : EXPENSE_CATEGORY_KEYS).map((k) => (
-                    <option key={k} value={k}>
-                      {formatCategoryLabel(k, row.type, (key) => t(key as never))}
-                    </option>
-                  ))}
-                  <option value={CATEGORY_CUSTOM}>{t("categoryCustom")}</option>
-                </select>
-                {rowErrors[idx]?.category ? (
-                  <div className="text-xs text-destructive">{t("bulkClientFieldCategory")}</div>
-                ) : null}
-                {row.categoryPreset === CATEGORY_CUSTOM ? (
-                  <div className="mt-2 space-y-2">
-                    <Label htmlFor={`category_custom_${idx}`}>
-                      {t("categoryCustomDetail")}
-                      <span className="ml-1 text-[11px] text-sky-700/70">{common("requiredInParens")}</span>
-                    </Label>
-                    <Input
-                      id={`category_custom_${idx}`}
-                      value={row.categoryCustom}
-                      placeholder={t("categoryCustomPlaceholder")}
-                      onChange={(e) =>
-                        setRows((prev) =>
-                          prev.map((r, i) => (i === idx ? { ...r, categoryCustom: e.target.value } : r)),
-                        )
-                      }
-                      required
-                    />
-                  </div>
-                ) : null}
-              </div>
-
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor={`category_${idx}`}>{t("category")}</Label>
+                  <select
+                    id={`category_${idx}`}
+                    value={row.categoryPreset}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setRows((prev) =>
+                        prev.map((r, i) =>
+                          i === idx
+                            ? { ...r, categoryPreset: v, categoryCustom: v === CATEGORY_CUSTOM ? r.categoryCustom : "" }
+                            : r,
+                        ),
+                      );
+                    }}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    aria-invalid={Boolean(rowErrors[idx]?.category)}
+                  >
+                    {(row.type === "income" ? INCOME_CATEGORY_KEYS : EXPENSE_CATEGORY_KEYS).map((k) => (
+                      <option key={k} value={k}>
+                        {formatCategoryLabel(k, row.type, (key) => t(key as never))}
+                      </option>
+                    ))}
+                    <option value={CATEGORY_CUSTOM}>{t("categoryCustom")}</option>
+                  </select>
+                  {rowErrors[idx]?.category ? (
+                    <div className="text-xs text-destructive">{t("bulkClientFieldCategory")}</div>
+                  ) : null}
+                  {row.categoryPreset === CATEGORY_CUSTOM ? (
+                    <div className="mt-2 space-y-2">
+                      <Label htmlFor={`category_custom_${idx}`}>
+                        {t("categoryCustomDetail")}
+                        <span className="ml-1 text-[11px] text-sky-700/70">{common("requiredInParens")}</span>
+                      </Label>
+                      <Input
+                        id={`category_custom_${idx}`}
+                        value={row.categoryCustom}
+                        placeholder={t("categoryCustomPlaceholder")}
+                        onChange={(e) =>
+                          setRows((prev) =>
+                            prev.map((r, i) => (i === idx ? { ...r, categoryCustom: e.target.value } : r)),
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                  ) : null}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor={`occurred_on_${idx}`}>{t("bulkDate")}</Label>
                   <Input
@@ -795,19 +764,20 @@ export function BulkTransactionsForm({
                     <div className="text-xs text-destructive">{t("bulkClientFieldDate")}</div>
                   ) : null}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`note_${idx}`}>
-                    {t("note")}
-                    <span className="ml-1 text-[11px] text-emerald-700/70">{common("optionalInParens")}</span>
-                  </Label>
-                  <Input
-                    id={`note_${idx}`}
-                    value={row.note}
-                    onChange={(e) =>
-                      setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, note: e.target.value } : r)))
-                    }
-                  />
-                </div>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <Label htmlFor={`note_${idx}`}>
+                  {t("note")}
+                  <span className="ml-1 text-[11px] text-emerald-700/70">{common("optionalInParens")}</span>
+                </Label>
+                <Input
+                  id={`note_${idx}`}
+                  value={row.note}
+                  onChange={(e) =>
+                    setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, note: e.target.value } : r)))
+                  }
+                />
               </div>
             </div>
           ))}

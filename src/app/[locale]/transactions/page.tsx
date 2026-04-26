@@ -10,7 +10,7 @@ import { coerceTransactionCategory, formatCategoryLabel } from "@/lib/transactio
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { materializeRecurringBills } from "@/lib/recurring-bills";
 import { createTransactionsBulk } from "@/lib/server-actions/create-transactions-bulk";
-import { coerceCurrency, computeAmountBase } from "@/lib/fx";
+import { coerceCurrency, computeAmountBase, BASE_CURRENCY, type Currency } from "@/lib/fx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,8 +20,10 @@ import { LocalCalendarDateHidden } from "@/components/transactions/LocalCalendar
 import { RecurringBillForm } from "@/components/transactions/RecurringBillForm";
 import { FxPicker } from "@/components/transactions/FxPicker";
 import { TransactionCategoryFields } from "@/components/transactions/TransactionCategoryFields";
+import { TransactionsCurrencyPicker } from "@/components/transactions/TransactionsCurrencyPicker";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
 
 function isoTimestampToDatetimeLocal(value: string | null | undefined): string {
   if (!value) return "";
@@ -306,6 +308,18 @@ async function deleteTransaction(formData: FormData) {
   redirect(transactionsSearchPath(locale, { success: "deleted", date: contextDate }));
 }
 
+async function fetchFxRateUsdToLatest(display: Currency): Promise<number> {
+  if (display === BASE_CURRENCY) return 1;
+  const api = new URL("https://api.frankfurter.app/latest");
+  api.searchParams.set("from", BASE_CURRENCY);
+  api.searchParams.set("to", display);
+  const res = await fetch(api.toString(), { cache: "no-store" });
+  if (!res.ok) return 1;
+  const data = (await res.json().catch(() => null)) as null | { rates?: Record<string, number> };
+  const rate = Number(data?.rates?.[display]);
+  return Number.isFinite(rate) && rate > 0 ? rate : 1;
+}
+
 export default async function TransactionsPage({
   params,
   searchParams,
@@ -325,6 +339,15 @@ export default async function TransactionsPage({
   const recordedAtDefault = datePrefill ? `${datePrefill}T20:00` : undefined;
   const editIdRaw = typeof sp.edit === "string" ? sp.edit.trim() : "";
   const editId = editIdRaw.length >= 32 ? editIdRaw : undefined;
+  const displayCurrency = coerceCurrency(typeof sp.dc === "string" ? sp.dc : BASE_CURRENCY);
+  const usdToDisplay = await fetchFxRateUsdToLatest(displayCurrency);
+  const money = new Intl.NumberFormat(locale === "zh" ? "zh-CN" : "en-US", {
+    style: "currency",
+    currency: displayCurrency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const fmt = (usd: number) => money.format(usd * usdToDisplay);
 
   if (!isSupabaseConfigured) {
     return (
@@ -359,12 +382,35 @@ export default async function TransactionsPage({
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{nav("transactions")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t("subtitle", { scanLimit: scanReceiptDailyLimit, voiceLimit: voiceDailyLimit })}
-        </p>
+      <div className="space-y-6">
+      <div className="space-y-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold">{nav("transactions")}</h1>
+
+          <div className="mt-2 space-y-2">
+            <p className="text-sm text-muted-foreground">
+              {t("subtitle", { scanLimit: scanReceiptDailyLimit, voiceLimit: voiceDailyLimit })}
+            </p>
+
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <TransactionsCurrencyPicker
+                label={t("fxDisplayCurrency")}
+                basePath={`/${locale}/transactions`}
+                preservedQuery={{
+                  date: datePrefill,
+                  edit: editId,
+                }}
+                displayCurrency={displayCurrency}
+              />
+              <Link
+                href={`/${locale}/transactions/import`}
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              >
+                {t("importCsv")}
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
 
       {(errorKey || successKey) ? <ClearFlashParams /> : null}
@@ -614,23 +660,22 @@ export default async function TransactionsPage({
                   <div>
                     <div className="font-medium">
                       {row.type === "income" ? "+" : "-"}
-                      {Number(row.amount_base ?? row.amount).toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
+                      {fmt(Number(row.amount_base ?? row.amount))}
                       {String(row.currency ?? "USD").toUpperCase() !== "USD" ? (
                         <span className="ml-2 text-xs font-normal text-muted-foreground">
-                          (
+                          (USD {Number(row.amount_base ?? row.amount).toFixed(2)} ·{" "}
                           {Number(row.amount).toLocaleString(locale === "zh" ? "zh-CN" : "en-US", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}{" "}
                           {String(row.currency ?? "").toUpperCase()})
                         </span>
-                      ) : null}
-                      ·{" "}
+                      ) : (
+                        <span className="ml-2 text-xs font-normal text-muted-foreground">
+                          (USD {Number(row.amount_base ?? row.amount).toFixed(2)})
+                        </span>
+                      )}
+                      {" · "}
                       {formatCategoryLabel(String(row.category ?? ""), String(row.type ?? ""), (key) => t(key))}
                       {row.sub_category ? ` / ${row.sub_category}` : ""}
                     </div>
