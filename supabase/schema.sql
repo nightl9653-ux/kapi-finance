@@ -165,6 +165,62 @@ create table if not exists user_achievements (
   unlocked_at timestamp default now()
 );
 
+-- 梦想剧场：目标故事（基准故事）
+create table if not exists goal_stories (
+  id uuid default gen_random_uuid() primary key,
+  goal_id uuid references financial_goals(id) on delete cascade,
+  -- 用于去重缓存：同一目标、同一输入、同一语言命中直接复用
+  input_hash text not null,
+  keywords jsonb default '[]',
+  free_text text,
+  locale text not null,
+  content text not null,
+  created_at timestamp default now()
+);
+
+create unique index if not exists goal_stories_goal_input_locale_uq
+on goal_stories (goal_id, input_hash, locale);
+
+-- 梦想剧场：同一基准故事的多语言产物（文本/音频/字幕）
+create table if not exists goal_media (
+  story_id uuid references goal_stories(id) on delete cascade,
+  locale text not null,
+  content text not null,
+  audio_url text,
+  subtitle_url text,
+  created_at timestamp default now(),
+  primary key (story_id, locale)
+);
+
+-- 梦想剧场：视频画面（无文字画面；与语言无关）
+create table if not exists goal_videos (
+  id uuid default gen_random_uuid() primary key,
+  story_id uuid references goal_stories(id) on delete cascade unique,
+  video_url text,
+  status text default 'processing',
+  provider_task_id text,
+  provider_model text,
+  duration_sec integer,
+  resolution text,
+  last_error text,
+  created_at timestamp default now()
+);
+
+-- 兼容存量库：补齐新增列（可重复执行）
+alter table goal_videos add column if not exists provider_model text;
+alter table goal_videos add column if not exists duration_sec integer;
+alter table goal_videos add column if not exists resolution text;
+alter table goal_videos add column if not exists last_error text;
+
+-- -----------------------------
+-- Storage buckets + policies (Supabase Storage)
+-- -----------------------------
+-- Bucket: goal-media
+-- 约定 object path: {user_id}/goals/{goal_id}/stories/{story_id}/{locale}/{filename}
+insert into storage.buckets (id, name, public)
+values ('goal-media', 'goal-media', true)
+on conflict (id) do nothing;
+
 -- 启用 RLS（行级安全）
 alter table profiles enable row level security;
 alter table financial_goals enable row level security;
@@ -175,168 +231,379 @@ alter table recurring_bills enable row level security;
 alter table subscriptions enable row level security;
 alter table ai_insights enable row level security;
 alter table user_achievements enable row level security;
+alter table goal_stories enable row level security;
+alter table goal_media enable row level security;
+alter table goal_videos enable row level security;
 
 -- -----------------------------
 -- RLS policies
 -- -----------------------------
 
 -- profiles: user can read/update own profile
+drop policy if exists "profiles_select_own" on profiles;
 create policy "profiles_select_own"
 on profiles for select
 using (id = auth.uid());
 
+drop policy if exists "profiles_insert_own" on profiles;
 create policy "profiles_insert_own"
 on profiles for insert
 with check (id = auth.uid());
 
+drop policy if exists "profiles_update_own" on profiles;
 create policy "profiles_update_own"
 on profiles for update
 using (id = auth.uid())
 with check (id = auth.uid());
 
 -- financial_goals: CRUD limited to owner
+drop policy if exists "goals_select_own" on financial_goals;
 create policy "goals_select_own"
 on financial_goals for select
 using (user_id = auth.uid());
 
+drop policy if exists "goals_insert_own" on financial_goals;
 create policy "goals_insert_own"
 on financial_goals for insert
 with check (user_id = auth.uid());
 
+drop policy if exists "goals_update_own" on financial_goals;
 create policy "goals_update_own"
 on financial_goals for update
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
+drop policy if exists "goals_delete_own" on financial_goals;
 create policy "goals_delete_own"
 on financial_goals for delete
 using (user_id = auth.uid());
 
 -- transactions: CRUD limited to owner
+drop policy if exists "transactions_select_own" on transactions;
 create policy "transactions_select_own"
 on transactions for select
 using (user_id = auth.uid());
 
+drop policy if exists "transactions_insert_own" on transactions;
 create policy "transactions_insert_own"
 on transactions for insert
 with check (user_id = auth.uid());
 
+drop policy if exists "transactions_update_own" on transactions;
 create policy "transactions_update_own"
 on transactions for update
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
+drop policy if exists "transactions_delete_own" on transactions;
 create policy "transactions_delete_own"
 on transactions for delete
 using (user_id = auth.uid());
 
 -- notifications: CRUD limited to owner
+drop policy if exists "notifications_select_own" on notifications;
 create policy "notifications_select_own"
 on notifications for select
 using (user_id = auth.uid());
 
+drop policy if exists "notifications_insert_own" on notifications;
 create policy "notifications_insert_own"
 on notifications for insert
 with check (user_id = auth.uid());
 
+drop policy if exists "notifications_update_own" on notifications;
 create policy "notifications_update_own"
 on notifications for update
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
+drop policy if exists "notifications_delete_own" on notifications;
 create policy "notifications_delete_own"
 on notifications for delete
 using (user_id = auth.uid());
 
 -- ai_usage: CRUD limited to owner
+drop policy if exists "ai_usage_select_own" on ai_usage;
 create policy "ai_usage_select_own"
 on ai_usage for select
 using (user_id = auth.uid());
 
+drop policy if exists "ai_usage_insert_own" on ai_usage;
 create policy "ai_usage_insert_own"
 on ai_usage for insert
 with check (user_id = auth.uid());
 
+drop policy if exists "ai_usage_update_own" on ai_usage;
 create policy "ai_usage_update_own"
 on ai_usage for update
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
+drop policy if exists "ai_usage_delete_own" on ai_usage;
 create policy "ai_usage_delete_own"
 on ai_usage for delete
 using (user_id = auth.uid());
 
 -- recurring_bills: CRUD limited to owner
+drop policy if exists "recurring_bills_select_own" on recurring_bills;
 create policy "recurring_bills_select_own"
 on recurring_bills for select
 using (user_id = auth.uid());
 
+drop policy if exists "recurring_bills_insert_own" on recurring_bills;
 create policy "recurring_bills_insert_own"
 on recurring_bills for insert
 with check (user_id = auth.uid());
 
+drop policy if exists "recurring_bills_update_own" on recurring_bills;
 create policy "recurring_bills_update_own"
 on recurring_bills for update
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
+drop policy if exists "recurring_bills_delete_own" on recurring_bills;
 create policy "recurring_bills_delete_own"
 on recurring_bills for delete
 using (user_id = auth.uid());
 
 -- subscriptions: CRUD limited to owner (server should normally manage)
+drop policy if exists "subscriptions_select_own" on subscriptions;
 create policy "subscriptions_select_own"
 on subscriptions for select
 using (user_id = auth.uid());
 
+drop policy if exists "subscriptions_insert_own" on subscriptions;
 create policy "subscriptions_insert_own"
 on subscriptions for insert
 with check (user_id = auth.uid());
 
+drop policy if exists "subscriptions_update_own" on subscriptions;
 create policy "subscriptions_update_own"
 on subscriptions for update
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
+drop policy if exists "subscriptions_delete_own" on subscriptions;
 create policy "subscriptions_delete_own"
 on subscriptions for delete
 using (user_id = auth.uid());
 
 -- ai_insights: CRUD limited to owner
+drop policy if exists "ai_insights_select_own" on ai_insights;
 create policy "ai_insights_select_own"
 on ai_insights for select
 using (user_id = auth.uid());
 
+drop policy if exists "ai_insights_insert_own" on ai_insights;
 create policy "ai_insights_insert_own"
 on ai_insights for insert
 with check (user_id = auth.uid());
 
+drop policy if exists "ai_insights_update_own" on ai_insights;
 create policy "ai_insights_update_own"
 on ai_insights for update
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
+drop policy if exists "ai_insights_delete_own" on ai_insights;
 create policy "ai_insights_delete_own"
 on ai_insights for delete
 using (user_id = auth.uid());
 
 -- user_achievements: CRUD limited to owner
+drop policy if exists "achievements_select_own" on user_achievements;
 create policy "achievements_select_own"
 on user_achievements for select
 using (user_id = auth.uid());
 
+drop policy if exists "achievements_insert_own" on user_achievements;
 create policy "achievements_insert_own"
 on user_achievements for insert
 with check (user_id = auth.uid());
 
+drop policy if exists "achievements_update_own" on user_achievements;
 create policy "achievements_update_own"
 on user_achievements for update
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
+drop policy if exists "achievements_delete_own" on user_achievements;
 create policy "achievements_delete_own"
 on user_achievements for delete
 using (user_id = auth.uid());
+
+-- goal_stories: select/insert/delete limited to owner of the goal
+drop policy if exists "goal_stories_select_own" on goal_stories;
+create policy "goal_stories_select_own"
+on goal_stories for select
+using (
+  exists (
+    select 1
+    from financial_goals g
+    where g.id = goal_stories.goal_id
+      and g.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "goal_stories_insert_own" on goal_stories;
+create policy "goal_stories_insert_own"
+on goal_stories for insert
+with check (
+  exists (
+    select 1
+    from financial_goals g
+    where g.id = goal_stories.goal_id
+      and g.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "goal_stories_delete_own" on goal_stories;
+create policy "goal_stories_delete_own"
+on goal_stories for delete
+using (
+  exists (
+    select 1
+    from financial_goals g
+    where g.id = goal_stories.goal_id
+      and g.user_id = auth.uid()
+  )
+);
+
+-- goal_media: select/insert/update limited to owner (through story -> goal)
+drop policy if exists "goal_media_select_own" on goal_media;
+create policy "goal_media_select_own"
+on goal_media for select
+using (
+  exists (
+    select 1
+    from goal_stories s
+    join financial_goals g on g.id = s.goal_id
+    where s.id = goal_media.story_id
+      and g.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "goal_media_insert_own" on goal_media;
+create policy "goal_media_insert_own"
+on goal_media for insert
+with check (
+  exists (
+    select 1
+    from goal_stories s
+    join financial_goals g on g.id = s.goal_id
+    where s.id = goal_media.story_id
+      and g.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "goal_media_update_own" on goal_media;
+create policy "goal_media_update_own"
+on goal_media for update
+using (
+  exists (
+    select 1
+    from goal_stories s
+    join financial_goals g on g.id = s.goal_id
+    where s.id = goal_media.story_id
+      and g.user_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1
+    from goal_stories s
+    join financial_goals g on g.id = s.goal_id
+    where s.id = goal_media.story_id
+      and g.user_id = auth.uid()
+  )
+);
+
+-- goal_videos: select/insert/update limited to owner (through story -> goal)
+drop policy if exists "goal_videos_select_own" on goal_videos;
+create policy "goal_videos_select_own"
+on goal_videos for select
+using (
+  exists (
+    select 1
+    from goal_stories s
+    join financial_goals g on g.id = s.goal_id
+    where s.id = goal_videos.story_id
+      and g.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "goal_videos_insert_own" on goal_videos;
+create policy "goal_videos_insert_own"
+on goal_videos for insert
+with check (
+  exists (
+    select 1
+    from goal_stories s
+    join financial_goals g on g.id = s.goal_id
+    where s.id = goal_videos.story_id
+      and g.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "goal_videos_update_own" on goal_videos;
+create policy "goal_videos_update_own"
+on goal_videos for update
+using (
+  exists (
+    select 1
+    from goal_stories s
+    join financial_goals g on g.id = s.goal_id
+    where s.id = goal_videos.story_id
+      and g.user_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1
+    from goal_stories s
+    join financial_goals g on g.id = s.goal_id
+    where s.id = goal_videos.story_id
+      and g.user_id = auth.uid()
+  )
+);
+
+-- Storage policies for bucket `goal-media`
+-- 说明：路径必须以 auth.uid() 开头；保证“只能读写自己的媒体文件”
+drop policy if exists "goal_media_objects_select_own" on storage.objects;
+create policy "goal_media_objects_select_own"
+on storage.objects for select
+using (
+  bucket_id = 'goal-media'
+  and (name like (auth.uid()::text || '/%'))
+);
+
+drop policy if exists "goal_media_objects_insert_own" on storage.objects;
+create policy "goal_media_objects_insert_own"
+on storage.objects for insert
+with check (
+  bucket_id = 'goal-media'
+  and (name like (auth.uid()::text || '/%'))
+);
+
+drop policy if exists "goal_media_objects_update_own" on storage.objects;
+create policy "goal_media_objects_update_own"
+on storage.objects for update
+using (
+  bucket_id = 'goal-media'
+  and (name like (auth.uid()::text || '/%'))
+)
+with check (
+  bucket_id = 'goal-media'
+  and (name like (auth.uid()::text || '/%'))
+);
+
+drop policy if exists "goal_media_objects_delete_own" on storage.objects;
+create policy "goal_media_objects_delete_own"
+on storage.objects for delete
+using (
+  bucket_id = 'goal-media'
+  and (name like (auth.uid()::text || '/%'))
+);
 
 -- -----------------------------
 -- Triggers / constraints

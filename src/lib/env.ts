@@ -63,3 +63,96 @@ export function getOpenAIScanConfig(): {
   };
 }
 
+/** 梦想剧场：故事生成/翻译（服务端）；未配置时相关功能不可用 */
+export function getOpenAIDreamConfig(): {
+  apiKey: string;
+  storyModel: string;
+  translateModel: string;
+  ttsModel: string;
+  ttsVoice: string;
+  baseURL?: string;
+} | null {
+  const apiKey =
+    process.env.OPENAI_API_KEY?.trim() ??
+    process.env.DMX_API_KEY?.trim() ??
+    process.env.DMXAPI_API_KEY?.trim();
+  if (!apiKey) return null;
+
+  const baseURL =
+    process.env.OPENAI_BASE_URL?.trim() ??
+    process.env.DMX_BASE_URL?.trim() ??
+    process.env.DMXAPI_BASE_URL?.trim();
+
+  return {
+    apiKey,
+    storyModel: (process.env.OPENAI_DREAM_STORY_MODEL ?? process.env.DMX_DREAM_STORY_MODEL ?? "gpt-4o").trim(),
+    translateModel: (process.env.OPENAI_DREAM_TRANSLATE_MODEL ?? process.env.DMX_DREAM_TRANSLATE_MODEL ?? "gpt-4o-mini").trim(),
+    ttsModel: (process.env.OPENAI_DREAM_TTS_MODEL ?? process.env.DMX_DREAM_TTS_MODEL ?? "gpt-4o-mini-tts").trim(),
+    ttsVoice: (process.env.OPENAI_DREAM_TTS_VOICE ?? process.env.DMX_DREAM_TTS_VOICE ?? "alloy").trim(),
+    baseURL: baseURL || undefined,
+  };
+}
+
+/** DMXAPI：Seedance 视频生成（responses 异步任务）；默认 Base URL 对齐官方文档示例 */
+export function getDmxVideoConfig(): {
+  apiKey: string;
+  baseURL: string;
+  submitModel: string;
+  getModel: string;
+  promptModel: string;
+} | null {
+  const apiKey =
+    process.env.OPENAI_API_KEY?.trim() ??
+    process.env.DMX_API_KEY?.trim() ??
+    process.env.DMXAPI_API_KEY?.trim();
+  if (!apiKey) return null;
+
+  const baseURL =
+    (process.env.DMX_VIDEO_BASE_URL ??
+      process.env.OPENAI_BASE_URL ??
+      process.env.DMX_BASE_URL ??
+      process.env.DMXAPI_BASE_URL ??
+      ""
+    ).trim() || "https://www.dmxapi.com/v1";
+
+  return {
+    apiKey,
+    baseURL,
+    // 国际站默认走 Vidu 2.0（4s×3≈12s 由应用层拼接/连播）
+    submitModel: (process.env.DMX_VIDEO_SUBMIT_MODEL ?? "vidu2.0").trim(),
+    getModel: (process.env.DMX_VIDEO_GET_MODEL ?? "seedance-get").trim(),
+    promptModel: (process.env.DMX_VIDEO_PROMPT_MODEL ?? process.env.OPENAI_SCAN_MODEL ?? "gpt-4o-mini").trim(),
+  };
+}
+
+/** 梦想剧场：文生图（服务端）；默认使用豆包 Seedream 系列（如可用） */
+export function getDreamImageConfig(): {
+  apiKey: string;
+  baseURL: string;
+  model: string;
+  ultraModel: string;
+} | null {
+  const apiKey =
+    process.env.OPENAI_API_KEY?.trim() ??
+    process.env.DMX_API_KEY?.trim() ??
+    process.env.DMXAPI_API_KEY?.trim();
+  if (!apiKey) return null;
+
+  const baseURL =
+    (process.env.DMX_IMAGE_BASE_URL ??
+      process.env.OPENAI_BASE_URL ??
+      process.env.DMX_BASE_URL ??
+      process.env.DMXAPI_BASE_URL ??
+      ""
+    ).trim() || "https://www.dmxapi.com/v1";
+
+  return {
+    apiKey,
+    baseURL,
+    /** 未勾选高质量：默认与 `DMX_IMAGE_MODEL_ULTRA` 一致为 GPT Image 2；可用 .env 的 DMX_IMAGE_MODEL 覆盖 */
+    model: (process.env.DMX_IMAGE_MODEL ?? "gpt-image-2").trim(),
+    /** 勾选高质量：默认同上；可用 DMX_IMAGE_MODEL_ULTRA 指定更强档（若网关区分） */
+    ultraModel: (process.env.DMX_IMAGE_MODEL_ULTRA ?? "gpt-image-2").trim(),
+  };
+}
+
