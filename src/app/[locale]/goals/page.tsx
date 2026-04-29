@@ -6,11 +6,17 @@ import { redirect } from "next/navigation";
 import type { Locale } from "@/i18n/locales";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { BASE_CURRENCY, coerceCurrency, type Currency } from "@/lib/fx";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GoalTypePicker } from "@/components/goals/GoalTypePicker";
+import { TransactionsCurrencyPicker } from "@/components/transactions/TransactionsCurrencyPicker";
+import { FundPoolPlanner } from "@/components/goals/FundPoolPlanner";
+import { DreamTheater } from "@/components/goals/DreamTheater";
+
+type TxRow = { type: string | null; amount_base: number | null; timestamp: string | null };
 
 function formatDateInput(value: string | null | undefined): string {
   if (!value) return "";
@@ -39,6 +45,51 @@ function goalTypeLabel(t: (k: string) => string, type: string): string {
   const key = type as keyof typeof emoji;
   if (!emoji[key]) return type;
   return `${emoji[key]} ${t(type)}`;
+}
+
+function utcMonthStart(d: Date): Date {
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0, 0));
+}
+
+function utcYearStart(d: Date): Date {
+  return new Date(Date.UTC(d.getUTCFullYear(), 0, 1, 0, 0, 0, 0));
+}
+
+function utcQuarterStart(d: Date): Date {
+  const q0 = Math.floor(d.getUTCMonth() / 3) * 3;
+  return new Date(Date.UTC(d.getUTCFullYear(), q0, 1, 0, 0, 0, 0));
+}
+
+async function fetchFxRateUsdToLatest(display: Currency): Promise<number> {
+  if (display === BASE_CURRENCY) return 1;
+  const api = new URL("https://api.frankfurter.app/latest");
+  api.searchParams.set("from", BASE_CURRENCY);
+  api.searchParams.set("to", display);
+  const res = await fetch(api.toString(), { cache: "no-store" });
+  if (!res.ok) return 1;
+  const data = (await res.json().catch(() => null)) as null | { rates?: Record<string, number> };
+  const rate = Number(data?.rates?.[display]);
+  return Number.isFinite(rate) && rate > 0 ? rate : 1;
+}
+
+async function fetchAllTransactionsForUser(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, userId: string) {
+  const pageSize = 1000;
+  const out: TxRow[] = [];
+  for (let page = 0; page < 50; page++) {
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("type,amount_base,timestamp")
+      .eq("user_id", userId)
+      .order("timestamp", { ascending: true })
+      .range(from, to);
+    if (error) throw error;
+    const rows = (data ?? []) as TxRow[];
+    out.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return out;
 }
 
 async function updateGoal(formData: FormData) {
@@ -161,10 +212,13 @@ export default async function GoalsPage({
   const locale = (raw === "zh" ? "zh" : "en") as Locale;
   const nav = await getTranslations("nav");
   const t = await getTranslations("goals");
+  const tt = await getTranslations("transactions");
   const common = await getTranslations("common");
   const sp = searchParams ? await searchParams : {};
   const errorKey = typeof sp.error === "string" ? sp.error : undefined;
   const successKey = typeof sp.success === "string" ? sp.success : undefined;
+  const displayCurrency = coerceCurrency(typeof sp.dc === "string" ? sp.dc : BASE_CURRENCY);
+  const usdToDisplay = await fetchFxRateUsdToLatest(displayCurrency);
 
   if (!isSupabaseConfigured) {
     return (
@@ -201,6 +255,37 @@ export default async function GoalsPage({
   const isPlus = Boolean(profile?.is_plus_member);
   const usedCount = goals?.length ?? 0;
 
+  const txRows = await fetchAllTransactionsForUser(supabase, auth.user.id).catch(() => []);
+  const now = new Date();
+  const monthStart = utcMonthStart(now).getTime();
+  const quarterStart = utcQuarterStart(now).getTime();
+  const yearStart = utcYearStart(now).getTime();
+
+  let netAll = 0;
+  let netMonth = 0;
+  let netQuarter = 0;
+  let netYear = 0;
+  for (const r of txRows) {
+    const amt = Number(r.amount_base ?? 0);
+    if (!Number.isFinite(amt) || amt === 0) continue;
+    const kind = String(r.type ?? "");
+    const signed = kind === "income" ? amt : kind === "expense" ? -amt : 0;
+    if (!signed) continue;
+    const ts = r.timestamp ? new Date(r.timestamp).getTime() : NaN;
+    if (!Number.isFinite(ts)) continue;
+    netAll += signed;
+    if (ts >= monthStart) netMonth += signed;
+    if (ts >= quarterStart) netQuarter += signed;
+    if (ts >= yearStart) netYear += signed;
+  }
+
+  const money = new Intl.NumberFormat(locale === "zh" ? "zh-CN" : "en-US", {
+    style: "currency",
+    currency: displayCurrency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -208,15 +293,49 @@ export default async function GoalsPage({
         <p className="text-sm text-muted-foreground">
           {t("subtitle")}
         </p>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-          <span className="rounded-full border bg-white px-3 py-1">
-            {isPlus ? t("planPlus") : t("planFree")}
-          </span>
-          <span className="text-muted-foreground">
-            {isPlus ? t("quotaUnlimited") : t("quota", { used: usedCount, limit: 2 })}
-          </span>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border bg-white px-3 py-1">
+              {isPlus ? t("planPlus") : t("planFree")}
+            </span>
+            <span className="text-muted-foreground">
+              {isPlus ? t("quotaUnlimited") : t("quota", { used: usedCount, limit: 2 })}
+            </span>
+          </div>
+          <TransactionsCurrencyPicker
+            label={tt("fxDisplayCurrency")}
+            basePath={`/${locale}/goals`}
+            preservedQuery={{}}
+            displayCurrency={displayCurrency}
+          />
         </div>
       </div>
+
+      <div className="grid gap-3 sm:grid-cols-4">
+        <div className="rounded-2xl border bg-white/70 p-4">
+          <div className="text-sm text-muted-foreground">{t("netAllTime")}</div>
+          <div className="mt-1 text-lg font-semibold">{money.format(netAll * usdToDisplay)}</div>
+        </div>
+        <div className="rounded-2xl border bg-white/70 p-4">
+          <div className="text-sm text-muted-foreground">{t("netMonth")}</div>
+          <div className="mt-1 text-lg font-semibold">{money.format(netMonth * usdToDisplay)}</div>
+        </div>
+        <div className="rounded-2xl border bg-white/70 p-4">
+          <div className="text-sm text-muted-foreground">{t("netQuarter")}</div>
+          <div className="mt-1 text-lg font-semibold">{money.format(netQuarter * usdToDisplay)}</div>
+        </div>
+        <div className="rounded-2xl border bg-white/70 p-4">
+          <div className="text-sm text-muted-foreground">{t("netYear")}</div>
+          <div className="mt-1 text-lg font-semibold">{money.format(netYear * usdToDisplay)}</div>
+        </div>
+      </div>
+
+      <FundPoolPlanner
+        goals={(goals ?? []).map((g) => ({ id: String(g.id), name: String(g.name ?? "") }))}
+        netMonthUsd={netMonth}
+        displayCurrency={displayCurrency}
+        usdToDisplay={usdToDisplay}
+      />
 
       {errorKey ? (
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -379,6 +498,18 @@ export default async function GoalsPage({
                     </div>
                   </form>
                 </div>
+
+                <DreamTheater
+                  goal={{
+                    id: String(g.id),
+                    name: String(g.name ?? ""),
+                    type: String(g.type ?? ""),
+                    targetAmount: Number(g.target_amount ?? 0),
+                    currentAmount: Number(g.current_amount ?? 0),
+                    deadline: g.deadline ? String(g.deadline) : null,
+                  }}
+                  pageLocale={locale}
+                />
               </div>
             ))
           ) : (
