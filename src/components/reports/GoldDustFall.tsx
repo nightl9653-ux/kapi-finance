@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -140,7 +140,7 @@ export function GoldDustFall({
             animationDelay: `${p.delay}s`,
             animationDuration: `${p.dur}s`,
             // 横向轻微漂移
-            ["--kapi-drift" as any]: `${p.drift}px`,
+            ...({ ["--kapi-drift"]: `${p.drift}px` } as CSSProperties),
           }}
         />
       ))}
@@ -156,9 +156,11 @@ export function GoldDustFall({
             opacity: r.opacity,
             animationDelay: `${r.delay}s`,
             animationDuration: `${r.dur}s`,
-            ["--kapi-drift" as any]: `${r.drift}px`,
-            ["--kapi-spin" as any]: `${r.spin}deg`,
-            ["--kapi-base-rot" as any]: `155deg`,
+            ...({
+              ["--kapi-drift"]: `${r.drift}px`,
+              ["--kapi-spin"]: `${r.spin}deg`,
+              ["--kapi-base-rot"]: `155deg`,
+            } as CSSProperties),
           }}
         >
           {/* 花瓣：更纤细、更像玫瑰的“旋涡花瓣”层叠（只花瓣，不画花托/枝叶） */}

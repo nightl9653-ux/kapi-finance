@@ -30,7 +30,7 @@ export default async function TransactionsImportPage({ params }: { params: Promi
   const supabase = await createSupabaseServerClient();
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError || !auth.user) {
-    const returnTo = transactionsAuthReturnPath(locale, { tab: "import" } as any);
+    const returnTo = transactionsAuthReturnPath(locale, {});
     redirect(`/${locale}/auth?next=${encodeURIComponent(returnTo)}`);
   }
 

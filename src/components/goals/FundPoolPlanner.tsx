@@ -50,16 +50,18 @@ export function FundPoolPlanner({
       if (!raw) return;
       const parsed = JSON.parse(raw) as Partial<SavedState> | null;
       if (!parsed) return;
-      if (typeof parsed.poolBaseUsd === "number") setPoolBaseUsd(parsed.poolBaseUsd);
-      if (typeof parsed.savingsRatePct === "number") setSavingsRatePct(clampPct(parsed.savingsRatePct));
-      if (parsed.goalRatesPct && typeof parsed.goalRatesPct === "object") {
-        setGoalRatesPct(
-          Object.fromEntries(
-            Object.entries(parsed.goalRatesPct as Record<string, unknown>)
-              .map(([k, v]) => [k, typeof v === "number" ? clampPct(v) : 0]),
-          ),
-        );
-      }
+      queueMicrotask(() => {
+        if (typeof parsed.poolBaseUsd === "number") setPoolBaseUsd(parsed.poolBaseUsd);
+        if (typeof parsed.savingsRatePct === "number") setSavingsRatePct(clampPct(parsed.savingsRatePct));
+        if (parsed.goalRatesPct && typeof parsed.goalRatesPct === "object") {
+          setGoalRatesPct(
+            Object.fromEntries(
+              Object.entries(parsed.goalRatesPct as Record<string, unknown>)
+                .map(([k, v]) => [k, typeof v === "number" ? clampPct(v) : 0]),
+            ),
+          );
+        }
+      });
     } catch {
       // ignore
     }

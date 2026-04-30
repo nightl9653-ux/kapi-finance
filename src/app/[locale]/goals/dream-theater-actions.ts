@@ -8,7 +8,6 @@ import type { Locale } from "@/i18n/locales";
 import { getDreamImageConfig, getDmxVideoConfig, getOpenAIDreamConfig } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
-  dmxGetResponseById,
   dmxPostResponses,
   dmxGetVideoById,
   dmxPostVideos,
@@ -49,7 +48,7 @@ const DREAM_VISUAL_MAX_REFRESH_FAILS = 8 as const;
 const DREAM_VISUAL_PROMPT_BUILD_ID = 13 as const;
 
 /** 设为 "1" 时沿用固定「安家」英文镜头（更稳）；默认关闭以提升多样性 */
-function useDeterministicHomeShots(): boolean {
+function isDeterministicHomeShotsEnabled(): boolean {
   return String(process.env.DREAM_VISUAL_USE_DETERMINISTIC_HOME ?? "").trim() === "1";
 }
 
@@ -359,44 +358,6 @@ function toSrt(lines: string[], totalMsOverride?: number): string {
   return blocks.join("\n");
 }
 
-function buildNarrationSystemPrompt(locale: Locale, targetSeconds: number): string {
-  const zh = locale === "zh";
-  return zh
-    ? [
-        "你是短视频口播文案作者。",
-        "基于输入的故事正文，写一段适合作为旁白的极短口播稿。",
-        "硬性要求：",
-        `- 时长目标：约 ${targetSeconds} 秒（中文大概 30–45 字）`,
-        "- 只输出口播正文，不要标题，不要列表，不要 markdown。",
-        "- 1–2 句，画面感强，温柔鼓励，不要说教。",
-        "- 不要出现数字、金额、日期（避免念出来别扭）。",
-      ].join("\n")
-    : [
-        "You write short voiceover scripts for short videos.",
-        "Based on the input story, write a very short narration script suitable for voiceover.",
-        "Hard requirements:",
-        `- Target length: about ${targetSeconds} seconds (roughly 18–28 words)`,
-        "- Output narration only. No title, no bullets, no markdown.",
-        "- 1–2 sentences, vivid imagery, gentle encouragement, not preachy.",
-        "- Avoid numbers, amounts, and dates.",
-      ].join("\n");
-}
-
-function clampNarration(locale: Locale, text: string): string {
-  const t = String(text ?? "").replace(/\s+/g, " ").trim();
-  if (!t) return "";
-  if (locale === "zh") {
-    const maxChars = 45;
-    if (t.length <= maxChars) return t;
-    const cut = t.slice(0, maxChars).replace(/[，,、；;:.!?！？。]+$/g, "");
-    return /[。！？]$/.test(cut) ? cut : `${cut}。`;
-  }
-  const words = t.split(" ").filter(Boolean);
-  if (words.length <= 28) return t;
-  const cut = words.slice(0, 28).join(" ").replace(/[,:;.!?]+$/g, "");
-  return /[.!?]$/.test(cut) ? cut : `${cut}.`;
-}
-
 async function uploadPublicObject(params: {
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
   bucket: string;
@@ -626,7 +587,8 @@ async function dmxPostImages(params: {
   const hasResponseFormat = Boolean(payloadObj && "response_format" in payloadObj);
   const looksUnknownParam = /unknown_parameter/i.test(msg1);
   if (hasResponseFormat && looksUnknownParam && payloadObj) {
-    const { response_format: _rf, ...rest } = payloadObj;
+    const { response_format, ...rest } = payloadObj;
+    void response_format;
     const second = await tryOnce(rest);
     if (second.ok) return second.parsed;
     const msg2 =
@@ -945,27 +907,6 @@ type ShotBucket =
   | "neighborhood_park"
   | "other";
 
-function bucketForPrompt(p: string): ShotBucket {
-  const s = String(p ?? "").toLowerCase();
-  if (/\b(infinity pool|villa|courtyard|architectural photography|real[-\s]?estate listing|property listing)\b/.test(s))
-    return "housing_listing";
-  if (/\b(front porch|porch|entryway|front door|doorstep|wooden steps|stairs)\b/.test(s)) return "porch_entry";
-  if (/\b(vegetable|vegetables|raised bed|garden bed|kitchen garden|allotment|soil rows|seedlings)\b/.test(s))
-    return "vegetable_garden";
-  if (/\b(greenhouse|potting shed|nursery|seed tray|potted herbs|terracotta pots|flower shop)\b/.test(s))
-    return "flower_greenhouse";
-  if (
-    /\b(countryside|field|meadow|farm|orchard|gravel path|dirt road|country lane|rural|hiking trail|trekking path|river gorge|river valley|azalea|rhododendron sea|national forest|primeval|old-growth|ancient trees|原始森林|森林公园)\b/.test(s)
-  )
-    return "country_path";
-  if (/\b(airport|terminal|runway|gate|boarding|airplane|plane|jet|flight)\b/.test(s)) return "airport_travel";
-  if (/\b(kitchen|island|stovetop|oven|countertop|cabinets)\b/.test(s)) return "kitchen";
-  if (/\b(dining room|dining table|tableware|candles|centerpiece)\b/.test(s)) return "dining";
-  if (/\b(garden terrace|terrace|patio|pergola|deck|outdoor seating)\b/.test(s)) return "garden_terrace";
-  if (/\b(neighborhood park|park path|bench|playground)\b/.test(s)) return "neighborhood_park";
-  return "other";
-}
-
 function hasHousingSignal(text: string): boolean {
   const s = String(text ?? "");
   return /housing|house|home|mortgage|房贷|置业|新居|首付|楼盘|户型|安家|买房|看房|月供|全屋/.test(s);
@@ -974,30 +915,6 @@ function hasHousingSignal(text: string): boolean {
 function hasTravelSignal(text: string): boolean {
   const s = String(text ?? "");
   return /travel|trip|airport|flight|plane|jet|train|station|旅行|旅游|机场|航班|机票|登机|飞去|高铁|车站|南美|冰岛|极光|樱花/.test(s);
-}
-
-function isMixedSettingPrompt(p: string): boolean {
-  // “内容不合理”的典型：机场+菜园/厨房+田园同框；或者用“窗外看到另一个地点”硬拼
-  const s = String(p ?? "").toLowerCase();
-  if (
-    /\b(bedroom|living room|duvet|bed linens|\bbed\b|tile floor|minimalist room)\b/.test(s) &&
-    /\b(planter box|planting box|planting trough|raised planter|vegetable trough|lettuce bed|herb bed|black planter|soil.?filled|indoor allotment)\b/.test(s)
-  )
-    return true;
-  if (
-    /\b(bedroom|living room|duvet|\bbed\b|bedside)\b/.test(s) &&
-    /\b(runway|airport|airplane|boarding|terminal)\b/.test(s)
-  )
-    return true;
-  const flags = [
-    /\b(airport|terminal|runway|gate|boarding|airplane|plane|jet|flight)\b/.test(s),
-    /\b(vegetable|raised bed|garden bed|seedlings|potting shed|greenhouse)\b/.test(s),
-    /\b(kitchen|dining table|dining room|stovetop|oven|countertop)\b/.test(s),
-    /\b(countryside|field|meadow|farm|rural|country lane|dirt road)\b/.test(s),
-  ].filter(Boolean).length;
-  if (flags >= 2) return true;
-  if (/\b(window view|through the window|seen through a window|inside .* looking out|indoor.*overlooking)\b/.test(s)) return true;
-  return false;
 }
 
 function cleanBaseConceptForTemplates(baseConcept: string): string {
@@ -1020,19 +937,6 @@ function cleanVibeForKitchenIndoor(vibe: string): string {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 140);
-}
-
-function containsHumanOrCartoonSignal(p: string): boolean {
-  const s = String(p ?? "").toLowerCase();
-  // 只要出现“人物/剪影/卡通/吉祥物”等信号，就判定为高风险
-  if (/\b(person|people|human|man|woman|child|kid|family|couple|portrait|figure|silhouette|someone|anyone|passenger|traveler|traveller|staff|crowd)\b/.test(s))
-    return true;
-  if (/\b(face|smile|hands?|arms?|legs?|body)\b/.test(s)) return true;
-  if (/\b(cartoon|illustration|anime|mascot|character|toy|doll|pixar|disney|mickey|minnie)\b/.test(s))
-    return true;
-  // 中文关键词兜底（部分模型会把中文混进 prompt）
-  if (/[人影人物小孩孩子男女人像剪影卡通动漫吉祥物玩偶]/.test(s)) return true;
-  return false;
 }
 
 function templatePrompt(bucket: ShotBucket, baseConcept: string, styleSeed?: string | null, styleIndex?: number): string {
@@ -1380,7 +1284,7 @@ export async function generateDreamImageForStory(input: {
 
   const goalType = String(goal.type ?? "");
   const useDeterministic =
-    useDeterministicHomeShots() && shouldUseDeterministicHomeVisuals(goalType, String(story.content ?? ""));
+    isDeterministicHomeShotsEnabled() && shouldUseDeterministicHomeVisuals(goalType, String(story.content ?? ""));
   const imageModel = resolveDreamImageModel(highQuality, imgCfg, useDeterministic);
 
   const prompt = await generateEnglishImagePrompt({
@@ -1622,7 +1526,7 @@ function resolveDreamImageModel(
 
 /** 去掉易诱发布料特写的有毒片段，并把「整景」约束放在提示最前（不少模型更吃前段） */
 function sanitizeImagePromptForApi(prompt: string): string {
-  let p = String(prompt ?? "")
+  const p = String(prompt ?? "")
     .replace(/\bcrisp\s+fabric\s+texture\b/gi, "crisp wood glass and plaster detail")
     .replace(/\bfabric\s+texture\b/gi, "interior surfaces")
     .replace(/\btextile\s+texture\b/gi, "room environment")
@@ -1795,7 +1699,7 @@ export async function submitDreamVisualJob(input: { storyId: string; highQuality
   const goalTypeStr = String(goal.type ?? "");
   const storyBody = String(story.content ?? "");
   const useDeterministic =
-    useDeterministicHomeShots() && shouldUseDeterministicHomeVisuals(goalTypeStr, storyBody);
+    isDeterministicHomeShotsEnabled() && shouldUseDeterministicHomeVisuals(goalTypeStr, storyBody);
   const imageModel = resolveDreamImageModel(highQuality, imgCfg, useDeterministic);
 
   const basePrompt = await generateEnglishImagePrompt({
@@ -1903,7 +1807,7 @@ export async function refreshDreamVisualJob(input: { storyId: string; highQualit
   const goalTypeStr = String(goal.type ?? "");
   const storyBody = String(story.content ?? "");
   const useDeterministic =
-    useDeterministicHomeShots() && shouldUseDeterministicHomeVisuals(goalTypeStr, storyBody);
+    isDeterministicHomeShotsEnabled() && shouldUseDeterministicHomeVisuals(goalTypeStr, storyBody);
   const imageModel = resolveDreamImageModel(highQuality, imgCfg, useDeterministic);
 
   const existing = await readExistingVisualState(supabase, storyId);
@@ -2054,7 +1958,6 @@ export async function refreshDreamVisualJob(input: { storyId: string; highQualit
 // Seedance 1.5 Pro（responses）：常见约束 duration ∈ [4, 12]
 // 产品默认：固定 12 秒（无声 720p，成本更可控）
 const DEFAULT_SEEDANCE_VIDEO_SECONDS = 12 as const;
-const VIDU_SEGMENT_SECONDS = 4 as const;
 const VIDU_SEGMENT_COUNT = 3 as const;
 
 function buildVideoPromptSystem(): string {

@@ -113,7 +113,7 @@ export function FxPicker({
   // auto-fetch USD->displayCurrency for preview
   useEffect(() => {
     if (displayCurrency === BASE_CURRENCY) {
-      setUsdToDisplay(1);
+      queueMicrotask(() => setUsdToDisplay(1));
       return;
     }
     let cancelled = false;

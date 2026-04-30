@@ -80,7 +80,7 @@ export function RecurringBillForm({
 
   useEffect(() => {
     if (displayCurrency === BASE_CURRENCY) {
-      setUsdToDisplay(1);
+      queueMicrotask(() => setUsdToDisplay(1));
       return;
     }
     let cancelled = false;
