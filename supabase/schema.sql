@@ -70,6 +70,42 @@ create table if not exists transactions (
 create index if not exists transactions_user_occurred_on_idx
 on transactions (user_id, occurred_on);
 
+-- 预算方案（每月一份；AI 可生成并保存）
+create table if not exists budgets (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade,
+  -- 月份锚点：使用该月 1 号（UTC 语义）便于唯一约束与查询
+  month date not null,
+  currency text default 'USD',
+  source text default 'ai',
+  note text,
+  created_at timestamp default now()
+);
+
+create unique index if not exists budgets_user_month_uq
+on budgets (user_id, month);
+
+create index if not exists budgets_user_month_idx
+on budgets (user_id, month desc);
+
+create table if not exists budget_items (
+  id uuid default gen_random_uuid() primary key,
+  budget_id uuid references budgets(id) on delete cascade,
+  category text not null,
+  -- 本位币（USD）预算上限
+  limit_base decimal(12,2) not null,
+  -- 预算占比（0-100），用于展示
+  pct decimal(6,2),
+  rationale text,
+  created_at timestamp default now()
+);
+
+create unique index if not exists budget_items_budget_category_uq
+on budget_items (budget_id, category);
+
+create index if not exists budget_items_budget_idx
+on budget_items (budget_id);
+
 -- Backfill for existing rows (best-effort；会话时区非业务时区时可能与「记账业务日」不完全一致，仅作历史修补)
 update transactions
 set occurred_on = coalesce(occurred_on, (timestamp::date))
@@ -101,8 +137,12 @@ create table if not exists ai_usage (
   date date default current_date,
   screenshot_count int default 0,
   voice_count int default 0,
+  assistant_count int default 0,
   created_at timestamp default now()
 );
+
+-- 存量库：补齐 AI 助手计数字段（可重复执行）
+alter table public.ai_usage add column if not exists assistant_count int default 0;
 
 -- 每人每天一行，便于 upsert 与扫单次数统计
 create unique index if not exists ai_usage_user_date_uq on ai_usage (user_id, date);
@@ -227,6 +267,8 @@ alter table financial_goals enable row level security;
 alter table transactions enable row level security;
 alter table notifications enable row level security;
 alter table ai_usage enable row level security;
+alter table budgets enable row level security;
+alter table budget_items enable row level security;
 alter table recurring_bills enable row level security;
 alter table subscriptions enable row level security;
 alter table ai_insights enable row level security;
@@ -343,6 +385,85 @@ drop policy if exists "ai_usage_delete_own" on ai_usage;
 create policy "ai_usage_delete_own"
 on ai_usage for delete
 using (user_id = auth.uid());
+
+-- budgets: CRUD limited to owner
+drop policy if exists "budgets_select_own" on budgets;
+create policy "budgets_select_own"
+on budgets for select
+using (user_id = auth.uid());
+
+drop policy if exists "budgets_insert_own" on budgets;
+create policy "budgets_insert_own"
+on budgets for insert
+with check (user_id = auth.uid());
+
+drop policy if exists "budgets_update_own" on budgets;
+create policy "budgets_update_own"
+on budgets for update
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+drop policy if exists "budgets_delete_own" on budgets;
+create policy "budgets_delete_own"
+on budgets for delete
+using (user_id = auth.uid());
+
+-- budget_items: access through parent budget ownership
+drop policy if exists "budget_items_select_own" on budget_items;
+create policy "budget_items_select_own"
+on budget_items for select
+using (
+  exists (
+    select 1
+    from budgets b
+    where b.id = budget_items.budget_id
+      and b.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "budget_items_insert_own" on budget_items;
+create policy "budget_items_insert_own"
+on budget_items for insert
+with check (
+  exists (
+    select 1
+    from budgets b
+    where b.id = budget_items.budget_id
+      and b.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "budget_items_update_own" on budget_items;
+create policy "budget_items_update_own"
+on budget_items for update
+using (
+  exists (
+    select 1
+    from budgets b
+    where b.id = budget_items.budget_id
+      and b.user_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1
+    from budgets b
+    where b.id = budget_items.budget_id
+      and b.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "budget_items_delete_own" on budget_items;
+create policy "budget_items_delete_own"
+on budget_items for delete
+using (
+  exists (
+    select 1
+    from budgets b
+    where b.id = budget_items.budget_id
+      and b.user_id = auth.uid()
+  )
+);
 
 -- recurring_bills: CRUD limited to owner
 drop policy if exists "recurring_bills_select_own" on recurring_bills;
@@ -664,4 +785,48 @@ drop trigger if exists financial_goals_limit on public.financial_goals;
 create trigger financial_goals_limit
 before insert on public.financial_goals
 for each row execute procedure public.enforce_goal_limit();
+
+-- Goals page：单笔聚合净资产变动（避免客户端分页扫全表）
+create index if not exists transactions_user_timestamp_idx
+on public.transactions (user_id, "timestamp");
+
+create or replace function public.goals_net_stats()
+returns table (
+  net_all numeric,
+  net_month numeric,
+  net_quarter numeric,
+  net_year numeric
+)
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  with bounds as (
+    select
+      (date_trunc('month', now() at time zone 'utc') at time zone 'utc') as month_ts,
+      (date_trunc('quarter', now() at time zone 'utc') at time zone 'utc') as quarter_ts,
+      (date_trunc('year', now() at time zone 'utc') at time zone 'utc') as year_ts
+  ),
+  signed as (
+    select
+      case
+        when t.type = 'income' then coalesce(t.amount_base, 0)::numeric
+        when t.type = 'expense' then -coalesce(t.amount_base, 0)::numeric
+        else 0::numeric
+      end as signed_amt,
+      t."timestamp" as ts
+    from public.transactions t
+    where t.user_id = auth.uid()
+      and t.amount_base is not null
+      and t."timestamp" is not null
+  )
+  select
+    coalesce((select sum(signed_amt) from signed), 0)::numeric,
+    coalesce((select sum(signed_amt) from signed s cross join bounds b where s.ts >= b.month_ts), 0)::numeric,
+    coalesce((select sum(signed_amt) from signed s cross join bounds b where s.ts >= b.quarter_ts), 0)::numeric,
+    coalesce((select sum(signed_amt) from signed s cross join bounds b where s.ts >= b.year_ts), 0)::numeric;
+$$;
+
+grant execute on function public.goals_net_stats() to authenticated;
 

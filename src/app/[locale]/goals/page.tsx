@@ -65,7 +65,8 @@ async function fetchFxRateUsdToLatest(display: Currency): Promise<number> {
   const api = new URL("https://api.frankfurter.app/latest");
   api.searchParams.set("from", BASE_CURRENCY);
   api.searchParams.set("to", display);
-  const res = await fetch(api.toString(), { cache: "no-store" });
+  // 与 /api/fx 类似：日内汇率可缓存，减少首屏外网等待
+  const res = await fetch(api.toString(), { next: { revalidate: 300 } });
   if (!res.ok) return 1;
   const data = (await res.json().catch(() => null)) as null | { rates?: Record<string, number> };
   const rate = Number(data?.rates?.[display]);
@@ -90,6 +91,34 @@ async function fetchAllTransactionsForUser(supabase: Awaited<ReturnType<typeof c
     if (rows.length < pageSize) break;
   }
   return out;
+}
+
+type NetTotals = { netAll: number; netMonth: number; netQuarter: number; netYear: number };
+
+function computeNetTotalsFromTxRows(txRows: TxRow[]): NetTotals {
+  const now = new Date();
+  const monthStart = utcMonthStart(now).getTime();
+  const quarterStart = utcQuarterStart(now).getTime();
+  const yearStart = utcYearStart(now).getTime();
+
+  let netAll = 0;
+  let netMonth = 0;
+  let netQuarter = 0;
+  let netYear = 0;
+  for (const r of txRows) {
+    const amt = Number(r.amount_base ?? 0);
+    if (!Number.isFinite(amt) || amt === 0) continue;
+    const kind = String(r.type ?? "");
+    const signed = kind === "income" ? amt : kind === "expense" ? -amt : 0;
+    if (!signed) continue;
+    const ts = r.timestamp ? new Date(r.timestamp).getTime() : NaN;
+    if (!Number.isFinite(ts)) continue;
+    netAll += signed;
+    if (ts >= monthStart) netMonth += signed;
+    if (ts >= quarterStart) netQuarter += signed;
+    if (ts >= yearStart) netYear += signed;
+  }
+  return { netAll, netMonth, netQuarter, netYear };
 }
 
 async function updateGoal(formData: FormData) {
@@ -210,15 +239,18 @@ export default async function GoalsPage({
 }) {
   const { locale: raw } = await params;
   const locale = (raw === "zh" ? "zh" : "en") as Locale;
-  const nav = await getTranslations("nav");
-  const t = await getTranslations("goals");
-  const tt = await getTranslations("transactions");
-  const common = await getTranslations("common");
   const sp = searchParams ? await searchParams : {};
   const errorKey = typeof sp.error === "string" ? sp.error : undefined;
   const successKey = typeof sp.success === "string" ? sp.success : undefined;
   const displayCurrency = coerceCurrency(typeof sp.dc === "string" ? sp.dc : BASE_CURRENCY);
-  const usdToDisplay = await fetchFxRateUsdToLatest(displayCurrency);
+
+  const [nav, t, tt, common, usdToDisplay] = await Promise.all([
+    getTranslations("nav"),
+    getTranslations("goals"),
+    getTranslations("transactions"),
+    getTranslations("common"),
+    fetchFxRateUsdToLatest(displayCurrency),
+  ]);
 
   if (!isSupabaseConfigured) {
     return (
@@ -237,17 +269,14 @@ export default async function GoalsPage({
     redirect(`/${locale}/auth?next=${encodeURIComponent(`/${locale}/goals`)}`);
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_plus_member")
-    .eq("id", auth.user.id)
-    .maybeSingle();
-
-  const { data: goals, error } = await supabase
-    .from("financial_goals")
-    .select("id,name,type,target_amount,current_amount,deadline,priority,created_at")
-    .eq("user_id", auth.user.id)
-    .order("created_at", { ascending: false });
+  const [{ data: profile }, { data: goals, error }] = await Promise.all([
+    supabase.from("profiles").select("is_plus_member").eq("id", auth.user.id).maybeSingle(),
+    supabase
+      .from("financial_goals")
+      .select("id,name,type,target_amount,current_amount,deadline,priority,created_at")
+      .eq("user_id", auth.user.id)
+      .order("created_at", { ascending: false }),
+  ]);
   if (error) {
     redirect(`/${locale}/goals?error=unknown`);
   }
@@ -255,29 +284,25 @@ export default async function GoalsPage({
   const isPlus = Boolean(profile?.is_plus_member);
   const usedCount = goals?.length ?? 0;
 
-  const txRows = await fetchAllTransactionsForUser(supabase, auth.user.id).catch(() => []);
-  const now = new Date();
-  const monthStart = utcMonthStart(now).getTime();
-  const quarterStart = utcQuarterStart(now).getTime();
-  const yearStart = utcYearStart(now).getTime();
+  const { data: netRpc, error: netRpcError } = await supabase.rpc("goals_net_stats");
+  const rpcRow = netRpc?.[0] as Record<string, unknown> | undefined;
+  const rpcNums =
+    rpcRow &&
+    ["net_all", "net_month", "net_quarter", "net_year"].map((k) => Number(rpcRow[k])).every((n) => Number.isFinite(n));
 
-  let netAll = 0;
-  let netMonth = 0;
-  let netQuarter = 0;
-  let netYear = 0;
-  for (const r of txRows) {
-    const amt = Number(r.amount_base ?? 0);
-    if (!Number.isFinite(amt) || amt === 0) continue;
-    const kind = String(r.type ?? "");
-    const signed = kind === "income" ? amt : kind === "expense" ? -amt : 0;
-    if (!signed) continue;
-    const ts = r.timestamp ? new Date(r.timestamp).getTime() : NaN;
-    if (!Number.isFinite(ts)) continue;
-    netAll += signed;
-    if (ts >= monthStart) netMonth += signed;
-    if (ts >= quarterStart) netQuarter += signed;
-    if (ts >= yearStart) netYear += signed;
+  let netTotals: NetTotals;
+  if (!netRpcError && rpcNums && rpcRow) {
+    netTotals = {
+      netAll: Number(rpcRow.net_all),
+      netMonth: Number(rpcRow.net_month),
+      netQuarter: Number(rpcRow.net_quarter),
+      netYear: Number(rpcRow.net_year),
+    };
+  } else {
+    const txRows = await fetchAllTransactionsForUser(supabase, auth.user.id).catch(() => []);
+    netTotals = computeNetTotalsFromTxRows(txRows);
   }
+  const { netAll, netMonth, netQuarter, netYear } = netTotals;
 
   const money = new Intl.NumberFormat(locale === "zh" ? "zh-CN" : "en-US", {
     style: "currency",

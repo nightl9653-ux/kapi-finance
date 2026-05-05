@@ -198,8 +198,50 @@
     "recurringMonthInYear": "Month {n}"
   },
   "aiAssistantPage": {
-    "subtitle": "Coming soon: bilingual AI chat, budget suggestions, and conflict hints.",
-    "placeholder": "Placeholder: AI chat"
+    "subtitle": "Ask in plain language for general budgeting, saving, and goal planning guidance. Your real balances live in the app.",
+    "budget": {
+      "title": "AI Budget Plan",
+      "subtitle": "Generate a monthly budget cap (USD base) from your last ~3 months of income/spending.",
+      "month": "Month",
+      "total": "Total",
+      "empty": "No budget plan yet. Click the button above to generate one.",
+      "generate": "Generate",
+      "regenerate": "Regenerate",
+      "generating": "Generating…",
+      "progress": {
+        "trackedMonthSpend": "Spending in budget-line categories (this month): {amount}. Category keys must match exactly; otherwise the line shows 0.",
+        "statusOk": "Under budget",
+        "statusNear": "≥ 80% of budget",
+        "statusAtLimit": "At budget cap",
+        "statusOver": "Over budget"
+      },
+      "errors": {
+        "unauthenticated": "Please sign in to generate a budget.",
+        "openai_unconfigured": "Chat is not configured on the server.",
+        "supabase_not_configured": "Database is not configured.",
+        "rate_limit": "Daily AI limit reached. Try again tomorrow.",
+        "openai_failed": "The model is temporarily unavailable. Try again later.",
+        "db_write_failed": "Could not save the budget. Please try again.",
+        "network": "Network error. Check your connection and retry.",
+        "unknown": "Something went wrong. Please try again."
+      }
+    },
+    "chatEmpty": "Type a question below. Press Enter to send (Shift+Enter for a new line).",
+    "inputPlaceholder": "e.g., How should I think about splitting savings between an emergency fund and a trip goal?",
+    "send": "Send",
+    "sending": "Thinking…",
+    "quotaHint": "About {remaining} user messages left today (resets daily).",
+    "errors": {
+      "unauthenticated": "Please sign in to use the AI assistant.",
+      "openai_unconfigured": "Chat is not configured on the server.",
+      "supabase_not_configured": "Database is not configured.",
+      "rate_limit": "Daily AI message limit reached. Try again tomorrow.",
+      "bad_messages": "Invalid request. Refresh the page and try again.",
+      "openai_failed": "The model is temporarily unavailable. Try again later.",
+      "usage_write_failed": "Could not record usage. Please try again.",
+      "network": "Network error. Check your connection and retry.",
+      "unknown": "Something went wrong. Please try again."
+    }
   },
   "reportsPage": {
     "subtitle": "Monthly view, category mix, and a multi-month trend.",

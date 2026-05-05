@@ -126,6 +126,30 @@ export function getDmxVideoConfig(): {
 }
 
 /** 梦想剧场：文生图（服务端）；默认使用豆包 Seedream 系列（如可用） */
+/** AI 助手聊天（服务端）；与扫单/梦想剧场共用 API Key 来源 */
+export function getOpenAIChatConfig(): { apiKey: string; model: string; baseURL?: string } | null {
+  const apiKey =
+    process.env.OPENAI_API_KEY?.trim() ??
+    process.env.DMX_API_KEY?.trim() ??
+    process.env.DMXAPI_API_KEY?.trim();
+  if (!apiKey) return null;
+  const baseURL =
+    process.env.OPENAI_BASE_URL?.trim() ??
+    process.env.DMX_BASE_URL?.trim() ??
+    process.env.DMXAPI_BASE_URL?.trim();
+  return {
+    apiKey,
+    model: (process.env.OPENAI_ASSISTANT_MODEL ?? process.env.DMX_ASSISTANT_MODEL ?? "gpt-4o-mini").trim(),
+    baseURL: baseURL || undefined,
+  };
+}
+
+/** AI 助手每日消息轮次上限（一次用户发送 + 回复算一次业务轮次，这里按「用户消息条数」计） */
+export const assistantDailyLimit = (() => {
+  const n = Number(process.env.AI_ASSISTANT_DAILY_LIMIT ?? "40");
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 40;
+})();
+
 export function getDreamImageConfig(): {
   apiKey: string;
   baseURL: string;

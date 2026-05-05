@@ -198,8 +198,50 @@
     "recurringMonthInYear": "{n}月"
   },
   "aiAssistantPage": {
-    "subtitle": "这里将实现：双语 AI 聊天界面、预算分配建议、冲突解决提示。",
-    "placeholder": "占位：AI 聊天"
+    "subtitle": "用自然语言提问，获得预算、储蓄与目标相关的一般性建议。具体账户数据以应用内为准。",
+    "budget": {
+      "title": "AI 预算方案",
+      "subtitle": "基于你近 3 个月的收入/支出结构生成月度预算上限（USD 本位币）。",
+      "month": "月份",
+      "total": "预算总额",
+      "empty": "还没有预算方案。点击上方按钮一键生成。",
+      "generate": "一键生成",
+      "regenerate": "重新生成",
+      "generating": "生成中…",
+      "progress": {
+        "trackedMonthSpend": "本月与预算行同分类的支出合计：{amount}（按交易分类与预算 category 完全匹配；未匹配则显示 0）",
+        "statusOk": "在预算内",
+        "statusNear": "已用 ≥80% 预算",
+        "statusAtLimit": "已用满预算",
+        "statusOver": "已超过预算"
+      },
+      "errors": {
+        "unauthenticated": "请先登录后再生成预算。",
+        "openai_unconfigured": "服务端未配置对话模型，请联系管理员。",
+        "supabase_not_configured": "数据库未配置。",
+        "rate_limit": "今日 AI 次数已用完，请明天再试。",
+        "openai_failed": "模型暂时不可用，请稍后再试。",
+        "db_write_failed": "保存预算失败，请稍后再试。",
+        "network": "网络异常，请检查连接后重试。",
+        "unknown": "发生错误，请稍后再试。"
+      }
+    },
+    "chatEmpty": "在下方输入问题，按 Enter 发送（Shift+Enter 换行）。",
+    "inputPlaceholder": "例如：想提前还清房贷，每月大概多还多少比较合适？",
+    "send": "发送",
+    "sending": "正在回复…",
+    "quotaHint": "今日还可发送约 {remaining} 条（每日额度独立计数）。",
+    "errors": {
+      "unauthenticated": "请先登录后再使用 AI 助手。",
+      "openai_unconfigured": "服务端未配置对话模型，请联系管理员。",
+      "supabase_not_configured": "数据库未配置。",
+      "rate_limit": "今日 AI 对话次数已用完，请明天再试。",
+      "bad_messages": "请求内容无效，请刷新页面后重试。",
+      "openai_failed": "模型暂时不可用，请稍后再试。",
+      "usage_write_failed": "用量记录失败，请稍后再试。",
+      "network": "网络异常，请检查连接后重试。",
+      "unknown": "发生错误，请稍后再试。"
+    }
   },
   "reportsPage": {
     "subtitle": "按自然月查看收入、支出、分类与多月趋势。",
