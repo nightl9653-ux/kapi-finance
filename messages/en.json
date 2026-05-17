@@ -226,8 +226,8 @@
         "unknown": "Something went wrong. Please try again."
       }
     },
-    "chatEmpty": "Type a question below. Press Enter to send (Shift+Enter for a new line).",
-    "inputPlaceholder": "e.g., How should I think about splitting savings between an emergency fund and a trip goal?",
+    "chatEmpty": "No messages yet. Your conversation will appear here.",
+    "inputPlaceholder": "Type your question here — e.g., how should I split savings between an emergency fund and a trip goal?",
     "send": "Send",
     "sending": "Thinking…",
     "quotaHint": "About {remaining} user messages left today (resets daily).",
@@ -342,15 +342,63 @@
     "iosPitch": "On iPhone/iPad, prefer the official “Shortcuts + clipboard” flow on the quick record page—after a one-time setup it’s much faster than only using the gallery picker."
   },
   "pricing": {
-    "title": "Upgrade to Plus",
-    "monthly": "Monthly",
-    "quarterly": "Quarterly",
-    "yearly": "Yearly",
-    "lifetime": "Lifetime",
-    "features": "All Features Included",
-    "cta": "Upgrade Now",
-    "compareCta": "Free vs Plus comparison (coming soon)",
-    "tablePlaceholder": "Placeholder: pricing table ($1.99/mo, $4.99/qtr, $18.99/yr, $39.99 lifetime) + first-month promo + subscribe"
+    "title": "Kapi Plus",
+    "subtitle": "Unlimited financial goals and more. Prices are in USD; payments will arrive in a later release.",
+    "badgePlus": "Plus",
+    "badgeFree": "Free",
+    "youArePlus": "You're on Plus—thank you for your support.",
+    "youAreFree": "You're on the Free plan. Compare options below.",
+    "guestHint": "Sign in to see membership status for your account.",
+    "promo": "Monthly: first month $4.99, then $6.99/mo. Yearly ~$5.83/mo.",
+    "plans": {
+      "monthly": {
+        "name": "Monthly",
+        "price": "$6.99",
+        "period": "/mo",
+        "sub": "First month $4.99",
+        "pick": "Choose monthly"
+      },
+      "quarterly": {
+        "name": "Quarterly",
+        "price": "$17.99",
+        "period": "/qtr",
+        "sub": "~$6.00/mo · save ~14%",
+        "pick": "Choose quarterly"
+      },
+      "yearly": {
+        "name": "Yearly",
+        "price": "$69.99",
+        "period": "/yr",
+        "sub": "~$5.83/mo · best value",
+        "pick": "Choose yearly",
+        "recommended": "Popular"
+      },
+      "lifetime": {
+        "name": "2-year",
+        "price": "$129.99",
+        "period": "one-time · 2 years",
+        "sub": "~$5.42/mo · save ~22%",
+        "pick": "Choose 2-year plan"
+      }
+    },
+    "checkoutNote": "Checkout (e.g. Stripe) is not wired yet. Contact support through your usual channel if you need Plus before launch.",
+    "ctaDisabledHint": "Checkout coming soon",
+    "compareTitle": "Free vs Plus",
+    "compareFeatureColumn": "Feature",
+    "compareBlurb": "Details may change as the product evolves; in-app rules win.",
+    "compare": {
+      "goals": { "label": "Financial goals", "free": "Up to 2", "plus": "Unlimited" },
+      "record": { "label": "Transactions, reports, budgets", "free": "Included", "plus": "Included" },
+      "scan": { "label": "Receipt scan", "free": "5/day", "plus": "20/day" },
+      "voice": { "label": "Voice entry", "free": "3/day", "plus": "12/day" },
+      "ai": { "label": "AI assistant + AI budget", "free": "20/day shared", "plus": "80/day shared" },
+      "dream": {
+        "label": "Dream Theater",
+        "free": "Story 5 · Media 5 · visuals require Plus",
+        "plus": "Story 15 · Media 15 · Standard 2 · HQ 1/day (separate quota)"
+      },
+      "support": { "label": "Feature priority", "free": "Standard", "plus": "Plus-first (planned)" }
+    }
   },
   "common": {
     "supabaseEnvMissing": "Supabase is not configured. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.local`, then refresh.",

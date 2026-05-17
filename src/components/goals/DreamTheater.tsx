@@ -7,6 +7,14 @@ import type { Locale } from "@/i18n/locales";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  dreamLocalizedMediaRateLimitError,
+  dreamStoryRateLimitError,
+  dreamVisualHqPlusRequiredError,
+  dreamVisualHqRateLimitError,
+  dreamVisualPlusRequiredError,
+  dreamVisualRateLimitError,
+} from "@/lib/env";
 import { cn } from "@/lib/utils";
 import {
   generateLocalizedStoryMedia,
@@ -154,8 +162,8 @@ function normalizeKeywordInput(raw: string): string[] {
     .filter(Boolean);
 }
 
-export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
-  const { goal, pageLocale } = props;
+export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isPlusMember: boolean }) {
+  const { goal, pageLocale, isPlusMember } = props;
   const [open, setOpen] = useState(false);
   const [moduleLocale, setModuleLocale] = useState<Locale>(pageLocale);
 
@@ -186,6 +194,15 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
   const [visualImgReady, setVisualImgReady] = useState(false);
   const [visualImgFailed, setVisualImgFailed] = useState(false);
   const [visualImgRetryTick, setVisualImgRetryTick] = useState(0);
+  /** 与 `/api/ai-usage` 的 dream_visual 一致；null 表示尚未拉取 */
+  const [dreamVisualRemaining, setDreamVisualRemaining] = useState<number | null>(null);
+  const [dreamVisualLimit, setDreamVisualLimit] = useState(3);
+  const [dreamVisualHqRemaining, setDreamVisualHqRemaining] = useState<number | null>(null);
+  const [dreamVisualHqLimit, setDreamVisualHqLimit] = useState(0);
+  const [dreamStoryRemaining, setDreamStoryRemaining] = useState<number | null>(null);
+  const [dreamStoryLimit, setDreamStoryLimit] = useState(5);
+  const [dreamLocalizedMediaRemaining, setDreamLocalizedMediaRemaining] = useState<number | null>(null);
+  const [dreamLocalizedMediaLimit, setDreamLocalizedMediaLimit] = useState(5);
   const currentVisualUrl = visualUrls[visualIndex] ?? "";
 
   const visualDisplaySrc = useMemo(() => {
@@ -228,7 +245,9 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
         ? "多镜头对应故事里的不同场景（随关键词变化）；箭头或 ← → 切换。"
         : "Multiple shots follow your story; arrows or ← →.",
       genVisual: zh ? "生成图片画面" : "Generate image",
-      visualHQ: zh ? "高质量（更慢更贵）" : "High quality (slower, more expensive)",
+      visualHQ: zh ? "高质量（Plus 专属 · 单独计次）" : "High quality (Plus only · separate quota)",
+      visualHqPlusOnly: zh ? "高质量画面仅 Plus 会员可用，请升级后使用。" : "High-quality visuals are available on Plus only.",
+      visualPlusOnly: zh ? "文生图画面需 Plus 会员，请升级后使用。" : "Dream visuals require Plus. Upgrade to generate images.",
       visualProcessing: zh ? "图片生成中…" : "Generating image…",
       visualProcessingPartial: zh ? "预览已就绪，其余镜头生成中…" : "Preview ready; finishing remaining shots…",
       visualReady: zh ? "已生成" : "Ready",
@@ -237,8 +256,46 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
       visualImgError: zh ? "该镜头画面加载失败（链接可能暂时不可用）。" : "This shot failed to load.",
       visualImgRetry: zh ? "重试加载" : "Retry",
       visualRuleUpdated: zh ? "规则已更新：当前为旧画面，点击「重新生成画面」刷新。" : "Rules updated: showing older visuals. Click Regenerate to refresh.",
+      visualQuotaLine: (rem: number, lim: number) =>
+        zh
+          ? `今日普通画面：剩余 ${rem}/${lim}（每次「生成/重新生成」并成功启动计 1 次，自动补镜头不计）`
+          : `Standard visuals today: ${rem}/${lim} left (each Generate/Regenerate start counts once; auto fill-ins do not).`,
+      visualHqQuotaLine: (rem: number, lim: number) =>
+        zh
+          ? `今日高质量画面：剩余 ${rem}/${lim}（与普通画面分开计次，每次 3 镜头）`
+          : `HQ visuals today: ${rem}/${lim} left (separate quota; 3 shots per run).`,
+      storyQuotaLine: (rem: number, lim: number) =>
+        zh
+          ? `今日小作文：剩余 ${rem}/${lim}（相同关键词与描述命中缓存时不扣次）`
+          : `Dream stories today: ${rem}/${lim} left (cache hits for the same inputs do not count).`,
+      mediaQuotaLine: (rem: number, lim: number) =>
+        zh
+          ? `今日旁白/字幕/翻译：剩余 ${rem}/${lim}（已有该语言产物命中缓存时不扣次）`
+          : `Narration/subtitles/translation today: ${rem}/${lim} left (cached locale media does not count).`,
+      usageMigrationHint: zh
+        ? "用量统计暂不可用：请在 Supabase SQL 编辑器为 ai_usage 表补齐 dream_visual_count、dream_story_count、dream_localized_media_count 列（见仓库 supabase/migrations）。"
+        : "Usage tracking unavailable: add dream_visual_count, dream_story_count, and dream_localized_media_count on ai_usage in Supabase (see supabase/migrations).",
     };
   }, [moduleLocale]);
+
+  const localizedMediaRateLimitMessage = useCallback(
+    () =>
+      moduleLocale === "zh"
+        ? `今日旁白/字幕/翻译次数已达上限（每天 ${dreamLocalizedMediaLimit} 次），请明日再试。`
+        : `Daily narration/subtitle/translation limit reached (${dreamLocalizedMediaLimit}/day). Try again tomorrow.`,
+    [moduleLocale, dreamLocalizedMediaLimit],
+  );
+
+  useEffect(() => {
+    if (!isPlusMember && visualHQ) setVisualHQ(false);
+  }, [isPlusMember, visualHQ]);
+
+  const visualGenerateDisabled =
+    visualStatus === "processing" ||
+    !isPlusMember ||
+    (visualHQ
+      ? dreamVisualHqRemaining !== null && dreamVisualHqRemaining <= 0
+      : dreamVisualRemaining !== null && dreamVisualRemaining <= 0);
 
   const currentStory = storyByLocale[moduleLocale] || "";
   const currentAudio = audioByLocale[moduleLocale] || "";
@@ -276,9 +333,20 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
         });
         setStoryId(res.storyId);
         setStoryByLocale((prev) => ({ ...prev, [res.locale]: res.content }));
+        if (!res.cached) void refreshDreamTheaterUsageQuotas();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "unknown";
-        setErr(msg);
+        if (msg === dreamStoryRateLimitError) {
+          setErr(
+            moduleLocale === "zh"
+              ? `今日梦想小作文次数已达上限（每天 ${dreamStoryLimit} 次），请明日再试或微调关键词后重试。`
+              : `Daily dream story limit reached (${dreamStoryLimit}/day). Try again tomorrow or tweak keywords.`,
+          );
+        } else if (msg === "usage_query_failed" || msg === "usage_write_failed") {
+          setErr(uiText.usageMigrationHint);
+        } else {
+          setErr(msg);
+        }
       }
     });
   };
@@ -304,9 +372,16 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
         if (res.audioUrl) setAudioByLocale((prev) => ({ ...prev, [res.locale]: res.audioUrl! }));
         if (res.subtitleUrl) setSubtitleByLocale((prev) => ({ ...prev, [res.locale]: res.subtitleUrl! }));
         if (res.mediaError) setErr(res.mediaError);
+        if (!res.cached) void refreshDreamTheaterUsageQuotas();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "unknown";
-        setErr(msg);
+        if (msg === dreamLocalizedMediaRateLimitError) {
+          setErr(localizedMediaRateLimitMessage());
+        } else if (msg === "usage_query_failed" || msg === "usage_write_failed") {
+          setErr(uiText.usageMigrationHint);
+        } else {
+          setErr(msg);
+        }
       }
     });
   };
@@ -321,9 +396,16 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
         if (res.audioUrl) setAudioByLocale((prev) => ({ ...prev, [res.locale]: res.audioUrl! }));
         if (res.subtitleUrl) setSubtitleByLocale((prev) => ({ ...prev, [res.locale]: res.subtitleUrl! }));
         if (res.mediaError) setErr(res.mediaError);
+        if (!res.cached) void refreshDreamTheaterUsageQuotas();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "unknown";
-        setErr(msg);
+        if (msg === dreamLocalizedMediaRateLimitError) {
+          setErr(localizedMediaRateLimitMessage());
+        } else if (msg === "usage_query_failed" || msg === "usage_write_failed") {
+          setErr(uiText.usageMigrationHint);
+        } else {
+          setErr(msg);
+        }
       }
     });
   };
@@ -336,6 +418,85 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
     setLastVisualHQ(null);
     setVisualPbMatches(null);
   }, [storyId]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/ai-usage");
+        const data = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          dream_visual?: { remaining?: number; limit?: number };
+          dream_visual_hq?: { remaining?: number; limit?: number };
+          dream_story?: { remaining?: number; limit?: number };
+          dream_localized_media?: { remaining?: number; limit?: number };
+        };
+        if (cancelled || !res.ok || !data.ok) return;
+        if (data.dream_visual) {
+          if (typeof data.dream_visual.remaining === "number") setDreamVisualRemaining(data.dream_visual.remaining);
+          if (typeof data.dream_visual.limit === "number") setDreamVisualLimit(data.dream_visual.limit);
+        }
+        if (data.dream_visual_hq) {
+          if (typeof data.dream_visual_hq.remaining === "number") setDreamVisualHqRemaining(data.dream_visual_hq.remaining);
+          if (typeof data.dream_visual_hq.limit === "number") setDreamVisualHqLimit(data.dream_visual_hq.limit);
+        }
+        if (data.dream_story) {
+          if (typeof data.dream_story.remaining === "number") setDreamStoryRemaining(data.dream_story.remaining);
+          if (typeof data.dream_story.limit === "number") setDreamStoryLimit(data.dream_story.limit);
+        }
+        if (data.dream_localized_media) {
+          if (typeof data.dream_localized_media.remaining === "number") {
+            setDreamLocalizedMediaRemaining(data.dream_localized_media.remaining);
+          }
+          if (typeof data.dream_localized_media.limit === "number") {
+            setDreamLocalizedMediaLimit(data.dream_localized_media.limit);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  const refreshDreamTheaterUsageQuotas = useCallback(async () => {
+    try {
+      const res = await fetch("/api/ai-usage");
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        dream_visual?: { remaining?: number; limit?: number };
+        dream_visual_hq?: { remaining?: number; limit?: number };
+        dream_story?: { remaining?: number; limit?: number };
+        dream_localized_media?: { remaining?: number; limit?: number };
+      };
+      if (!res.ok || !data.ok) return;
+      if (data.dream_visual) {
+        if (typeof data.dream_visual.remaining === "number") setDreamVisualRemaining(data.dream_visual.remaining);
+        if (typeof data.dream_visual.limit === "number") setDreamVisualLimit(data.dream_visual.limit);
+      }
+      if (data.dream_visual_hq) {
+        if (typeof data.dream_visual_hq.remaining === "number") setDreamVisualHqRemaining(data.dream_visual_hq.remaining);
+        if (typeof data.dream_visual_hq.limit === "number") setDreamVisualHqLimit(data.dream_visual_hq.limit);
+      }
+      if (data.dream_story) {
+        if (typeof data.dream_story.remaining === "number") setDreamStoryRemaining(data.dream_story.remaining);
+        if (typeof data.dream_story.limit === "number") setDreamStoryLimit(data.dream_story.limit);
+      }
+      if (data.dream_localized_media) {
+        if (typeof data.dream_localized_media.remaining === "number") {
+          setDreamLocalizedMediaRemaining(data.dream_localized_media.remaining);
+        }
+        if (typeof data.dream_localized_media.limit === "number") {
+          setDreamLocalizedMediaLimit(data.dream_localized_media.limit);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     // 兜底：如果某次 transition 异常导致 finally 未触发，避免按钮永久灰掉
@@ -404,9 +565,30 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
         setVisualIndex(0);
         setVisualStatus(res.status);
         setVisualPbMatches(res.pbMatches);
+        void refreshDreamTheaterUsageQuotas();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "unknown";
-        setErr(msg);
+        if (msg === dreamVisualPlusRequiredError) {
+          setErr(uiText.visualPlusOnly);
+        } else if (msg === dreamVisualRateLimitError) {
+          setErr(
+            moduleLocale === "zh"
+              ? `今日普通画面任务已达上限（每天 ${dreamVisualLimit} 次），请明日再试。`
+              : `Daily standard visual limit reached (${dreamVisualLimit}/day). Try again tomorrow.`,
+          );
+        } else if (msg === dreamVisualHqPlusRequiredError) {
+          setErr(uiText.visualHqPlusOnly);
+        } else if (msg === dreamVisualHqRateLimitError) {
+          setErr(
+            moduleLocale === "zh"
+              ? `今日高质量画面已达上限（每天 ${dreamVisualHqLimit} 次），请明日再试或改用普通画质。`
+              : `Daily HQ visual limit reached (${dreamVisualHqLimit}/day). Try tomorrow or use standard quality.`,
+          );
+        } else if (msg === "usage_query_failed" || msg === "usage_write_failed") {
+          setErr(uiText.usageMigrationHint);
+        } else {
+          setErr(msg);
+        }
         setVisualStatus("failed");
       } finally {
         setVisualSubmitting(false);
@@ -530,10 +712,18 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <div className="text-xs text-muted-foreground">
-                  {pending ? (moduleLocale === "zh" ? "生成中…" : "Generating…") : ""}
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <div>{pending ? (moduleLocale === "zh" ? "生成中…" : "Generating…") : ""}</div>
+                  {dreamStoryRemaining !== null ? (
+                    <p className="text-foreground/90">{uiText.storyQuotaLine(dreamStoryRemaining, dreamStoryLimit)}</p>
+                  ) : null}
                 </div>
-                <Button type="button" className="rounded-full" onClick={onGenerate} disabled={pending}>
+                <Button
+                  type="button"
+                  className="rounded-full"
+                  onClick={onGenerate}
+                  disabled={pending || (dreamStoryRemaining !== null && dreamStoryRemaining <= 0)}
+                >
                   {uiText.generate}
                 </Button>
               </div>
@@ -548,11 +738,22 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
 
               <div className="rounded-lg border bg-white p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-xs text-muted-foreground">
-                    {uiText.narration}: {currentAudio ? (moduleLocale === "zh" ? "已生成" : "ready") : moduleLocale === "zh" ? "未生成" : "missing"} ·{" "}
-                    {uiText.subtitles}: {currentSubtitle ? (moduleLocale === "zh" ? "已生成" : "ready") : moduleLocale === "zh" ? "未生成" : "missing"}
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    <div>
+                      {uiText.narration}: {currentAudio ? (moduleLocale === "zh" ? "已生成" : "ready") : moduleLocale === "zh" ? "未生成" : "missing"} ·{" "}
+                      {uiText.subtitles}: {currentSubtitle ? (moduleLocale === "zh" ? "已生成" : "ready") : moduleLocale === "zh" ? "未生成" : "missing"}
+                    </div>
+                    {dreamLocalizedMediaRemaining !== null ? (
+                      <p className="text-foreground/90">{uiText.mediaQuotaLine(dreamLocalizedMediaRemaining, dreamLocalizedMediaLimit)}</p>
+                    ) : null}
                   </div>
-                  <Button type="button" variant="secondary" className="rounded-full" onClick={onGenerateMedia} disabled={pending}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="rounded-full"
+                    onClick={onGenerateMedia}
+                    disabled={pending || (dreamLocalizedMediaRemaining !== null && dreamLocalizedMediaRemaining <= 0)}
+                  >
                     {uiText.genMedia}
                   </Button>
                 </div>
@@ -576,6 +777,17 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
                 <div className="mt-1 space-y-1 text-xs text-muted-foreground">
                   <p>{uiText.visualHint}</p>
                   <p>{uiText.visualMultiShot}</p>
+                  {isPlusMember && dreamVisualRemaining !== null ? (
+                    <p className="text-foreground/90">{uiText.visualQuotaLine(dreamVisualRemaining, dreamVisualLimit)}</p>
+                  ) : !isPlusMember ? (
+                    <p className="text-foreground/90">{uiText.visualPlusOnly}</p>
+                  ) : null}
+                  {isPlusMember && dreamVisualHqRemaining !== null && dreamVisualHqLimit > 0 ? (
+                    <p className="text-foreground/90">
+                      {uiText.visualHqQuotaLine(dreamVisualHqRemaining, dreamVisualHqLimit)}
+                    </p>
+                  ) : null}
+
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
@@ -609,12 +821,18 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
                     ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <label className="flex items-center gap-2 rounded-full border bg-white px-3 py-1 text-xs text-muted-foreground">
+                    <label
+                      className={cn(
+                        "flex items-center gap-2 rounded-full border bg-white px-3 py-1 text-xs",
+                        isPlusMember ? "text-muted-foreground" : "text-muted-foreground/70",
+                      )}
+                      title={!isPlusMember ? uiText.visualHqPlusOnly : undefined}
+                    >
                       <input
                         type="checkbox"
                         checked={visualHQ}
                         onChange={(e) => setVisualHQ(e.target.checked)}
-                        disabled={visualStatus === "processing"}
+                        disabled={visualStatus === "processing" || !isPlusMember}
                       />
                       <span>{uiText.visualHQ}</span>
                     </label>
@@ -622,7 +840,7 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale }) {
                       type="button"
                       className="rounded-full"
                       onClick={onGenerateVisual}
-                      disabled={visualStatus === "processing"}
+                      disabled={visualGenerateDisabled}
                     >
                       {visualStatus === "processing"
                         ? moduleLocale === "zh"

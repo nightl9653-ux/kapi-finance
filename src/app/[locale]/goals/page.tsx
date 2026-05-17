@@ -534,6 +534,7 @@ export default async function GoalsPage({
                     deadline: g.deadline ? String(g.deadline) : null,
                   }}
                   pageLocale={locale}
+                  isPlusMember={isPlus}
                 />
               </div>
             ))

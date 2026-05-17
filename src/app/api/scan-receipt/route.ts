@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { getOpenAIScanConfig, isSupabaseConfigured, scanOcrProvider, scanReceiptDailyLimit } from "@/lib/env";
+import { getAiUsageLimit } from "@/lib/ai-usage-limits";
+import { getOpenAIScanConfig, isSupabaseConfigured, scanOcrProvider } from "@/lib/env";
 import { extractTransactionsFromImage } from "@/lib/scan-receipt-ai";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
 
 export const maxDuration = 120;
 
@@ -63,6 +65,8 @@ export async function POST(req: Request) {
 
   const usageDate = parseUsageDate(formData);
   const locale = parseLocale(formData);
+  const isPlus = await fetchUserIsPlusMember(supabase, auth.user.id);
+  const scanLimit = getAiUsageLimit(isPlus, "scan");
 
   const { data: usageRow, error: usageErr } = await supabase
     .from("ai_usage")
@@ -76,9 +80,9 @@ export async function POST(req: Request) {
   }
 
   const used = usageRow?.screenshot_count ?? 0;
-  if (used >= scanReceiptDailyLimit) {
+  if (used >= scanLimit) {
     return NextResponse.json(
-      { ok: false, error: "rate_limit", limit: scanReceiptDailyLimit },
+      { ok: false, error: "rate_limit", limit: scanLimit },
       { status: 429 },
     );
   }
@@ -120,8 +124,8 @@ export async function POST(req: Request) {
         return NextResponse.json({
           ok: true,
           transactions: [],
-          remaining: Math.max(0, scanReceiptDailyLimit - used),
-          limit: scanReceiptDailyLimit,
+          remaining: Math.max(0, scanLimit - used),
+          limit: scanLimit,
         });
       }
       console.warn("scan-receipt unrecognized", {
@@ -169,7 +173,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     ok: true,
     transactions: extracted.rows,
-    remaining: Math.max(0, scanReceiptDailyLimit - nextCount),
-    limit: scanReceiptDailyLimit,
+    remaining: Math.max(0, scanLimit - nextCount),
+    limit: scanLimit,
   });
 }

@@ -5,8 +5,24 @@ import OpenAI from "openai";
 import { Buffer } from "buffer";
 
 import type { Locale } from "@/i18n/locales";
+import {
+  assertDreamLocalizedMediaQuotaAvailable,
+  dreamLocalizedMediaUsageDateUtc,
+  incrementDreamLocalizedMediaCount,
+} from "@/lib/dream-localized-media-usage";
+import {
+  assertDreamStoryQuotaAvailable,
+  dreamStoryUsageDateUtc,
+  incrementDreamStoryCount,
+} from "@/lib/dream-story-usage";
+import {
+  assertDreamVisualQuotaAvailable,
+  dreamVisualUsageDateUtc,
+  incrementDreamVisualTaskCount,
+} from "@/lib/dream-visual-usage";
 import { getDreamImageConfig, getDmxVideoConfig, getOpenAIDreamConfig } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
 import {
   dmxPostResponses,
   dmxGetVideoById,
@@ -219,6 +235,10 @@ export async function generateStoryForGoal(input: {
     };
   }
 
+  const isPlus = await fetchUserIsPlusMember(supabase, auth.user.id);
+  const usageDateStory = dreamStoryUsageDateUtc();
+  await assertDreamStoryQuotaAvailable(supabase, auth.user.id, usageDateStory, isPlus);
+
   const client = new OpenAI({ apiKey: cfg.apiKey, baseURL: cfg.baseURL, timeout: 90_000 });
   const completion = await client.chat.completions.create({
     model: cfg.storyModel,
@@ -258,6 +278,8 @@ export async function generateStoryForGoal(input: {
     .maybeSingle();
 
   if (insertError || !inserted?.id) throw new Error("db_insert_failed");
+
+  await incrementDreamStoryCount(supabase, auth.user.id, usageDateStory);
 
   return { storyId: String(inserted.id), locale, content, cached: false };
 }
@@ -420,6 +442,10 @@ export async function generateLocalizedStoryMedia(input: {
     };
   }
 
+  const isPlusMedia = await fetchUserIsPlusMember(supabase, auth.user.id);
+  const usageDateMedia = dreamLocalizedMediaUsageDateUtc();
+  await assertDreamLocalizedMediaQuotaAvailable(supabase, auth.user.id, usageDateMedia, isPlusMedia);
+
   const { data: story, error: storyError } = await supabase
     .from("goal_stories")
     .select("id,goal_id,content,locale")
@@ -541,6 +567,8 @@ export async function generateLocalizedStoryMedia(input: {
   );
   if (upsertError) throw new Error("db_upsert_failed");
 
+  await incrementDreamLocalizedMediaCount(supabase, auth.user.id, usageDateMedia);
+
   return {
     storyId,
     locale,
@@ -548,7 +576,7 @@ export async function generateLocalizedStoryMedia(input: {
     audioUrl,
     subtitleUrl,
     mediaError,
-    cached: Boolean(mediaCached?.content),
+    cached: false,
   };
 }
 
@@ -1282,6 +1310,10 @@ export async function generateDreamImageForStory(input: {
   if (goalError || !goal?.id) throw new Error("goal_not_found");
   if (String(goal.user_id) !== auth.user.id) throw new Error("forbidden");
 
+  const isPlusVisual = await fetchUserIsPlusMember(supabase, auth.user.id);
+  const usageDate = dreamVisualUsageDateUtc();
+  await assertDreamVisualQuotaAvailable(supabase, auth.user.id, usageDate, isPlusVisual, highQuality);
+
   const goalType = String(goal.type ?? "");
   const useDeterministic =
     isDeterministicHomeShotsEnabled() && shouldUseDeterministicHomeVisuals(goalType, String(story.content ?? ""));
@@ -1363,6 +1395,8 @@ export async function generateDreamImageForStory(input: {
     { onConflict: "story_id" },
   );
   if (upsertError) throw new Error("db_visual_upsert_failed");
+
+  await incrementDreamVisualTaskCount(supabase, auth.user.id, usageDate, highQuality);
 
   return { storyId, imageUrls, model: imageModel };
 }
@@ -1696,6 +1730,10 @@ export async function submitDreamVisualJob(input: { storyId: string; highQuality
   if (goalError || !goal?.id) throw new Error("goal_not_found");
   if (String(goal.user_id) !== auth.user.id) throw new Error("forbidden");
 
+  const isPlusSubmit = await fetchUserIsPlusMember(supabase, auth.user.id);
+  const usageDateSubmit = dreamVisualUsageDateUtc();
+  await assertDreamVisualQuotaAvailable(supabase, auth.user.id, usageDateSubmit, isPlusSubmit, highQuality);
+
   const goalTypeStr = String(goal.type ?? "");
   const storyBody = String(story.content ?? "");
   const useDeterministic =
@@ -1774,6 +1812,7 @@ export async function submitDreamVisualJob(input: { storyId: string; highQuality
     refreshFailStreak: 0,
     lastError: null,
   });
+  await incrementDreamVisualTaskCount(supabase, auth.user.id, usageDateSubmit, highQuality);
   return { storyId, status: "processing", imageUrls: [firstUrl], pbMatches: true, pb: DREAM_VISUAL_PROMPT_BUILD_ID };
 }
 

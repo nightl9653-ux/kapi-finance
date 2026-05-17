@@ -5,12 +5,15 @@ import { redirect } from "next/navigation";
 
 import type { Locale } from "@/i18n/locales";
 import { transactionsAuthReturnPath } from "@/lib/auth-return-path";
-import { isSupabaseConfigured, scanReceiptDailyLimit, voiceDailyLimit } from "@/lib/env";
+import { getAiUsageLimits } from "@/lib/ai-usage-limits";
+import { isSupabaseConfigured } from "@/lib/env";
+import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
 import { coerceTransactionCategory, formatCategoryLabel } from "@/lib/transaction-categories";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { materializeRecurringBills } from "@/lib/recurring-bills";
 import { createTransactionsBulk } from "@/lib/server-actions/create-transactions-bulk";
 import { coerceCurrency, computeAmountBase, BASE_CURRENCY, type Currency } from "@/lib/fx";
+import { firstSearchParam, uuidToCompactHex, uuidsEqual } from "@/lib/url-search-params";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +23,7 @@ import { LocalCalendarDateHidden } from "@/components/transactions/LocalCalendar
 import { RecurringBillForm } from "@/components/transactions/RecurringBillForm";
 import { FxPicker } from "@/components/transactions/FxPicker";
 import { TransactionCategoryFields } from "@/components/transactions/TransactionCategoryFields";
+import { ScrollTransactionEditIntoView } from "@/components/transactions/ScrollTransactionEditIntoView";
 import { TransactionsCurrencyPicker } from "@/components/transactions/TransactionsCurrencyPicker";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -333,13 +337,14 @@ export default async function TransactionsPage({
   const t = await getTranslations("transactions");
   const common = await getTranslations("common");
   const sp = searchParams ? await searchParams : {};
-  const errorKey = typeof sp.error === "string" ? sp.error : undefined;
-  const successKey = typeof sp.success === "string" ? sp.success : undefined;
-  const datePrefill = typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : undefined;
+  const errorKey = firstSearchParam(sp.error);
+  const successKey = firstSearchParam(sp.success);
+  const dateRaw = firstSearchParam(sp.date);
+  const datePrefill = dateRaw && /^\d{4}-\d{2}-\d{2}$/.test(dateRaw) ? dateRaw : undefined;
   const recordedAtDefault = datePrefill ? `${datePrefill}T20:00` : undefined;
-  const editIdRaw = typeof sp.edit === "string" ? sp.edit.trim() : "";
-  const editId = editIdRaw.length >= 32 ? editIdRaw : undefined;
-  const displayCurrency = coerceCurrency(typeof sp.dc === "string" ? sp.dc : BASE_CURRENCY);
+  const editParam = firstSearchParam(sp.edit)?.trim();
+  const editQueryActive = Boolean(editParam && uuidToCompactHex(editParam));
+  const displayCurrency = coerceCurrency(firstSearchParam(sp.dc) ?? BASE_CURRENCY);
   const usdToDisplay = await fetchFxRateUsdToLatest(displayCurrency);
   const money = new Intl.NumberFormat(locale === "zh" ? "zh-CN" : "en-US", {
     style: "currency",
@@ -370,6 +375,9 @@ export default async function TransactionsPage({
   // 自动生成到期的周期性账单（无 cron 的情况下在访问时补齐）
   await materializeRecurringBills({ supabase, userId: auth.user.id });
 
+  const isPlus = await fetchUserIsPlusMember(supabase, auth.user.id);
+  const aiLimits = getAiUsageLimits(isPlus);
+
   const { data: rows, error } = await supabase
     .from("transactions")
     .select("id,amount,currency,fx_rate,amount_base,type,category,sub_category,merchant,note,occurred_on,timestamp,created_at")
@@ -381,6 +389,11 @@ export default async function TransactionsPage({
     redirect(`/${locale}/transactions?error=unknown`);
   }
 
+  const editingRowId =
+    editQueryActive && editParam && rows?.length
+      ? rows.find((row) => uuidsEqual(editParam, String(row.id)))?.id
+      : undefined;
+
   return (
       <div className="space-y-6">
       <div className="space-y-3">
@@ -389,7 +402,7 @@ export default async function TransactionsPage({
 
           <div className="mt-2 space-y-2">
             <p className="text-sm text-muted-foreground">
-              {t("subtitle", { scanLimit: scanReceiptDailyLimit, voiceLimit: voiceDailyLimit })}
+              {t("subtitle", { scanLimit: aiLimits.scan, voiceLimit: aiLimits.voice })}
             </p>
 
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -398,7 +411,7 @@ export default async function TransactionsPage({
                 basePath={`/${locale}/transactions`}
                 preservedQuery={{
                   date: datePrefill,
-                  edit: editId,
+                  edit: editQueryActive ? editParam : undefined,
                 }}
                 displayCurrency={displayCurrency}
               />
@@ -525,20 +538,22 @@ export default async function TransactionsPage({
         locale={locale}
         action={createTransactionsBulk}
         prefillDate={datePrefill}
-        scanDailyLimit={scanReceiptDailyLimit}
-        voiceDailyLimit={voiceDailyLimit}
+        scanDailyLimit={aiLimits.scan}
+        voiceDailyLimit={aiLimits.voice}
       />
 
       <RecurringBillForm locale={locale} action={createRecurringBill} />
 
       <div className="rounded-2xl border bg-white/70 p-6">
         <h2 className="text-base font-medium">{t("listTitle")}</h2>
+        <ScrollTransactionEditIntoView rowId={editingRowId} />
         <div className="mt-4 space-y-3">
           {rows?.length ? (
             rows.map((row) =>
-              editId === row.id ? (
+              editQueryActive && editParam && uuidsEqual(editParam, String(row.id)) ? (
                 <form
                   key={row.id}
+                  id={`tx-edit-${row.id}`}
                   action={updateTransaction}
                   className="rounded-xl border bg-white p-4"
                 >
@@ -640,6 +655,7 @@ export default async function TransactionsPage({
                         {common("save")}
                       </Button>
                       <Link
+                        scroll={false}
                         href={
                           datePrefill
                             ? `/${locale}/transactions?date=${encodeURIComponent(datePrefill)}`
@@ -655,6 +671,7 @@ export default async function TransactionsPage({
               ) : (
                 <div
                   key={row.id}
+                  id={`tx-edit-${row.id}`}
                   className="flex flex-col gap-2 rounded-xl border bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
@@ -687,6 +704,7 @@ export default async function TransactionsPage({
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Link
+                      scroll={false}
                       href={(() => {
                         const p = new URLSearchParams();
                         if (datePrefill) p.set("date", datePrefill);

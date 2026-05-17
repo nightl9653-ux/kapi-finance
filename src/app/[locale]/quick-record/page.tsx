@@ -5,9 +5,11 @@ import { Suspense } from "react";
 import type { Locale } from "@/i18n/locales";
 import { QuickRecordClient } from "@/components/quick-record/QuickRecordClient";
 import { ClearFlashParams } from "@/components/transactions/ClearFlashParams";
-import { isSupabaseConfigured, scanReceiptDailyLimit } from "@/lib/env";
+import { getAiUsageLimit } from "@/lib/ai-usage-limits";
+import { isSupabaseConfigured } from "@/lib/env";
 import { createTransactionsBulk } from "@/lib/server-actions/create-transactions-bulk";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
 
 export default async function QuickRecordPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
@@ -29,6 +31,8 @@ export default async function QuickRecordPage({ params }: { params: Promise<{ lo
     redirect(`/${locale}/auth?next=${encodeURIComponent(`/${locale}/quick-record`)}`);
   }
 
+  const isPlus = await fetchUserIsPlusMember(supabase, auth.user.id);
+  const scanDailyLimit = getAiUsageLimit(isPlus, "scan");
   const t = await getTranslations("quickRecord");
 
   return (
@@ -40,7 +44,7 @@ export default async function QuickRecordPage({ params }: { params: Promise<{ lo
 
       <Suspense fallback={<div className="text-sm text-muted-foreground">{t("loading")}</div>}>
         <ClearFlashParams />
-        <QuickRecordClient locale={locale} action={createTransactionsBulk} scanDailyLimit={scanReceiptDailyLimit} />
+        <QuickRecordClient locale={locale} action={createTransactionsBulk} scanDailyLimit={scanDailyLimit} />
       </Suspense>
     </div>
   );

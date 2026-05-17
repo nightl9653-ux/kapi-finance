@@ -1,5 +1,7 @@
 import type { Locale } from "@/i18n/locales";
 
+import { firstSearchParam, uuidToCompactHex } from "@/lib/url-search-params";
+
 /**
  * 构造登录后返回的站内路径（仅含允许的 query），用于 `auth?next=`。
  */
@@ -8,10 +10,10 @@ export function transactionsAuthReturnPath(
   sp: Record<string, string | string[] | undefined>,
 ): string {
   const p = new URLSearchParams();
-  const date = typeof sp.date === "string" ? sp.date : undefined;
+  const date = firstSearchParam(sp.date);
   if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) p.set("date", date);
-  const edit = typeof sp.edit === "string" ? sp.edit.trim() : undefined;
-  if (edit && edit.length >= 32) p.set("edit", edit);
+  const editRaw = firstSearchParam(sp.edit)?.trim();
+  if (editRaw && uuidToCompactHex(editRaw)) p.set("edit", editRaw);
   const q = p.toString();
   return `/${locale}/transactions${q ? `?${q}` : ""}`;
 }
@@ -21,7 +23,7 @@ export function dashboardAuthReturnPath(
   sp: Record<string, string | string[] | undefined>,
 ): string {
   const p = new URLSearchParams();
-  const month = typeof sp.month === "string" ? sp.month : undefined;
+  const month = firstSearchParam(sp.month);
   if (month && /^\d{4}-\d{2}$/.test(month)) p.set("month", month);
   const q = p.toString();
   return `/${locale}${q ? `?${q}` : ""}`;
@@ -34,9 +36,9 @@ export function reportsAuthReturnPath(
   sp: Record<string, string | string[] | undefined>,
 ): string {
   const p = new URLSearchParams();
-  const month = typeof sp.month === "string" ? sp.month : undefined;
+  const month = firstSearchParam(sp.month);
   if (month && /^\d{4}-\d{2}$/.test(month)) p.set("month", month);
-  const months = typeof sp.months === "string" ? sp.months : undefined;
+  const months = firstSearchParam(sp.months);
   const m = months ? parseInt(months, 10) : NaN;
   if (Number.isFinite(m) && REPORTS_MONTHS.has(m)) p.set("months", String(m));
   const q = p.toString();

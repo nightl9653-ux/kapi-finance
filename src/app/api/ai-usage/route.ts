@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 
-import { isSupabaseConfigured, scanReceiptDailyLimit, voiceDailyLimit } from "@/lib/env";
+import { getAiUsageLimits } from "@/lib/ai-usage-limits";
+import { isSupabaseConfigured } from "@/lib/env";
+import {
+  aiUsageSelectIncludes,
+  fetchAiUsageRow,
+  type AiUsageSelectTier,
+} from "@/lib/fetch-ai-usage-row";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
 
 function parseUsageDate(url: URL): string {
   const v = String(url.searchParams.get("usage_date") ?? "").trim();
@@ -21,44 +28,59 @@ export async function GET(req: Request) {
   }
 
   const usageDate = parseUsageDate(new URL(req.url));
+  const isPlus = await fetchUserIsPlusMember(supabase, auth.user.id);
+  const limits = getAiUsageLimits(isPlus);
 
-  const { data: usageRow, error: usageErr } = await supabase
-    .from("ai_usage")
-    .select("screenshot_count, voice_count")
-    .eq("user_id", auth.user.id)
-    .eq("date", usageDate)
-    .maybeSingle();
-
-  if (usageErr) {
+  let usageRow: Record<string, unknown> | null;
+  let columns: AiUsageSelectTier;
+  try {
+    const fetched = await fetchAiUsageRow(supabase, auth.user.id, usageDate);
+    usageRow = fetched.row;
+    columns = fetched.columns;
+  } catch {
     return NextResponse.json({ ok: false, error: "usage_query_failed" }, { status: 500 });
   }
 
-  const scanUsed = usageRow?.screenshot_count ?? 0;
-  const voiceUsed = usageRow?.voice_count ?? 0;
+  const scanUsed = Number(usageRow?.screenshot_count ?? 0);
+  const voiceUsed = Number(usageRow?.voice_count ?? 0);
+  const assistantUsed = aiUsageSelectIncludes(columns, "assistant_count")
+    ? Number(usageRow?.assistant_count ?? 0)
+    : 0;
+  const dreamVisualUsed = aiUsageSelectIncludes(columns, "dream_visual_count")
+    ? Number(usageRow?.dream_visual_count ?? 0)
+    : 0;
+  const dreamStoryUsed = aiUsageSelectIncludes(columns, "dream_story_count")
+    ? Number(usageRow?.dream_story_count ?? 0)
+    : 0;
+  const dreamLocalizedMediaUsed = aiUsageSelectIncludes(columns, "dream_localized_media_count")
+    ? Number(usageRow?.dream_localized_media_count ?? 0)
+    : 0;
+  const dreamVisualHqUsed = aiUsageSelectIncludes(columns, "dream_visual_hq_count")
+    ? Number(usageRow?.dream_visual_hq_count ?? 0)
+    : 0;
+  const dreamVisualHqLimit = isPlus ? limits.dreamVisualHq : 0;
 
-  const scanRemaining = Math.max(0, scanReceiptDailyLimit - scanUsed);
-  const voiceRemaining = Math.max(0, voiceDailyLimit - voiceUsed);
+  const pack = (used: number, limit: number) => ({
+    used,
+    remaining: Math.max(0, limit - used),
+    limit,
+  });
 
   return NextResponse.json({
     ok: true,
     usage_date: usageDate,
-    scan: {
-      used: scanUsed,
-      remaining: scanRemaining,
-      limit: scanReceiptDailyLimit,
-    },
-    voice: {
-      used: voiceUsed,
-      remaining: voiceRemaining,
-      limit: voiceDailyLimit,
-    },
+    tier: isPlus ? "plus" : "free",
+    scan: pack(scanUsed, limits.scan),
+    voice: pack(voiceUsed, limits.voice),
+    assistant: pack(assistantUsed, limits.assistant),
+    dream_visual: pack(dreamVisualUsed, limits.dreamVisual),
+    dream_visual_hq: pack(dreamVisualHqUsed, dreamVisualHqLimit),
+    dream_story: pack(dreamStoryUsed, limits.dreamStory),
+    dream_localized_media: pack(dreamLocalizedMediaUsed, limits.dreamLocalizedMedia),
   }, {
     headers: {
-      // 仅对当前用户短缓存，防止错误重试/初始化时频繁查询
       "Cache-Control": "private, max-age=5",
-      // 保险起见：确保不同 Cookie 不共用缓存
       Vary: "Cookie",
     },
   });
 }
-

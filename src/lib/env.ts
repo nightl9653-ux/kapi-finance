@@ -1,3 +1,5 @@
+import { getAiUsageLimit, getAiUsageLimits } from "@/lib/ai-usage-limits";
+
 function required(value: string | undefined, name: string): string {
   if (!value) throw new Error(`Missing required env var: ${name}`);
   return value;
@@ -20,17 +22,11 @@ export const env = {
 
 export const isSupabaseConfigured = Boolean(NEXT_PUBLIC_SUPABASE_URL) && Boolean(NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
-/** 扫单每日次数上限（服务端；默认 10） */
-export const scanReceiptDailyLimit = (() => {
-  const n = Number(process.env.SCAN_RECEIPT_DAILY_LIMIT ?? "10");
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 10;
-})();
+/** @deprecated 请用 `getAiUsageLimit(isPlus, "scan")`；保留为 Free 档默认，供未传会员态的展示兜底 */
+export const scanReceiptDailyLimit = getAiUsageLimit(false, "scan");
 
-/** 语音记账每日次数上限（服务端；默认 5） */
-export const voiceDailyLimit = (() => {
-  const n = Number(process.env.VOICE_DAILY_LIMIT ?? "5");
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 5;
-})();
+/** @deprecated 请用 `getAiUsageLimit(isPlus, "voice")` */
+export const voiceDailyLimit = getAiUsageLimit(false, "voice");
 
 export const scanOcrProvider = (() => {
   const v = String(process.env.SCAN_OCR_PROVIDER ?? "openai").trim().toLowerCase();
@@ -144,11 +140,33 @@ export function getOpenAIChatConfig(): { apiKey: string; model: string; baseURL?
   };
 }
 
-/** AI 助手每日消息轮次上限（一次用户发送 + 回复算一次业务轮次，这里按「用户消息条数」计） */
-export const assistantDailyLimit = (() => {
-  const n = Number(process.env.AI_ASSISTANT_DAILY_LIMIT ?? "40");
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 40;
-})();
+/** @deprecated 请用 `getAiUsageLimit(isPlus, "assistant")`；含 AI 预算生成（共用 assistant_count） */
+export const assistantDailyLimit = getAiUsageLimit(false, "assistant");
+
+/** @deprecated 请用 `getAiUsageLimit(isPlus, "dreamVisual")` */
+export const dreamVisualDailyLimit = getAiUsageLimit(false, "dreamVisual");
+
+/** 与 `dream-theater-actions` 抛出信息一致，供客户端展示友好文案 */
+export const dreamVisualRateLimitError = "dream_visual_rate_limit" as const;
+
+/** Free 档不提供文生图（画面生成需 Plus） */
+export const dreamVisualPlusRequiredError = "dream_visual_plus_required" as const;
+
+export const dreamVisualHqPlusRequiredError = "dream_visual_hq_plus_required" as const;
+
+export const dreamVisualHqRateLimitError = "dream_visual_hq_rate_limit" as const;
+
+/** @deprecated 请用 `getAiUsageLimit(isPlus, "dreamStory")` */
+export const dreamStoryDailyLimit = getAiUsageLimit(false, "dreamStory");
+
+export const dreamStoryRateLimitError = "dream_story_rate_limit" as const;
+
+/** @deprecated 请用 `getAiUsageLimit(isPlus, "dreamLocalizedMedia")` */
+export const dreamLocalizedMediaDailyLimit = getAiUsageLimit(false, "dreamLocalizedMedia");
+
+export const dreamLocalizedMediaRateLimitError = "dream_localized_media_rate_limit" as const;
+
+export { getAiUsageLimit, getAiUsageLimits };
 
 export function getDreamImageConfig(): {
   apiKey: string;

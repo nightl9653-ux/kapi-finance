@@ -10,6 +10,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { firstSearchParam, uuidsEqual } from "@/lib/url-search-params";
 
 async function deleteRecurring(formData: FormData) {
   "use server";
@@ -98,7 +99,7 @@ export default async function RecurringBillsPage({
   const t = await getTranslations("transactions");
   const common = await getTranslations("common");
   const sp = searchParams ? await searchParams : {};
-  const editId = typeof sp.edit === "string" ? sp.edit.trim() : "";
+  const editParam = firstSearchParam(sp.edit)?.trim();
 
   const supabase = await createSupabaseServerClient();
   const { data: auth, error: authError } = await supabase.auth.getUser();
@@ -134,7 +135,7 @@ export default async function RecurringBillsPage({
         ) : rows?.length ? (
           <div className="space-y-3">
             {rows.map((r) => (
-              editId === r.id ? (
+              editParam && uuidsEqual(editParam, String(r.id)) ? (
                 <form key={r.id} action={updateRecurring} className="rounded-xl border bg-white p-4">
                   <input type="hidden" name="locale" value={locale} />
                   <input type="hidden" name="id" value={r.id} />
@@ -231,6 +232,7 @@ export default async function RecurringBillsPage({
                         {common("save")}
                       </Button>
                       <Link
+                        scroll={false}
                         href={`/${locale}/recurring-bills`}
                         className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "rounded-full")}
                       >
@@ -263,6 +265,7 @@ export default async function RecurringBillsPage({
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Link
+                      scroll={false}
                       href={`/${locale}/recurring-bills?edit=${encodeURIComponent(r.id)}`}
                       className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "rounded-full")}
                     >

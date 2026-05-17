@@ -1,9 +1,11 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
-import { getOpenAIScanConfig, isSupabaseConfigured, voiceDailyLimit } from "@/lib/env";
+import { getAiUsageLimit } from "@/lib/ai-usage-limits";
+import { getOpenAIScanConfig, isSupabaseConfigured } from "@/lib/env";
 import { extractTransactionsFromText } from "@/lib/scan-receipt-ai";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
 
 export const maxDuration = 120;
 
@@ -72,6 +74,8 @@ export async function POST(req: Request) {
 
   const usageDate = parseUsageDate(formData);
   const locale = parseLocale(formData);
+  const isPlus = await fetchUserIsPlusMember(supabase, auth.user.id);
+  const voiceLimit = getAiUsageLimit(isPlus, "voice");
 
   const { data: usageRow, error: usageErr } = await supabase
     .from("ai_usage")
@@ -85,9 +89,9 @@ export async function POST(req: Request) {
   }
 
   const used = usageRow?.voice_count ?? 0;
-  if (used >= voiceDailyLimit) {
+  if (used >= voiceLimit) {
     return NextResponse.json(
-      { ok: false, error: "rate_limit", limit: voiceDailyLimit },
+      { ok: false, error: "rate_limit", limit: voiceLimit },
       { status: 429 },
     );
   }
@@ -153,8 +157,8 @@ export async function POST(req: Request) {
     ok: true,
     transcript: transcriptText,
     transactions: extracted.rows,
-    remaining: Math.max(0, voiceDailyLimit - nextCount),
-    limit: voiceDailyLimit,
+    remaining: Math.max(0, voiceLimit - nextCount),
+    limit: voiceLimit,
   });
 }
 

@@ -63,7 +63,7 @@ export function TransactionsCurrencyPicker({
 
   const commit = (raw: string) => {
     const c = coerceCurrency(raw);
-    router.push(build(c));
+    router.push(build(c), { scroll: false });
   };
 
   const suggestions = useMemo(() => {
@@ -82,6 +82,7 @@ export function TransactionsCurrencyPicker({
           return (
             <Link
               key={c}
+              scroll={false}
               href={build(c)}
               className={cn(
                 "rounded-full px-2 py-0.5",

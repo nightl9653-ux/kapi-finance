@@ -138,11 +138,27 @@ create table if not exists ai_usage (
   screenshot_count int default 0,
   voice_count int default 0,
   assistant_count int default 0,
+  dream_visual_count int default 0,
+  dream_story_count int default 0,
+  dream_localized_media_count int default 0,
+  dream_visual_hq_count int default 0,
   created_at timestamp default now()
 );
 
 -- 存量库：补齐 AI 助手计数字段（可重复执行）
 alter table public.ai_usage add column if not exists assistant_count int default 0;
+
+-- 存量库：梦想剧场文生图任务计次（可重复执行）
+alter table public.ai_usage add column if not exists dream_visual_count int default 0;
+
+-- 存量库：梦想剧场小作文生成计次（可重复执行）
+alter table public.ai_usage add column if not exists dream_story_count int default 0;
+
+-- 存量库：梦想剧场旁白/字幕/翻译计次（可重复执行）
+alter table public.ai_usage add column if not exists dream_localized_media_count int default 0;
+
+-- 存量库：梦想剧场高质量文生图计次（可重复执行）
+alter table public.ai_usage add column if not exists dream_visual_hq_count int default 0;
 
 -- 每人每天一行，便于 upsert 与扫单次数统计
 create unique index if not exists ai_usage_user_date_uq on ai_usage (user_id, date);

@@ -226,8 +226,8 @@
         "unknown": "发生错误，请稍后再试。"
       }
     },
-    "chatEmpty": "在下方输入问题，按 Enter 发送（Shift+Enter 换行）。",
-    "inputPlaceholder": "例如：想提前还清房贷，每月大概多还多少比较合适？",
+    "chatEmpty": "尚无对话，你和 AI 的问答会显示在这里。",
+    "inputPlaceholder": "在这里输入问题，例如：想提前还清房贷，每月大概多还多少比较合适？",
     "send": "发送",
     "sending": "正在回复…",
     "quotaHint": "今日还可发送约 {remaining} 条（每日额度独立计数）。",
@@ -342,15 +342,63 @@
     "iosPitch": "iOS 用户请优先在「快捷记账」页查看「快捷指令 + 剪贴板」官方推荐方案：配置后可接近「截图后自动打开并识别」，比仅用手动选图更快。"
   },
   "pricing": {
-    "title": "升级到Plus会员",
-    "monthly": "月度",
-    "quarterly": "季度",
-    "yearly": "年度",
-    "lifetime": "终身",
-    "features": "解锁全部功能",
-    "cta": "立即升级",
-    "compareCta": "Free vs Plus 功能对比（待实现）",
-    "tablePlaceholder": "占位：定价表（$1.99/月、$4.99/季、$18.99/年、$39.99 终身）+ 首月 $0.99 优惠 + 订阅按钮"
+    "title": "咔皮 Plus 会员",
+    "subtitle": "解锁不限数量的财务目标等能力；金额以 USD 标价，支付结算方式上线前可先收藏本页。",
+    "badgePlus": "Plus",
+    "badgeFree": "Free",
+    "youArePlus": "你当前已是 Plus 会员，感谢支持。",
+    "youAreFree": "你当前为 Free 版，可随时在此查看方案。",
+    "guestHint": "登录后可查看与你账号对应的会员状态。",
+    "promo": "新用户月度：首月 $4.99，之后 $6.99/月；年付约合 $5.83/月。",
+    "plans": {
+      "monthly": {
+        "name": "月度",
+        "price": "$6.99",
+        "period": "/月",
+        "sub": "首月 $4.99",
+        "pick": "选择月度"
+      },
+      "quarterly": {
+        "name": "季度",
+        "price": "$17.99",
+        "period": "/季",
+        "sub": "约合 $6.00/月 · 比月付省约 14%",
+        "pick": "选择季度"
+      },
+      "yearly": {
+        "name": "年度",
+        "price": "$69.99",
+        "period": "/年",
+        "sub": "约合 $5.83/月 · 更省心",
+        "pick": "选择年度",
+        "recommended": "推荐"
+      },
+      "lifetime": {
+        "name": "两年",
+        "price": "$129.99",
+        "period": "一次付清（两年）",
+        "sub": "约合 $5.42/月 · 比月付省约 22%",
+        "pick": "选择两年方案"
+      }
+    },
+    "checkoutNote": "在线支付与订阅入口正在接入（如 Stripe）。上线前若需开通 Plus，请通过你现有的商务/支持渠道联系。",
+    "ctaDisabledHint": "订阅入口即将开放",
+    "compareTitle": "Free 与 Plus",
+    "compareFeatureColumn": "对比项",
+    "compareBlurb": "以下对比随产品迭代可能调整，以应用内实际规则为准。",
+    "compare": {
+      "goals": { "label": "财务目标数量", "free": "最多 2 个", "plus": "不限" },
+      "record": { "label": "记账 / 报表 / 预算", "free": "可用", "plus": "可用" },
+      "scan": { "label": "扫单识别", "free": "5 次/天", "plus": "20 次/天" },
+      "voice": { "label": "语音记账", "free": "3 次/天", "plus": "12 次/天" },
+      "ai": { "label": "AI 助手 + AI 预算生成", "free": "共 20 次/天（共用额度）", "plus": "共 80 次/天（共用额度）" },
+      "dream": {
+        "label": "梦想剧场",
+        "free": "小作文 5·旁白/翻译 5·文生图需 Plus",
+        "plus": "小作文 15·旁白/翻译 15·普通画面 2·高质量 1 次/天（分开计次）"
+      },
+      "support": { "label": "功能优先级", "free": "标准", "plus": "会员优先（规划中）" }
+    }
   },
   "common": {
     "supabaseEnvMissing": "Supabase 环境变量未配置。请在 `.env.local` 配置 `NEXT_PUBLIC_SUPABASE_URL` 与 `NEXT_PUBLIC_SUPABASE_ANON_KEY` 后刷新。",
