@@ -186,7 +186,27 @@ function buildStoryUserPrompt(params: {
         .join("\n");
 }
 
+export type DreamStoryActionResult =
+  | { ok: true; storyId: string; locale: Locale; content: string; cached: boolean }
+  | { ok: false; error: string };
+
 export async function generateStoryForGoal(input: {
+  goalId: string;
+  selectedKeywords: string[];
+  customKeywords: string[];
+  freeText?: string;
+  locale: Locale;
+}): Promise<DreamStoryActionResult> {
+  try {
+    return { ok: true, ...(await generateStoryForGoalInner(input)) };
+  } catch (e) {
+    const error = e instanceof Error ? e.message : "unknown";
+    console.error("generateStoryForGoal failed", error);
+    return { ok: false, error };
+  }
+}
+
+async function generateStoryForGoalInner(input: {
   goalId: string;
   selectedKeywords: string[];
   customKeywords: string[];

@@ -338,31 +338,43 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
     })();
     const styleKeywords = blossomKw ? [blossomKw] : [];
     startTransition(async () => {
-      try {
-        const res = await generateStoryForGoal({
-          goalId: goal.id,
-          selectedKeywords: selected,
-          customKeywords: [...customKeywords, ...styleKeywords],
-          freeText,
-          locale: moduleLocale,
-        });
-        setStoryId(res.storyId);
-        setStoryByLocale((prev) => ({ ...prev, [res.locale]: res.content }));
-        if (!res.cached) void refreshDreamTheaterUsageQuotas();
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "unknown";
+      const res = await generateStoryForGoal({
+        goalId: goal.id,
+        selectedKeywords: selected,
+        customKeywords: [...customKeywords, ...styleKeywords],
+        freeText,
+        locale: moduleLocale,
+      });
+      if (!res.ok) {
+        const msg = res.error;
         if (msg === dreamStoryRateLimitError) {
           setErr(
             moduleLocale === "zh"
               ? `今日梦想小作文次数已达上限（每天 ${dreamStoryLimit} 次），请明日再试或微调关键词后重试。`
               : `Daily dream story limit reached (${dreamStoryLimit}/day). Try again tomorrow or tweak keywords.`,
           );
+        } else if (msg === "dream_openai_not_configured") {
+          setErr(
+            moduleLocale === "zh"
+              ? "梦想剧场 AI 未配置：请在 Vercel / .env.local 设置 OPENAI_API_KEY 或 DMX_API_KEY。"
+              : "Dream Theater AI is not configured (set OPENAI_API_KEY or DMX_API_KEY on the server).",
+          );
         } else if (msg === "usage_query_failed" || msg === "usage_write_failed") {
           setErr(uiText.usageMigrationHint);
+        } else if (msg === "db_insert_failed") {
+          setErr(
+            moduleLocale === "zh"
+              ? "保存小作文失败：请确认 Supabase 已创建 goal_stories 表及权限。"
+              : "Could not save the story. Check goal_stories table and RLS in Supabase.",
+          );
         } else {
           setErr(msg);
         }
+        return;
       }
+      setStoryId(res.storyId);
+      setStoryByLocale((prev) => ({ ...prev, [res.locale]: res.content }));
+      if (!res.cached) void refreshDreamTheaterUsageQuotas();
     });
   };
 
