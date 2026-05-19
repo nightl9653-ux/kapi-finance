@@ -24,6 +24,16 @@ import {
   generateStoryForGoal,
 } from "@/app/[locale]/goals/dream-theater-actions";
 
+/** 部署后旧标签页会持有过期的 Server Action id */
+function formatDreamTheaterActionError(message: string, zh: boolean): string {
+  if (/server action.*not found/i.test(message) || /failed to find server action/i.test(message)) {
+    return zh
+      ? "网站刚完成部署，当前页面版本过旧。请按 Ctrl+Shift+R（Mac：Cmd+Shift+R）强制刷新，或关闭标签页后重新打开再试。"
+      : "This tab is stale after a deploy. Hard-refresh (Ctrl+Shift+R) or reopen the page, then try again.";
+  }
+  return message;
+}
+
 type GoalContext = {
   id: string;
   name: string;
@@ -338,13 +348,19 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
     })();
     const styleKeywords = blossomKw ? [blossomKw] : [];
     startTransition(async () => {
-      const res = await generateStoryForGoal({
-        goalId: goal.id,
-        selectedKeywords: selected,
-        customKeywords: [...customKeywords, ...styleKeywords],
-        freeText,
-        locale: moduleLocale,
-      });
+      let res: Awaited<ReturnType<typeof generateStoryForGoal>>;
+      try {
+        res = await generateStoryForGoal({
+          goalId: goal.id,
+          selectedKeywords: selected,
+          customKeywords: [...customKeywords, ...styleKeywords],
+          freeText,
+          locale: moduleLocale,
+        });
+      } catch (e) {
+        setErr(formatDreamTheaterActionError(e instanceof Error ? e.message : "unknown", moduleLocale === "zh"));
+        return;
+      }
       if (!res.ok) {
         const msg = res.error;
         if (msg === dreamStoryRateLimitError) {
@@ -368,7 +384,7 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
               : "Could not save the story. Check goal_stories table and RLS in Supabase.",
           );
         } else {
-          setErr(msg);
+          setErr(formatDreamTheaterActionError(msg, moduleLocale === "zh"));
         }
         return;
       }
@@ -407,7 +423,7 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
         } else if (msg === "usage_query_failed" || msg === "usage_write_failed") {
           setErr(uiText.usageMigrationHint);
         } else {
-          setErr(msg);
+          setErr(formatDreamTheaterActionError(msg, moduleLocale === "zh"));
         }
       }
     });
@@ -431,7 +447,7 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
         } else if (msg === "usage_query_failed" || msg === "usage_write_failed") {
           setErr(uiText.usageMigrationHint);
         } else {
-          setErr(msg);
+          setErr(formatDreamTheaterActionError(msg, moduleLocale === "zh"));
         }
       }
     });
@@ -606,7 +622,7 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
         } else if (msg === "usage_query_failed" || msg === "usage_write_failed") {
           setErr(uiText.usageMigrationHint);
         } else {
-          setErr(msg);
+          setErr(formatDreamTheaterActionError(msg, moduleLocale === "zh"));
         }
         setVisualStatus("failed");
       } finally {
