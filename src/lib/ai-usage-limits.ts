@@ -4,7 +4,7 @@
  * 文生图成本（你提供的单价）：
  * - 普通：6 张/次 × $0.03 ≈ $0.18/次任务
  * - 高质量：3 张/次 × $0.09 ≈ $0.27/次任务
- * Plus 若每天用满普通 2 + 高质量 1，仅画面约 $2.16/天（~$65/月），远超 $6.99 收入；
+ * Plus 若每天用满普通 1 + 高质量 1，仅画面约 $0.45/天（~$13.5/月），仍需依赖多数用户用不满；
  * 下列默认额度按「多数用户达不到日上限」+ 控最坏情况兼顾。
  */
 
@@ -46,7 +46,7 @@ const PLUS_DEFAULTS: AiUsageLimits = {
   scan: 20,
   voice: 12,
   assistant: 80,
-  dreamVisual: 2,
+  dreamVisual: 1,
   dreamVisualHq: 1,
   dreamStory: 15,
   dreamLocalizedMedia: 15,

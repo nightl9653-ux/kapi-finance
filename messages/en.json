@@ -381,7 +381,23 @@
         "pick": "Choose 2-year plan"
       }
     },
-    "checkoutNote": "Checkout (e.g. Stripe) is not wired yet. Contact support through your usual channel if you need Plus before launch.",
+    "checkoutNote": "Checkout (Creem / Polar / Lemon Squeezy, etc.) is not wired yet. Contact support if you need Plus before launch.",
+    "creditPacks": {
+      "title": "AI image add-on packs",
+      "blurb": "Plus members can buy extra dream visuals when daily quota runs out. Valid 30 days; unused balance does not roll over. Daily quota is used first.",
+      "plusOnly": "Add-on packs are for Plus members only.",
+      "validDays": "Valid for {days} days after purchase",
+      "buy": "Buy",
+      "comingSoon": "Checkout link pending",
+      "standard": {
+        "title": "Standard visual pack",
+        "desc": "+20 standard shots (~3 full standard runs) · $2.99"
+      },
+      "hq": {
+        "title": "High-quality visual pack",
+        "desc": "+10 HQ shots (~3 full HQ runs) · $2.99"
+      }
+    },
     "ctaDisabledHint": "Checkout coming soon",
     "compareTitle": "Free vs Plus",
     "compareFeatureColumn": "Feature",
@@ -395,7 +411,7 @@
       "dream": {
         "label": "Dream Theater",
         "free": "Story 5 · Media 5 · visuals require Plus",
-        "plus": "Story 15 · Media 15 · Standard 2 · HQ 1/day (separate quota)"
+        "plus": "Story 15 · Media 15 · Standard 1 · HQ 1/day (separate quota)"
       },
       "support": { "label": "Feature priority", "free": "Standard", "plus": "Plus-first (planned)" }
     }

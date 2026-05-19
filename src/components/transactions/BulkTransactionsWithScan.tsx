@@ -130,9 +130,9 @@ export function BulkTransactionsWithScan({
   locale: string;
   action: (formData: FormData) => void;
   prefillDate?: string;
-  /** 与 `SCAN_RECEIPT_DAILY_LIMIT` / 服务端限额一致 */
+  /** 与 `getAiUsageLimit(isPlus, "scan")` / `FREE_SCAN_DAILY_LIMIT`、`PLUS_SCAN_DAILY_LIMIT` 一致 */
   scanDailyLimit: number;
-  /** 与 `VOICE_DAILY_LIMIT` / 服务端限额一致 */
+  /** 与 `getAiUsageLimit(isPlus, "voice")` / `FREE_VOICE_DAILY_LIMIT`、`PLUS_VOICE_DAILY_LIMIT` 一致 */
   voiceDailyLimit: number;
 }) {
   const t = useTranslations("transactions");

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { fetchImageCreditsBalance } from "@/lib/ai-image-credits";
 import { getAiUsageLimits } from "@/lib/ai-usage-limits";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
@@ -60,6 +61,16 @@ export async function GET(req: Request) {
     : 0;
   const dreamVisualHqLimit = isPlus ? limits.dreamVisualHq : 0;
 
+  let imageCredits = { standard: 0, hq: 0, expires_at: null as string | null };
+  if (isPlus) {
+    try {
+      const bal = await fetchImageCreditsBalance(supabase, auth.user.id);
+      imageCredits = { standard: bal.standard, hq: bal.hq, expires_at: bal.expiresAt };
+    } catch {
+      // 表未迁移时忽略加量包余额
+    }
+  }
+
   const pack = (used: number, limit: number) => ({
     used,
     remaining: Math.max(0, limit - used),
@@ -77,6 +88,7 @@ export async function GET(req: Request) {
     dream_visual_hq: pack(dreamVisualHqUsed, dreamVisualHqLimit),
     dream_story: pack(dreamStoryUsed, limits.dreamStory),
     dream_localized_media: pack(dreamLocalizedMediaUsed, limits.dreamLocalizedMedia),
+    image_credits: imageCredits,
   }, {
     headers: {
       "Cache-Control": "private, max-age=5",

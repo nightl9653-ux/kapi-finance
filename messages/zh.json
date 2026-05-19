@@ -381,7 +381,23 @@
         "pick": "选择两年方案"
       }
     },
-    "checkoutNote": "在线支付与订阅入口正在接入（如 Stripe）。上线前若需开通 Plus，请通过你现有的商务/支持渠道联系。",
+    "checkoutNote": "在线支付与订阅入口正在接入（Creem / Polar / Lemon Squeezy 等）。上线前若需开通 Plus，请通过你现有的商务/支持渠道联系。",
+    "creditPacks": {
+      "title": "AI 加量包（文生图）",
+      "blurb": "Plus 会员在每日额度用完后，可购买加量包继续生成画面。购买后 30 天内有效，未用完不结转。日限仍优先扣除。",
+      "plusOnly": "仅 Plus 会员可购买与使用加量包。",
+      "validDays": "购买后 {days} 天内有效",
+      "buy": "购买",
+      "comingSoon": "支付链接配置中",
+      "standard": {
+        "title": "普通画面小包",
+        "desc": "+20 张普通镜头（约 3 次完整普通画面生成）· $2.99"
+      },
+      "hq": {
+        "title": "高质量画面包",
+        "desc": "+10 张高质量镜头（约 3 次完整高质量生成）· $2.99"
+      }
+    },
     "ctaDisabledHint": "订阅入口即将开放",
     "compareTitle": "Free 与 Plus",
     "compareFeatureColumn": "对比项",
@@ -395,7 +411,7 @@
       "dream": {
         "label": "梦想剧场",
         "free": "小作文 5·旁白/翻译 5·文生图需 Plus",
-        "plus": "小作文 15·旁白/翻译 15·普通画面 2·高质量 1 次/天（分开计次）"
+        "plus": "小作文 15·旁白/翻译 15·普通画面 1·高质量 1 次/天（分开计次）"
       },
       "support": { "label": "功能优先级", "free": "标准", "plus": "会员优先（规划中）" }
     }

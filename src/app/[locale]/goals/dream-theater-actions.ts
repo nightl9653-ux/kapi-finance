@@ -18,7 +18,7 @@ import {
 import {
   assertDreamVisualQuotaAvailable,
   dreamVisualUsageDateUtc,
-  incrementDreamVisualTaskCount,
+  chargeDreamVisualTask,
 } from "@/lib/dream-visual-usage";
 import { getDreamImageConfig, getDmxVideoConfig, getOpenAIDreamConfig } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -1396,7 +1396,7 @@ export async function generateDreamImageForStory(input: {
   );
   if (upsertError) throw new Error("db_visual_upsert_failed");
 
-  await incrementDreamVisualTaskCount(supabase, auth.user.id, usageDate, highQuality);
+  await chargeDreamVisualTask(supabase, auth.user.id, usageDate, isPlusVisual, highQuality);
 
   return { storyId, imageUrls, model: imageModel };
 }
@@ -1812,7 +1812,7 @@ export async function submitDreamVisualJob(input: { storyId: string; highQuality
     refreshFailStreak: 0,
     lastError: null,
   });
-  await incrementDreamVisualTaskCount(supabase, auth.user.id, usageDateSubmit, highQuality);
+  await chargeDreamVisualTask(supabase, auth.user.id, usageDateSubmit, isPlusSubmit, highQuality);
   return { storyId, status: "processing", imageUrls: [firstUrl], pbMatches: true, pb: DREAM_VISUAL_PROMPT_BUILD_ID };
 }
 

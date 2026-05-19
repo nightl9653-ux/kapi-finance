@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import type { Locale } from "@/i18n/locales";
@@ -199,6 +200,8 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
   const [dreamVisualLimit, setDreamVisualLimit] = useState(3);
   const [dreamVisualHqRemaining, setDreamVisualHqRemaining] = useState<number | null>(null);
   const [dreamVisualHqLimit, setDreamVisualHqLimit] = useState(0);
+  const [imageCreditsStandard, setImageCreditsStandard] = useState(0);
+  const [imageCreditsHq, setImageCreditsHq] = useState(0);
   const [dreamStoryRemaining, setDreamStoryRemaining] = useState<number | null>(null);
   const [dreamStoryLimit, setDreamStoryLimit] = useState(5);
   const [dreamLocalizedMediaRemaining, setDreamLocalizedMediaRemaining] = useState<number | null>(null);
@@ -264,6 +267,14 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
         zh
           ? `今日高质量画面：剩余 ${rem}/${lim}（与普通画面分开计次，每次 3 镜头）`
           : `HQ visuals today: ${rem}/${lim} left (separate quota; 3 shots per run).`,
+      imageCreditsStandardLine: (n: number) =>
+        zh ? `加量包（普通镜头）：剩余 ${n} 张` : `Add-on pack (standard shots): ${n} left`,
+      imageCreditsHqLine: (n: number) =>
+        zh ? `加量包（高质量镜头）：剩余 ${n} 张` : `Add-on pack (HQ shots): ${n} left`,
+      visualRateLimitBuyPack: zh
+        ? "今日额度已用完。Plus 可购买加量包继续生成。"
+        : "Daily quota used up. Plus members can buy an add-on pack to continue.",
+      buyPackLink: zh ? "去购买加量包" : "Buy add-on pack",
       storyQuotaLine: (rem: number, lim: number) =>
         zh
           ? `今日小作文：剩余 ${rem}/${lim}（相同关键词与描述命中缓存时不扣次）`
@@ -290,12 +301,16 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
     if (!isPlusMember && visualHQ) setVisualHQ(false);
   }, [isPlusMember, visualHQ]);
 
+  const shotsNeeded = visualHQ ? 3 : 6;
+  const dailyVisualRemaining = visualHQ ? dreamVisualHqRemaining : dreamVisualRemaining;
+  const packVisualRemaining = visualHQ ? imageCreditsHq : imageCreditsStandard;
+  const canUseDaily = dailyVisualRemaining === null || dailyVisualRemaining > 0;
+  const canUsePack = isPlusMember && packVisualRemaining >= shotsNeeded;
+
   const visualGenerateDisabled =
     visualStatus === "processing" ||
     !isPlusMember ||
-    (visualHQ
-      ? dreamVisualHqRemaining !== null && dreamVisualHqRemaining <= 0
-      : dreamVisualRemaining !== null && dreamVisualRemaining <= 0);
+    (dailyVisualRemaining !== null && !canUseDaily && !canUsePack);
 
   const currentStory = storyByLocale[moduleLocale] || "";
   const currentAudio = audioByLocale[moduleLocale] || "";
@@ -419,60 +434,14 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
     setVisualPbMatches(null);
   }, [storyId]);
 
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch("/api/ai-usage");
-        const data = (await res.json().catch(() => ({}))) as {
-          ok?: boolean;
-          dream_visual?: { remaining?: number; limit?: number };
-          dream_visual_hq?: { remaining?: number; limit?: number };
-          dream_story?: { remaining?: number; limit?: number };
-          dream_localized_media?: { remaining?: number; limit?: number };
-        };
-        if (cancelled || !res.ok || !data.ok) return;
-        if (data.dream_visual) {
-          if (typeof data.dream_visual.remaining === "number") setDreamVisualRemaining(data.dream_visual.remaining);
-          if (typeof data.dream_visual.limit === "number") setDreamVisualLimit(data.dream_visual.limit);
-        }
-        if (data.dream_visual_hq) {
-          if (typeof data.dream_visual_hq.remaining === "number") setDreamVisualHqRemaining(data.dream_visual_hq.remaining);
-          if (typeof data.dream_visual_hq.limit === "number") setDreamVisualHqLimit(data.dream_visual_hq.limit);
-        }
-        if (data.dream_story) {
-          if (typeof data.dream_story.remaining === "number") setDreamStoryRemaining(data.dream_story.remaining);
-          if (typeof data.dream_story.limit === "number") setDreamStoryLimit(data.dream_story.limit);
-        }
-        if (data.dream_localized_media) {
-          if (typeof data.dream_localized_media.remaining === "number") {
-            setDreamLocalizedMediaRemaining(data.dream_localized_media.remaining);
-          }
-          if (typeof data.dream_localized_media.limit === "number") {
-            setDreamLocalizedMediaLimit(data.dream_localized_media.limit);
-          }
-        }
-      } catch {
-        // ignore
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open]);
-
-  const refreshDreamTheaterUsageQuotas = useCallback(async () => {
-    try {
-      const res = await fetch("/api/ai-usage");
-      const data = (await res.json().catch(() => ({}))) as {
-        ok?: boolean;
-        dream_visual?: { remaining?: number; limit?: number };
-        dream_visual_hq?: { remaining?: number; limit?: number };
-        dream_story?: { remaining?: number; limit?: number };
-        dream_localized_media?: { remaining?: number; limit?: number };
-      };
-      if (!res.ok || !data.ok) return;
+  const applyUsagePayload = useCallback(
+    (data: {
+      dream_visual?: { remaining?: number; limit?: number };
+      dream_visual_hq?: { remaining?: number; limit?: number };
+      dream_story?: { remaining?: number; limit?: number };
+      dream_localized_media?: { remaining?: number; limit?: number };
+      image_credits?: { standard?: number; hq?: number };
+    }) => {
       if (data.dream_visual) {
         if (typeof data.dream_visual.remaining === "number") setDreamVisualRemaining(data.dream_visual.remaining);
         if (typeof data.dream_visual.limit === "number") setDreamVisualLimit(data.dream_visual.limit);
@@ -493,10 +462,56 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
           setDreamLocalizedMediaLimit(data.dream_localized_media.limit);
         }
       }
+      if (data.image_credits) {
+        if (typeof data.image_credits.standard === "number") setImageCreditsStandard(data.image_credits.standard);
+        if (typeof data.image_credits.hq === "number") setImageCreditsHq(data.image_credits.hq);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/ai-usage");
+        const data = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          dream_visual?: { remaining?: number; limit?: number };
+          dream_visual_hq?: { remaining?: number; limit?: number };
+          dream_story?: { remaining?: number; limit?: number };
+          dream_localized_media?: { remaining?: number; limit?: number };
+          image_credits?: { standard?: number; hq?: number };
+        };
+        if (cancelled || !res.ok || !data.ok) return;
+        applyUsagePayload(data);
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, applyUsagePayload]);
+
+  const refreshDreamTheaterUsageQuotas = useCallback(async () => {
+    try {
+      const res = await fetch("/api/ai-usage");
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        dream_visual?: { remaining?: number; limit?: number };
+        dream_visual_hq?: { remaining?: number; limit?: number };
+        dream_story?: { remaining?: number; limit?: number };
+        dream_localized_media?: { remaining?: number; limit?: number };
+        image_credits?: { standard?: number; hq?: number };
+      };
+      if (!res.ok || !data.ok) return;
+      applyUsagePayload(data);
     } catch {
       // ignore
     }
-  }, []);
+  }, [applyUsagePayload]);
 
   useEffect(() => {
     // 兜底：如果某次 transition 异常导致 finally 未触发，避免按钮永久灰掉
@@ -570,20 +585,12 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
         const msg = e instanceof Error ? e.message : "unknown";
         if (msg === dreamVisualPlusRequiredError) {
           setErr(uiText.visualPlusOnly);
-        } else if (msg === dreamVisualRateLimitError) {
-          setErr(
-            moduleLocale === "zh"
-              ? `今日普通画面任务已达上限（每天 ${dreamVisualLimit} 次），请明日再试。`
-              : `Daily standard visual limit reached (${dreamVisualLimit}/day). Try again tomorrow.`,
-          );
+        } else if (msg === dreamVisualRateLimitError || msg === dreamVisualHqRateLimitError) {
+          setErr(uiText.visualRateLimitBuyPack);
         } else if (msg === dreamVisualHqPlusRequiredError) {
           setErr(uiText.visualHqPlusOnly);
-        } else if (msg === dreamVisualHqRateLimitError) {
-          setErr(
-            moduleLocale === "zh"
-              ? `今日高质量画面已达上限（每天 ${dreamVisualHqLimit} 次），请明日再试或改用普通画质。`
-              : `Daily HQ visual limit reached (${dreamVisualHqLimit}/day). Try tomorrow or use standard quality.`,
-          );
+        } else if (msg === "credits_write_failed") {
+          setErr(uiText.usageMigrationHint);
         } else if (msg === "usage_query_failed" || msg === "usage_write_failed") {
           setErr(uiText.usageMigrationHint);
         } else {
@@ -785,6 +792,26 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
                   {isPlusMember && dreamVisualHqRemaining !== null && dreamVisualHqLimit > 0 ? (
                     <p className="text-foreground/90">
                       {uiText.visualHqQuotaLine(dreamVisualHqRemaining, dreamVisualHqLimit)}
+                    </p>
+                  ) : null}
+                  {isPlusMember && imageCreditsStandard > 0 ? (
+                    <p className="text-foreground/90">{uiText.imageCreditsStandardLine(imageCreditsStandard)}</p>
+                  ) : null}
+                  {isPlusMember && imageCreditsHq > 0 ? (
+                    <p className="text-foreground/90">{uiText.imageCreditsHqLine(imageCreditsHq)}</p>
+                  ) : null}
+                  {isPlusMember &&
+                  dailyVisualRemaining !== null &&
+                  dailyVisualRemaining <= 0 &&
+                  packVisualRemaining < shotsNeeded ? (
+                    <p className="text-foreground/90">
+                      {uiText.visualRateLimitBuyPack}{" "}
+                      <Link
+                        href={`/${pageLocale}/pricing#credit-packs`}
+                        className="font-medium text-foreground underline underline-offset-2"
+                      >
+                        {uiText.buyPackLink}
+                      </Link>
                     </p>
                   ) : null}
 

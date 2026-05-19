@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
+import { CreditPackCards } from "@/components/pricing/CreditPackCards";
 import { Button } from "@/components/ui/button";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -104,6 +105,23 @@ export default async function PricingPage({
       </div>
 
       <p className="text-center text-xs text-muted-foreground">{t("checkoutNote")}</p>
+
+      <CreditPackCards
+        locale={locale}
+        signInHref={`/${locale}/auth`}
+        labels={{
+          title: t("creditPacks.title"),
+          blurb: t("creditPacks.blurb"),
+          plusOnly: t("creditPacks.plusOnly"),
+          signIn: ta("signIn"),
+          buy: t("creditPacks.buy"),
+          comingSoon: t("creditPacks.comingSoon"),
+          standardPackTitle: t("creditPacks.standard.title"),
+          standardPackDesc: t("creditPacks.standard.desc"),
+          hqPackTitle: t("creditPacks.hq.title"),
+          hqPackDesc: t("creditPacks.hq.desc"),
+        }}
+      />
 
       <div id="compare" className="scroll-mt-24 space-y-4">
         <div>
