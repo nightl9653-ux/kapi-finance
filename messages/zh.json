@@ -172,6 +172,7 @@
     "voiceErrorRateLimit": "今日语音次数已用完，请明天再试。",
     "voiceErrorRateLimitDetail": "今日语音次数已用完（剩余 0 / 上限 {n}）。请明天再试。",
     "voiceErrorUnrecognized": "没听清或无法解析出金额。建议：用“早餐 20，地铁 3，咖啡 18”这种格式报多笔，数字说清楚；必要时手动填写。",
+    "voiceErrorTranscribeModel": "语音转写模型不可用：DMX 默认线路未开放 whisper-1。请在 DMX 控制台查看「语音转写」支持的模型名，把 .env.local 里的 OPENAI_TRANSCRIBE_MODEL 改成该名称后重启 npm run dev（Vercel 同步配置并 Redeploy）。",
     "aiPrivacyHint": "隐私提示：截图/音频会上传到识别服务处理（DMXAPI/OpenAI），用于生成结构化记账结果。",
     "recurringTitle": "周期记账",
     "recurringToggle": "周期设置",
@@ -381,7 +382,11 @@
         "pick": "选择两年方案"
       }
     },
-    "checkoutNote": "在线支付与订阅入口正在接入（Creem / Polar / Lemon Squeezy 等）。上线前若需开通 Plus，请通过你现有的商务/支持渠道联系。",
+    "checkoutNote": "付款成功后约 1 分钟内自动开通 Plus（Creem Webhook 填 https://你的域名/api/billing/creem-webhook）。",
+    "signInToUpgrade": "登录后升级",
+    "comingSoon": "未配置付款链接",
+    "checkoutEnvHint": "请在 Vercel 配置 PLUS_PLAN_MONTHLY_CHECKOUT_URL 后 Redeploy；用 Free 账号登录可见「选择月度」。",
+    "alreadyPlus": "已是 Plus 会员",
     "creditPacks": {
       "title": "AI 加量包（文生图）",
       "blurb": "Plus 会员在每日额度用完后，可购买加量包继续生成画面。购买后 30 天内有效，未用完不结转。日限仍优先扣除。",

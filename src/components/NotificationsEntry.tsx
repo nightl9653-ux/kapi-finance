@@ -26,31 +26,43 @@ export function NotificationsEntry() {
     const client = supabase;
     let cancelled = false;
 
+    const ac = new AbortController();
+
     async function run() {
-      // 1) 确保“昨日未记账”通知被生成（幂等）
-      await fetch("/api/notifications/ensure", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          // fallback for older servers
-          today: getLocalISODate(),
-        }),
-      }).catch(() => null);
+      try {
+        // 1) 确保“昨日未记账”通知被生成（幂等）
+        await fetch("/api/notifications/ensure", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            // fallback for older servers
+            today: getLocalISODate(),
+          }),
+          signal: ac.signal,
+        }).catch((e) => {
+          if ((e as Error).name === "AbortError") return null;
+          return null;
+        });
 
-      // 2) 拉取未读数量（右上角角标）
-      const { count } = await client
-        .from("notifications")
-        .select("id", { count: "exact", head: true })
-        .is("read_at", null);
+        // 2) 拉取未读数量（右上角角标）
+        const { count, error } = await client
+          .from("notifications")
+          .select("id", { count: "exact", head: true })
+          .is("read_at", null);
 
-      if (!cancelled) setUnread(count ?? 0);
+        if (error || cancelled) return;
+        setUnread(count ?? 0);
+      } catch {
+        // 开发环境偶发网络/会话问题，避免未捕获 Promise 触发 Next 红标
+      }
     }
 
-    run();
+    void run();
 
     return () => {
       cancelled = true;
+      ac.abort();
     };
   }, [supabase]);
 

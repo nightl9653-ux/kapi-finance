@@ -60,8 +60,23 @@ export function useAiUsage({
 
   useEffect(() => {
     if (!autoRefresh) return;
-    void refreshUsage();
-  }, [autoRefresh, refreshUsage]);
+    const ac = new AbortController();
+    void (async () => {
+      try {
+        const usageDate = getUsageDateRef.current();
+        const res = await fetch(`/api/ai-usage?usage_date=${encodeURIComponent(usageDate)}`, {
+          signal: ac.signal,
+        });
+        const data = (await res.json().catch(() => ({}))) as UsageResponse;
+        if (!res.ok || !data.ok) return;
+        if (typeof data.scan?.remaining === "number") setScanRemaining(data.scan.remaining);
+        if (includeVoice && typeof data.voice?.remaining === "number") setVoiceRemaining(data.voice.remaining);
+      } catch (e) {
+        if ((e as Error).name === "AbortError") return;
+      }
+    })();
+    return () => ac.abort();
+  }, [autoRefresh, includeVoice]);
 
   return {
     scanRemaining,

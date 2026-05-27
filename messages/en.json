@@ -172,6 +172,7 @@
     "voiceErrorRateLimit": "Daily voice limit reached. Try again tomorrow.",
     "voiceErrorRateLimitDetail": "Daily voice limit reached (0 remaining / {n} limit). Try again tomorrow.",
     "voiceErrorUnrecognized": "Could not parse any amount. Tip: say amounts clearly, e.g. “breakfast 20, metro 3, coffee 18”, or enter manually.",
+    "voiceErrorTranscribeModel": "Speech-to-text model unavailable: your gateway does not expose whisper-1 on the default route. In the DMX console, find a supported transcription model ID, set OPENAI_TRANSCRIBE_MODEL in .env.local, restart dev, and mirror the same on Vercel with Redeploy.",
     "aiPrivacyHint": "Privacy: images/audio are uploaded to the recognition service (DMXAPI/OpenAI) to generate structured results.",
     "recurringTitle": "Recurring",
     "recurringToggle": "Schedule",
@@ -381,7 +382,11 @@
         "pick": "Choose 2-year plan"
       }
     },
-    "checkoutNote": "Checkout (Creem / Polar / Lemon Squeezy, etc.) is not wired yet. Contact support if you need Plus before launch.",
+    "checkoutNote": "Plus activates within about a minute after payment (configure your payment webhook). Cancellations/refunds need a separate membership update.",
+    "signInToUpgrade": "Sign in to upgrade",
+    "comingSoon": "Checkout URL not configured",
+    "checkoutEnvHint": "Set PLUS_PLAN_MONTHLY_CHECKOUT_URL on Vercel and Redeploy. Sign in with a Free account to see the monthly button.",
+    "alreadyPlus": "You’re already on Plus",
     "creditPacks": {
       "title": "AI image add-on packs",
       "blurb": "Plus members can buy extra dream visuals when daily quota runs out. Valid 30 days; unused balance does not roll over. Daily quota is used first.",

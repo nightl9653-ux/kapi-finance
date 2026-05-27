@@ -2,10 +2,9 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 import { CreditPackCards } from "@/components/pricing/CreditPackCards";
-import { Button } from "@/components/ui/button";
+import { PlusPlanCards } from "@/components/pricing/PlusPlanCards";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { cn } from "@/lib/utils";
 
 type LocaleSeg = "zh" | "en";
 
@@ -37,8 +36,6 @@ export default async function PricingPage({
     }
   }
 
-  const planKeys = ["monthly", "quarterly", "yearly", "lifetime"] as const;
-
   return (
     <div className="space-y-10">
       <div className="rounded-3xl border bg-gradient-to-br from-[#F4EFEA] via-[#FAF9F7] to-[#EEE7DE] p-8">
@@ -65,46 +62,7 @@ export default async function PricingPage({
         ) : null}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {planKeys.map((key) => {
-          const recommended = key === "yearly";
-          return (
-            <div
-              key={key}
-              className={cn(
-                "relative flex flex-col rounded-2xl border bg-white/80 p-5 shadow-sm",
-                recommended && "ring-2 ring-[#8B5CF6]/35",
-              )}
-            >
-              {recommended ? (
-                <span className="absolute -top-2.5 left-4 rounded-full bg-[#8B5CF6] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                  {t(`plans.yearly.recommended`)}
-                </span>
-              ) : null}
-              <div className="text-sm font-medium text-muted-foreground">{t(`plans.${key}.name`)}</div>
-              <div className="mt-2 flex items-baseline gap-1">
-                <span className="text-2xl font-semibold tabular-nums">{t(`plans.${key}.price`)}</span>
-                <span className="text-sm text-muted-foreground">{t(`plans.${key}.period`)}</span>
-              </div>
-              <p className="mt-2 min-h-[2.5rem] text-xs text-muted-foreground">{t(`plans.${key}.sub`)}</p>
-              <Button
-                type="button"
-                disabled
-                className={cn(
-                  "mt-auto w-full rounded-full",
-                  recommended && "bg-[#8B5CF6] hover:bg-[#8B5CF6]",
-                )}
-                title={t("checkoutNote")}
-                aria-label={t(`plans.${key}.pick`)}
-              >
-                {t("ctaDisabledHint")}
-              </Button>
-            </div>
-          );
-        })}
-      </div>
-
-      <p className="text-center text-xs text-muted-foreground">{t("checkoutNote")}</p>
+      <PlusPlanCards locale={locale} signInHref={`/${locale}/auth`} />
 
       <CreditPackCards
         locale={locale}

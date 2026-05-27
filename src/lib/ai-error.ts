@@ -35,6 +35,8 @@ export function mapAiErrorCode({
         return t("voiceErrorUnrecognized");
       case "rate_limit":
         return t("voiceErrorRateLimitDetail", { n: nSafe });
+      case "transcribe_model_unavailable":
+        return t("voiceErrorTranscribeModel");
       default:
         // fallthrough to scan mapping for shared cases
         break;

@@ -54,7 +54,7 @@ export function getOpenAIScanConfig(): {
     apiKey,
     model: (process.env.OPENAI_SCAN_MODEL ?? process.env.DMX_SCAN_MODEL ?? "gpt-4o-mini").trim(),
     baseURL: baseURL || undefined,
-    // 兼容性优先：whisper-1 在多数 OpenAI-compatible 网关可用
+    // 默认 whisper-1；DMX 等网关常需在 .env 指定 OPENAI_TRANSCRIBE_MODEL（见 DMX 控制台转写模型列表）
     transcribeModel: (process.env.OPENAI_TRANSCRIBE_MODEL ?? process.env.DMX_TRANSCRIBE_MODEL ?? "whisper-1").trim(),
   };
 }

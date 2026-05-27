@@ -265,44 +265,53 @@ export function BulkTransactionsForm({
       setUsdToDisplay(1);
       return;
     }
-    let cancelled = false;
-    fetch(`/api/fx?from=USD&to=${encodeURIComponent(displayCurrency)}`)
+    const ac = new AbortController();
+    fetch(`/api/fx?from=USD&to=${encodeURIComponent(displayCurrency)}`, { signal: ac.signal })
       .then((r) => r.json().catch(() => ({})))
       .then((d: unknown) => {
-        if (cancelled) return;
+        if (ac.signal.aborted) return;
         const rate = Number((d as { rate?: unknown } | null | undefined)?.rate);
         setUsdToDisplay(Number.isFinite(rate) && rate > 0 ? rate : 1);
       })
-      .catch(() => {
-        if (!cancelled) setUsdToDisplay(1);
+      .catch((e) => {
+        if ((e as Error).name === "AbortError") return;
+        if (!ac.signal.aborted) setUsdToDisplay(1);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => ac.abort();
   }, [displayCurrency]);
 
   useEffect(() => {
     if (fxMode !== "auto") return;
-    let cancelled = false;
+    const ac = new AbortController();
     (async () => {
-      for (let i = 0; i < rows.length; i++) {
-        const cur = coerceCurrency(rows[i]?.currency);
-        if (cur === "USD") continue;
+      const currencies = fxCurrenciesKey.split("|").filter((c) => c && c !== "USD");
+      const unique = [...new Set(currencies)];
+      for (const cur of unique) {
+        if (ac.signal.aborted) return;
         try {
-          const r = await fetch(`/api/fx?from=${encodeURIComponent(cur)}&to=USD`).then((x) => x.json().catch(() => ({})));
-          if (cancelled) return;
-          const rate = Number((r as FxApiResponse | null | undefined)?.rate);
+          const res = await fetch(`/api/fx?from=${encodeURIComponent(cur)}&to=USD`, { signal: ac.signal });
+          const r = (await res.json().catch(() => ({}))) as FxApiResponse;
+          if (ac.signal.aborted) return;
+          const rate = Number(r?.rate);
           if (!Number.isFinite(rate) || rate <= 0) continue;
-          setRows((prev) => prev.map((row, idx) => (idx === i ? { ...row, fx_rate: String(rate) } : row)));
-        } catch {
-          // ignore
+          const rateStr = String(rate);
+          setRows((prev) => {
+            let changed = false;
+            const next = prev.map((row) => {
+              if (coerceCurrency(row.currency) !== cur) return row;
+              if (row.fx_rate === rateStr) return row;
+              changed = true;
+              return { ...row, fx_rate: rateStr };
+            });
+            return changed ? next : prev;
+          });
+        } catch (e) {
+          if ((e as Error).name === "AbortError") return;
         }
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [fxMode, fxCurrenciesKey, rows]);
+    return () => ac.abort();
+  }, [fxMode, fxCurrenciesKey]);
 
   const payload = useMemo(
     () =>

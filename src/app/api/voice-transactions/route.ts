@@ -30,6 +30,15 @@ function parseLocale(raw: FormData): string {
   return String(raw.get("locale") ?? "en").trim() || "en";
 }
 
+function isTranscribeModelUnavailable(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { code?: string; error?: { code?: string }; message?: string };
+  if (e.code === "model_not_found") return true;
+  if (e.error?.code === "model_not_found") return true;
+  const msg = typeof e.message === "string" ? e.message : err instanceof Error ? err.message : "";
+  return /model_not_found|No available channel for model/i.test(msg);
+}
+
 export async function POST(req: Request) {
   if (!isSupabaseConfigured) {
     return NextResponse.json({ ok: false, error: "supabase_not_configured" }, { status: 503 });
@@ -108,6 +117,16 @@ export async function POST(req: Request) {
     if (!transcriptText) return NextResponse.json({ ok: false, error: "unrecognized" }, { status: 422 });
   } catch (e) {
     console.error("voice-transcribe openai", e);
+    if (isTranscribeModelUnavailable(e)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "transcribe_model_unavailable",
+          model: openai.transcribeModel,
+        },
+        { status: 503 },
+      );
+    }
     return NextResponse.json({ ok: false, error: "openai_failed" }, { status: 502 });
   }
 
