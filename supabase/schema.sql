@@ -1,4 +1,4 @@
--- Supabase schema for 咔皮·家庭财务规划平台
+-- Supabase schema for 咔账·家庭财务规划平台
 -- Note: In Supabase, `gen_random_uuid()` requires `pgcrypto`.
 create extension if not exists "pgcrypto";
 
@@ -11,6 +11,9 @@ create table if not exists profiles (
   occupation text,
   fixed_expenses jsonb default '[]',
   is_plus_member boolean default false,
+  terms_version text,
+  terms_accepted_at timestamptz,
+  sanctions_attested_at timestamptz,
   created_at timestamp default now(),
   updated_at timestamp default now()
 );

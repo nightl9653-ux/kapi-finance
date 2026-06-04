@@ -1,19 +1,42 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
+import { FeatureGuestLanding } from "@/components/marketing/FeatureGuestLanding";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { Locale } from "@/i18n/locales";
+import { isSupabaseConfigured } from "@/lib/env";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function SettingsPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const { locale: raw } = await params;
+  const locale = (raw === "zh" ? "zh" : "en") as Locale;
   const nav = await getTranslations("nav");
   const t = await getTranslations("transactions");
   const s = await getTranslations("settingsPage");
   const qr = await getTranslations("quickRecord");
+
+  if (isSupabaseConfigured) {
+    const supabase = await createSupabaseServerClient();
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) {
+      return (
+        <FeatureGuestLanding
+          locale={locale}
+          feature="settings"
+          signInNext={`/${locale}/settings`}
+        />
+      );
+    }
+  } else {
+    return (
+      <FeatureGuestLanding locale={locale} feature="settings" signInNext={`/${locale}/settings`} />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -44,4 +67,3 @@ export default async function SettingsPage({
     </div>
   );
 }
-

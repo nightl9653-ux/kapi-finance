@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import type { Locale } from "@/i18n/locales";
+import { FeatureGuestLanding } from "@/components/marketing/FeatureGuestLanding";
 import { QuickRecordClient } from "@/components/quick-record/QuickRecordClient";
 import { ClearFlashParams } from "@/components/transactions/ClearFlashParams";
 import { getAiUsageLimit } from "@/lib/ai-usage-limits";
@@ -28,7 +28,9 @@ export default async function QuickRecordPage({ params }: { params: Promise<{ lo
   const supabase = await createSupabaseServerClient();
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError || !auth.user) {
-    redirect(`/${locale}/auth?next=${encodeURIComponent(`/${locale}/quick-record`)}`);
+    return (
+      <FeatureGuestLanding locale={locale} feature="quickRecord" signInNext={`/${locale}/quick-record`} />
+    );
   }
 
   const isPlus = await fetchUserIsPlusMember(supabase, auth.user.id);

@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 
 import { appendPackCheckoutMetadata } from "@/lib/billing-checkout-url";
+import { billingLocaleFromRequest, billingRequestOrigin } from "@/lib/billing-request";
+import { pricingCheckoutSuccessUrl } from "@/lib/billing-success-url";
 import { CREDIT_PACK_IDS, CREDIT_PACKS, getCreditPackCheckoutUrl } from "@/lib/credit-packs";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const origin = billingRequestOrigin(req);
+  const locale = billingLocaleFromRequest(req);
+  const successUrl = pricingCheckoutSuccessUrl(origin, locale);
   const packs = CREDIT_PACK_IDS.map((id) => {
     const def = CREDIT_PACKS[id];
     return {
@@ -35,7 +40,9 @@ export async function GET() {
     for (const id of CREDIT_PACK_IDS) {
       const def = CREDIT_PACKS[id];
       const base = getCreditPackCheckoutUrl(def);
-      if (base) checkout_urls[id] = appendPackCheckoutMetadata(base, auth.user.id, id);
+      if (base) {
+        checkout_urls[id] = appendPackCheckoutMetadata(base, auth.user.id, id, { successUrl });
+      }
     }
   }
 

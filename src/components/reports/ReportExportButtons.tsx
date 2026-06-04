@@ -60,7 +60,7 @@ export function ReportExportButtons({ locale, viewingYm, copy, current, trend, t
     const all: (string | number | boolean)[][] = [header, ...categoryRows, ...summary];
     const text = toCsvTable(all);
     const lang = locale === "zh" ? "zh" : "en";
-    downloadBlob(`kapi-reports-month-${safeYm}-${lang}.csv`, text);
+    downloadBlob(`kash-reports-month-${safeYm}-${lang}.csv`, text);
   }, [copy, current, locale, safeYm]);
 
   const onExportTrend = useCallback(() => {
@@ -68,7 +68,7 @@ export function ReportExportButtons({ locale, viewingYm, copy, current, trend, t
     const dataRows = trend.map((r) => [r.ym, r.income.toFixed(2), r.expense.toFixed(2), r.net.toFixed(2)]);
     const text = toCsvTable([h as unknown as (string | number | boolean)[], ...dataRows]);
     const lang = locale === "zh" ? "zh" : "en";
-    downloadBlob(`kapi-reports-trend-${trendFileSuffix}-${lang}.csv`, text);
+    downloadBlob(`kash-reports-trend-${trendFileSuffix}-${lang}.csv`, text);
   }, [copy, locale, trend, trendFileSuffix]);
 
   return (

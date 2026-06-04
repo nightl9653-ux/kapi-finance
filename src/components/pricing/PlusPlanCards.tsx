@@ -30,7 +30,7 @@ export function PlusPlanCards({
     let cancelled = false;
     void (async () => {
       try {
-        const res = await fetch("/api/plus-checkout");
+        const res = await fetch(`/api/plus-checkout?locale=${encodeURIComponent(locale)}`);
         const json = (await res.json()) as PlusCheckoutResponse;
         if (!cancelled) setData(json);
       } catch {
@@ -42,7 +42,7 @@ export function PlusPlanCards({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [locale]);
 
   const tier = data?.tier;
   const urls = data?.checkout_urls ?? {};

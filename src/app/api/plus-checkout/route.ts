@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 
 import { appendPlusCheckoutMetadata } from "@/lib/billing-checkout-url";
+import { billingLocaleFromRequest, billingRequestOrigin } from "@/lib/billing-request";
+import { pricingCheckoutSuccessUrl } from "@/lib/billing-success-url";
 import { isSupabaseConfigured } from "@/lib/env";
 import { PLUS_PLAN_IDS, PLUS_PLANS, getPlusPlanCheckoutUrl } from "@/lib/plus-plans";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const origin = billingRequestOrigin(req);
+  const locale = billingLocaleFromRequest(req);
+  const successUrl = pricingCheckoutSuccessUrl(origin, locale);
   const plans = PLUS_PLAN_IDS.map((id) => {
     const def = PLUS_PLANS[id];
     return {
@@ -32,7 +37,9 @@ export async function GET() {
     for (const id of PLUS_PLAN_IDS) {
       const def = PLUS_PLANS[id];
       const base = getPlusPlanCheckoutUrl(def);
-      if (base) checkout_urls[id] = appendPlusCheckoutMetadata(base, auth.user.id, id);
+      if (base) {
+        checkout_urls[id] = appendPlusCheckoutMetadata(base, auth.user.id, id, { successUrl });
+      }
     }
   }
 

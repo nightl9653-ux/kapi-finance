@@ -115,7 +115,7 @@ export async function buildAssistantContextBlock(
 
   if (locale === "zh") {
     const lines = [
-      "【咔皮已知的简要画像（来自应用内真实汇总，用于把建议说具体；禁止编造下面未出现的事实；金额为 USD 本位，仅作量级参考）】",
+      "【咔账已知的简要画像（来自应用内真实汇总，用于把建议说具体；禁止编造下面未出现的事实；金额为 USD 本位，仅作量级参考）】",
       `- 资料「月收入」：${monthlyIncome != null ? `约 ${monthlyIncome.toFixed(0)} USD` : "未填写"}`,
       `- 财务目标：${goalNames.length ? `${goalNames.slice(0, 6).join("、")}（共 ${goalNames.length} 个）` : "尚未创建"}`,
       `- 本月是否已有 AI 预算方案：${hasBudget ? "是" : "否"}`,
@@ -134,7 +134,7 @@ export async function buildAssistantContextBlock(
   }
 
   const lines = [
-    "[Kapi snapshot from this user's data—personalize but never invent facts not listed; amounts are USD base, approximate.]",
+    "[Kash snapshot from this user's data—personalize but never invent facts not listed; amounts are USD base, approximate.]",
     `- Profile monthly income hint: ${monthlyIncome != null ? `~${monthlyIncome.toFixed(0)} USD` : "not set"}`,
     `- Financial goals: ${goalNames.length ? `${goalNames.slice(0, 6).join(", ")} (${goalNames.length} total)` : "none yet"}`,
     `- AI budget plan for this calendar month: ${hasBudget ? "yes" : "no"}`,

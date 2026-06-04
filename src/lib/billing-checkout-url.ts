@@ -1,14 +1,37 @@
+export type BillingCheckoutExtras = {
+  /** Creem：付完款跳转地址（按用户 locale）；见 https://docs.creem.io/features/checkout/checkout-api */
+  successUrl?: string;
+};
+
 /** 为 Lemon Squeezy / 同类 Checkout 附加 user_id、pack_id（需在支付平台 webhook 回传或自定义字段读取） */
-export function appendPackCheckoutMetadata(baseUrl: string, userId: string, packId: string): string {
-  return appendBillingCheckoutMetadata(baseUrl, { user_id: userId, pack_id: packId });
+export function appendPackCheckoutMetadata(
+  baseUrl: string,
+  userId: string,
+  packId: string,
+  extras?: BillingCheckoutExtras,
+): string {
+  return appendBillingCheckoutMetadata(baseUrl, { user_id: userId, pack_id: packId }, extras);
 }
 
 /** Plus 订阅 Checkout：自定义字段 `user_id` + `plan_id` */
-export function appendPlusCheckoutMetadata(baseUrl: string, userId: string, planId: string): string {
-  return appendBillingCheckoutMetadata(baseUrl, { user_id: userId, plan_id: planId });
+export function appendPlusCheckoutMetadata(
+  baseUrl: string,
+  userId: string,
+  planId: string,
+  extras?: BillingCheckoutExtras,
+): string {
+  return appendBillingCheckoutMetadata(
+    baseUrl,
+    { user_id: userId, plan_id: planId },
+    extras,
+  );
 }
 
-function appendBillingCheckoutMetadata(baseUrl: string, fields: Record<string, string>): string {
+function appendBillingCheckoutMetadata(
+  baseUrl: string,
+  fields: Record<string, string>,
+  extras?: BillingCheckoutExtras,
+): string {
   try {
     const u = new URL(baseUrl);
     const isCreem = u.hostname.includes("creem.io");
@@ -21,6 +44,9 @@ function appendBillingCheckoutMetadata(baseUrl: string, fields: Record<string, s
         // Lemon Squeezy 等
         u.searchParams.set(`checkout[custom][${key}]`, value);
       }
+    }
+    if (isCreem && extras?.successUrl) {
+      u.searchParams.set("success_url", extras.successUrl);
     }
     return u.href;
   } catch {

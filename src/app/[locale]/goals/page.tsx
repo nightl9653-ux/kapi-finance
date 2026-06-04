@@ -15,6 +15,7 @@ import { GoalTypePicker } from "@/components/goals/GoalTypePicker";
 import { TransactionsCurrencyPicker } from "@/components/transactions/TransactionsCurrencyPicker";
 import { FundPoolPlanner } from "@/components/goals/FundPoolPlanner";
 import { DreamTheater } from "@/components/goals/DreamTheater";
+import { FeatureGuestLanding } from "@/components/marketing/FeatureGuestLanding";
 
 type TxRow = { type: string | null; amount_base: number | null; timestamp: string | null };
 
@@ -266,7 +267,7 @@ export default async function GoalsPage({
   const supabase = await createSupabaseServerClient();
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError || !auth.user) {
-    redirect(`/${locale}/auth?next=${encodeURIComponent(`/${locale}/goals`)}`);
+    return <FeatureGuestLanding locale={locale} feature="goals" signInNext={`/${locale}/goals`} />;
   }
 
   const [{ data: profile }, { data: goals, error }] = await Promise.all([

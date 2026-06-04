@@ -27,6 +27,7 @@ import { ScrollTransactionEditIntoView } from "@/components/transactions/ScrollT
 import { TransactionsCurrencyPicker } from "@/components/transactions/TransactionsCurrencyPicker";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { FeatureGuestLanding } from "@/components/marketing/FeatureGuestLanding";
 
 
 function isoTimestampToDatetimeLocal(value: string | null | undefined): string {
@@ -369,7 +370,7 @@ export default async function TransactionsPage({
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError || !auth.user) {
     const returnTo = transactionsAuthReturnPath(locale, sp);
-    redirect(`/${locale}/auth?next=${encodeURIComponent(returnTo)}`);
+    return <FeatureGuestLanding locale={locale} feature="transactions" signInNext={returnTo} />;
   }
 
   // 自动生成到期的周期性账单（无 cron 的情况下在访问时补齐）

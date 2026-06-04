@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { ReportExportButtons } from "@/components/reports/ReportExportButtons";
 import { OrnamentDivider } from "@/components/reports/OrnamentDivider";
@@ -9,6 +8,7 @@ import { ReportsCurrencyPicker } from "@/components/reports/ReportsCurrencyPicke
 import { DashboardMonthPicker } from "@/components/dashboard/DashboardMonthPicker";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/i18n/locales";
+import { FeatureGuestLanding } from "@/components/marketing/FeatureGuestLanding";
 import { reportsAuthReturnPath } from "@/lib/auth-return-path";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -172,7 +172,7 @@ export default async function ReportsPage({
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError || !auth.user) {
     const returnTo = reportsAuthReturnPath(locale, sp);
-    redirect(`/${locale}/auth?next=${encodeURIComponent(returnTo)}`);
+    return <FeatureGuestLanding locale={locale} feature="reports" signInNext={returnTo} />;
   }
 
   const { data: rows } = await supabase

@@ -3,9 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import type { Locale } from "@/i18n/locales";
-import { dashboardAuthReturnPath } from "@/lib/auth-return-path";
 import { isSupabaseConfigured } from "@/lib/env";
 import { DashboardMonthPicker } from "@/components/dashboard/DashboardMonthPicker";
+import { HomeGuestLanding } from "@/components/marketing/HomeGuestLanding";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type DayAgg = { count: number; income: number; expense: number };
@@ -84,8 +84,7 @@ export default async function DashboardPage({
   const supabase = await createSupabaseServerClient();
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError || !auth.user) {
-    const returnTo = dashboardAuthReturnPath(locale, sp);
-    redirect(`/${locale}/auth?next=${encodeURIComponent(returnTo)}`);
+    return <HomeGuestLanding locale={locale} />;
   }
 
   const { data: rows } = await supabase

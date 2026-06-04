@@ -1,6 +1,6 @@
 {
-  "name": "咔皮·家庭财务规划",
-  "short_name": "咔皮记账",
+  "name": "咔账·家庭财务规划",
+  "short_name": "咔账记账",
   "description": "家庭财务规划与记账 PWA",
   "start_url": "/zh",
   "scope": "/",

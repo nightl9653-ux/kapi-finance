@@ -47,7 +47,7 @@ export function CreditPackCards(props: {
     let cancelled = false;
     void (async () => {
       try {
-        const res = await fetch("/api/credit-packs");
+        const res = await fetch(`/api/credit-packs?locale=${encodeURIComponent(locale)}`);
         const json = (await res.json()) as CreditPacksResponse;
         if (!cancelled) setData(json);
       } catch {
@@ -59,7 +59,7 @@ export function CreditPackCards(props: {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [locale]);
 
   const packs = data?.packs ?? [];
   const tier = data?.tier;

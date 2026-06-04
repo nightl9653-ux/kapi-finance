@@ -1,11 +1,10 @@
 import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
-
 import type { Locale } from "@/i18n/locales";
 import { fetchExpenseTotalsByCategory } from "@/lib/budget-progress";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AIAssistantChat } from "@/components/ai-assistant/AIAssistantChat";
+import { FeatureGuestLanding } from "@/components/marketing/FeatureGuestLanding";
 import { BudgetPlanCard } from "@/components/ai-assistant/BudgetPlanCard";
 
 function monthStartISO(): string {
@@ -36,7 +35,9 @@ export default async function AIAssistantPage({ params }: { params: Promise<{ lo
   const supabase = await createSupabaseServerClient();
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError || !auth.user) {
-    redirect(`/${locale}/auth?next=${encodeURIComponent(`/${locale}/ai-assistant`)}`);
+    return (
+      <FeatureGuestLanding locale={locale} feature="aiAssistant" signInNext={`/${locale}/ai-assistant`} />
+    );
   }
 
   const month = monthStartISO();

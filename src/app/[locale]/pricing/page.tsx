@@ -1,8 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { CreditPackCards } from "@/components/pricing/CreditPackCards";
 import { PlusPlanCards } from "@/components/pricing/PlusPlanCards";
+import { PricingCheckoutFlash } from "@/components/pricing/PricingCheckoutFlash";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -38,6 +40,10 @@ export default async function PricingPage({
 
   return (
     <div className="space-y-10">
+      <Suspense fallback={null}>
+        <PricingCheckoutFlash />
+      </Suspense>
+
       <div className="rounded-3xl border bg-gradient-to-br from-[#F4EFEA] via-[#FAF9F7] to-[#EEE7DE] p-8">
         <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{t("subtitle")}</p>

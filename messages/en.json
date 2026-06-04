@@ -1,6 +1,6 @@
 {
   "nav": {
-    "brand": "Kapi · Family Finance",
+    "brand": "Kash · Family Finance",
     "dashboard": "Dashboard",
     "goals": "Goals",
     "transactions": "Transactions",
@@ -343,7 +343,7 @@
     "iosPitch": "On iPhone/iPad, prefer the official “Shortcuts + clipboard” flow on the quick record page—after a one-time setup it’s much faster than only using the gallery picker."
   },
   "pricing": {
-    "title": "Kapi Plus",
+    "title": "Kash Plus",
     "subtitle": "Unlimited financial goals and more. Prices are in USD; payments will arrive in a later release.",
     "badgePlus": "Plus",
     "badgeFree": "Free",
@@ -382,6 +382,7 @@
         "pick": "Choose 2-year plan"
       }
     },
+    "checkoutSuccess": "Payment received! Plus or add-on credits usually appear within about a minute—refresh this page if your status hasn’t updated.",
     "checkoutNote": "Plus activates within about a minute after payment (configure your payment webhook). Cancellations/refunds need a separate membership update.",
     "signInToUpgrade": "Sign in to upgrade",
     "comingSoon": "Checkout URL not configured",
@@ -450,6 +451,249 @@
     "signUp": "Create account",
     "continueWithGoogle": "Continue with Google",
     "signOut": "Sign out",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "signUpSuccess": "Sign-up request submitted.",
+    "signUpConfirmEmail": "Check your email and click the confirmation link, then sign in.",
+    "legalConsentPrefix": "I have read and agree to the",
+    "legalConsentAnd": "and",
+    "legalConsentSuffix": ".",
+    "legalTermsLink": "Terms of Service",
+    "legalPrivacyLink": "Privacy Policy",
+    "legalConsentRequired": "Please accept the Terms of Service and Privacy Policy to create an account.",
+    "legalConsentHint": "Both boxes are required to register. Sign-in only does not need them.",
+    "sanctionsAttestLabel": "I am not located in, ordinarily resident in, or a national of any sanctioned, embargoed, or restricted jurisdiction described in the Terms of Service, and I am not using the service on behalf of any prohibited person or entity.",
+    "sanctionsAttestRequired": "Please confirm you are not in a sanctioned or restricted region to create an account."
+  },
+  "regionBlocked": {
+    "title": "Service not available in your region",
+    "body": "Kash is not offered in your location based on our compliance screening (including sanctions, embargoes, and export-control rules). Access, registration, and payments from restricted jurisdictions are prohibited.",
+    "noLiability": "We disclaim all liability for any attempt to use the service from a restricted region. Do not use VPNs or other means to circumvent these restrictions.",
+    "contact": "If you believe this is an error, email support@919145.xyz with your country of residence. We are not obligated to restore access.",
+    "readTerms": "Read Terms of Service (sanctions section)"
+  },
+  "footer": {
+    "tagline": "Kash helps households plan goals, track spending, and use AI-assisted budgeting.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "pricing": "Pricing",
+    "copyright": "© {year} Kash · Family Finance"
+  },
+  "guestLanding": {
+    "badge": "Sign in to use this feature",
+    "viewPricing": "View pricing",
+    "signInNote": "Free accounts include core tracking; Plus unlocks higher AI limits and unlimited goals.",
+    "goals": {
+      "lead": "Set savings targets, prioritize goals, allocate monthly net income, and visualize progress with Dream Theater.",
+      "bullets": [
+        "Track housing, travel, emergency fund, and custom goals",
+        "Fund pool planner with hard savings ratio",
+        "Net income stats by month, quarter, and year",
+        "Dream Theater stories and visuals (Plus for advanced media)"
+      ]
+    },
+    "transactions": {
+      "lead": "Record income and expenses in multiple currencies, import CSV, and create recurring bills.",
+      "bullets": [
+        "Manual entry with categories and FX to USD base",
+        "Bulk entry with receipt scan and voice (daily AI limits apply)",
+        "Recurring bills auto-materialize on visit",
+        "CSV import for up to 200 rows"
+      ]
+    },
+    "quickRecord": {
+      "lead": "Fast path for everyday purchases: share a payment screenshot, use voice, or paste from clipboard.",
+      "bullets": [
+        "PWA share target on Android",
+        "iOS Shortcuts + clipboard workflow",
+        "AI pre-fills amounts and categories—you confirm before saving",
+        "Same daily scan quota as receipt scan on the transactions page"
+      ]
+    },
+    "aiAssistant": {
+      "lead": "Ask budgeting questions in plain language and generate a monthly AI budget plan from your history.",
+      "bullets": [
+        "Chat assistant for saving and allocation guidance",
+        "AI budget caps by category from ~3 months of data",
+        "Progress tracking against budget lines",
+        "Daily message limits; higher on Plus"
+      ]
+    },
+    "reports": {
+      "lead": "View monthly income, spending, category mix, and multi-month trends—with CSV export.",
+      "bullets": [
+        "Monthly income, expense, and net totals",
+        "Spending and income by category",
+        "Trend window from 3 to 24 months",
+        "Export current month and trend CSV"
+      ]
+    },
+    "settings": {
+      "lead": "PWA install tips, quick-record shortcuts, recurring bills links, and account preferences (expanding).",
+      "bullets": [
+        "Android share-to-PWA and iOS Shortcuts guidance",
+        "Links to quick record and recurring bills",
+        "Language switch and pricing plans",
+        "Manage account and Plus status after sign-in"
+      ]
+    }
+  },
+  "homeLanding": {
+    "heroTitle": "Family finance planning that stays simple",
+    "heroSubtitle": "Goals, calendar dashboard, multi-currency transactions, AI receipt scan, voice entry, reports, and Dream Theater—built for households, not spreadsheets.",
+    "viewPricing": "See Plus plans",
+    "learnMore": "Learn more",
+    "features": [
+      {
+        "title": "Goals & fund pool",
+        "body": "Prioritize savings targets and allocate monthly net income across goals.",
+        "href": "/goals"
+      },
+      {
+        "title": "Transactions",
+        "body": "Log spending and income with FX, recurring bills, and CSV import.",
+        "href": "/transactions"
+      },
+      {
+        "title": "Quick record",
+        "body": "Screenshot or voice → AI pre-fill → confirm and save.",
+        "href": "/quick-record"
+      },
+      {
+        "title": "AI assistant",
+        "body": "Chat for guidance and generate monthly budget plans.",
+        "href": "/ai-assistant"
+      }
+    ]
+  },
+  "legalPrivacy": {
+    "title": "Privacy Policy",
+    "updated": "Last updated: June 1, 2026",
+    "intro": "This policy describes how Kash · Family Finance (“Kash”, “we”) handles information when you use our web app. Contact: support@919145.xyz. Use from sanctioned or otherwise restricted jurisdictions is not permitted—see our Terms of Service.",
+    "sections": [
+      {
+        "title": "Information we collect",
+        "paragraphs": [
+          "Account data: email and authentication identifiers from Supabase Auth (including Google sign-in if enabled).",
+          "Financial data you enter: transactions, goals, budgets, recurring bills, notifications, and related preferences stored in our database (Supabase).",
+          "AI inputs: receipt images, audio recordings, and chat messages you submit for recognition or assistant features.",
+          "Usage data: daily AI quota counters and technical logs needed to operate and secure the service."
+        ]
+      },
+      {
+        "title": "How we use information",
+        "paragraphs": [
+          "To provide bookkeeping, goals, reports, budgets, and AI-assisted features you request.",
+          "To process Plus membership and add-on purchases via our payment partner (Creem) and apply entitlements to your account.",
+          "To enforce rate limits, prevent abuse, and improve reliability.",
+          "We do not sell your personal information."
+        ]
+      },
+      {
+        "title": "Service providers",
+        "paragraphs": [
+          "Hosting: Vercel (application delivery).",
+          "Database & auth: Supabase.",
+          "AI recognition & chat: OpenAI-compatible gateways (e.g. DMXAPI) configured on our servers—your images/audio/prompts are sent only when you use those features.",
+          "Payments: Creem checkout and webhooks for membership and credit packs.",
+          "Exchange rates: Frankfurter (public FX API) for display conversions."
+        ]
+      },
+      {
+        "title": "Retention & security",
+        "paragraphs": [
+          "We retain account and financial records while your account is active. You may request deletion by contacting support@919145.xyz.",
+          "Data is protected by access controls, HTTPS, and row-level security in the database. No method of transmission is 100% secure.",
+          "AI uploads are processed to return structured results; we do not use them for unrelated advertising."
+        ]
+      },
+      {
+        "title": "Your choices",
+        "paragraphs": [
+          "You can sign out, export reports where available, and stop using AI features that upload media.",
+          "Browser local settings (language, PWA install) stay on your device.",
+          "Where required by law, you may request access, correction, or deletion of personal data via support@919145.xyz."
+        ]
+      },
+      {
+        "title": "Geographic restrictions & compliance",
+        "paragraphs": [
+          "Kash is not offered to individuals or entities in jurisdictions subject to comprehensive sanctions, embargoes, or similar restrictions under applicable law (including U.S., EU, UK, UN, or other programs), or in disputed or high-risk territories where we choose not to operate.",
+          "We may use technical signals (e.g. IP, payment, or account indicators) to restrict access. We are not obligated to provide service where doing so would violate export-control, sanctions, or anti-boycott rules.",
+          "If we learn you accessed the service from a restricted location or in breach of law, we may delete or disable your account and data without notice. We have no duty to retain data for such users and disclaim liability for doing so."
+        ]
+      },
+      {
+        "title": "Children & changes",
+        "paragraphs": [
+          "Kash is not directed at children under 13 (or the minimum age in your jurisdiction).",
+          "We may update this policy; the “Last updated” date will change. Continued use after changes means you accept the revised policy."
+        ]
+      }
+    ]
+  },
+  "legalTerms": {
+    "title": "Terms of Service",
+    "updated": "Last updated: June 1, 2026",
+    "intro": "These terms govern your use of Kash · Family Finance. By creating an account or using the app, you agree to them—including strict restrictions on sanctioned, embargoed, and other prohibited regions. Questions: support@919145.xyz.",
+    "sections": [
+      {
+        "title": "The service",
+        "paragraphs": [
+          "Kash provides personal and household finance tools: transaction tracking, goals, reports, AI-assisted entry, budgeting chat, and optional Plus membership features.",
+          "Features may change; we strive to keep core bookkeeping available on the Free plan as described on the pricing page.",
+          "Kash is not a bank, broker, tax advisor, or licensed financial planner. Outputs are informational only."
+        ]
+      },
+      {
+        "title": "Accounts",
+        "paragraphs": [
+          "You must provide accurate registration information and keep credentials secure.",
+          "You are responsible for activity under your account.",
+          "We may suspend accounts that violate these terms or pose security risk."
+        ]
+      },
+      {
+        "title": "Subscriptions & payments",
+        "paragraphs": [
+          "Plus plans and AI add-on packs are sold via Creem checkout links. Prices are shown on the pricing page in USD.",
+          "We do not solicit, accept, or fulfill paid subscriptions from persons or payment methods associated with sanctioned, embargoed, or otherwise restricted jurisdictions. Any payment we discover to be prohibited may be rejected, reversed, or left unfulfilled without liability to you.",
+          "Entitlements typically apply within about a minute after successful payment via webhook; refresh if status lags.",
+          "Refunds and cancellations follow Creem and our support policy—contact support@919145.xyz for billing help."
+        ]
+      },
+      {
+        "title": "Sanctions, export controls & restricted regions",
+        "paragraphs": [
+          "You may not use Kash if you are located in, ordinarily resident in, a citizen or national of, or organized under the laws of any jurisdiction subject to comprehensive sanctions, embargoes, or similar restrictions (including programs administered by the U.S., EU, UK, UN, or other authorities), or any territory we designate as unavailable due to sanctions, export-control, or political risk—including disputed areas where we do not intend to offer service.",
+          "You represent and warrant that you are not on any denied-party, restricted, or sanctions list; that you will not use the service on behalf of any such person or entity; and that your use complies with all applicable export-control, sanctions, and anti-boycott laws.",
+          "We may refuse registration, block access, suspend or terminate accounts, cancel subscriptions, withhold features, and delete data—at any time, with or without notice—if we believe you are in a restricted region, misrepresented your location, or pose a compliance risk. We owe no duty to you in such cases.",
+          "TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE DISCLAIM ALL LIABILITY—CONTRACT, TORT, OR OTHERWISE—FOR ANY ACCESS, USE, DATA LOSS, PAYMENT, OR HARM ARISING FROM (i) USE IN OR FROM A RESTRICTED JURISDICTION, (ii) VIOLATION OF SANCTIONS OR EXPORT RULES, (iii) OUR ENFORCEMENT ACTIONS, OR (iv) RELIANCE ON THE SERVICE WHERE PROHIBITED. YOU USE KAPI AT YOUR OWN RISK IN YOUR JURISDICTION.",
+          "You agree to indemnify and hold us harmless from any claim, fine, penalty, or cost (including reasonable legal fees) arising from your breach of this section or applicable sanctions/export laws."
+        ]
+      },
+      {
+        "title": "Acceptable use & AI",
+        "paragraphs": [
+          "Do not upload unlawful content, attempt to break rate limits, or interfere with the service.",
+          "AI results may be inaccurate; always verify amounts and categories before saving.",
+          "You grant us permission to process content you submit to AI features solely to provide those features."
+        ]
+      },
+      {
+        "title": "Disclaimer & liability",
+        "paragraphs": [
+          "The service is provided “as is” without warranties of uninterrupted or error-free operation, fitness for a particular purpose, or lawful use in your location.",
+          "To the maximum extent permitted by law, we are not liable for indirect, incidental, special, consequential, or punitive damages, or for lost profits, data, or goodwill, arising from use of Kash—including where access was unauthorized or contrary to these terms.",
+          "You agree to indemnify us against claims caused by your misuse of the service, breach of these terms, or violation of sanctions, export-control, or other applicable laws."
+        ]
+      },
+      {
+        "title": "Governing law & contact",
+        "paragraphs": [
+          "These terms are governed by the laws applicable to the operator of Kash, without regard to conflict-of-law rules.",
+          "For notices or disputes, email support@919145.xyz first so we can try to resolve the issue informally."
+        ]
+      }
+    ]
   }
 }
