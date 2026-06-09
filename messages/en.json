@@ -344,7 +344,7 @@
   },
   "pricing": {
     "title": "Kash Plus",
-    "subtitle": "Unlimited financial goals and more. Prices are in USD; payments will arrive in a later release.",
+    "subtitle": "Unlimited financial goals and more. Prices are in USD; sign in to purchase securely via Creem checkout.",
     "badgePlus": "Plus",
     "badgeFree": "Free",
     "youArePlus": "You're on Plus—thank you for your support.",
@@ -383,10 +383,11 @@
       }
     },
     "checkoutSuccess": "Payment received! Plus or add-on credits usually appear within about a minute—refresh this page if your status hasn’t updated.",
-    "checkoutNote": "Plus activates within about a minute after payment (configure your payment webhook). Cancellations/refunds need a separate membership update.",
-    "signInToUpgrade": "Sign in to upgrade",
-    "comingSoon": "Checkout URL not configured",
-    "checkoutEnvHint": "Set PLUS_PLAN_MONTHLY_CHECKOUT_URL on Vercel and Redeploy. Sign in with a Free account to see the monthly button.",
+    "checkoutNote": "Plus usually activates within about a minute after payment. Questions? Email support@919145.xyz.",
+    "signInToUpgrade": "Sign in to purchase",
+    "signInToPurchase": "Sign in to purchase",
+    "comingSoon": "Coming soon",
+    "checkoutEnvHint": "",
     "alreadyPlus": "You’re already on Plus",
     "creditPacks": {
       "title": "AI image add-on packs",
@@ -394,7 +395,7 @@
       "plusOnly": "Add-on packs are for Plus members only.",
       "validDays": "Valid for {days} days after purchase",
       "buy": "Buy",
-      "comingSoon": "Checkout link pending",
+      "comingSoon": "Coming soon",
       "standard": {
         "title": "Standard visual pack",
         "desc": "+20 standard shots (~3 full standard runs) · $2.99"
@@ -404,7 +405,7 @@
         "desc": "+10 HQ shots (~3 full HQ runs) · $2.99"
       }
     },
-    "ctaDisabledHint": "Checkout coming soon",
+    "ctaDisabledHint": "",
     "compareTitle": "Free vs Plus",
     "compareFeatureColumn": "Feature",
     "compareBlurb": "Details may change as the product evolves; in-app rules win.",

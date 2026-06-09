@@ -20,6 +20,7 @@ import {
   dreamVisualUsageDateUtc,
   chargeDreamVisualTask,
 } from "@/lib/dream-visual-usage";
+import { assertCreemPromptAllowed, assertCreemUserInputsAllowed } from "@/lib/creem-moderation";
 import { getDreamImageConfig, getDmxVideoConfig, getOpenAIDreamConfig } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
@@ -1697,10 +1698,18 @@ async function generateOneImage(params: {
   shotIdx: number;
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
   bucketPathPrefix: string;
+  moderationExternalId?: string;
 }): Promise<string> {
+  const composed = finalizeImagePromptForApi(composeFinalImagePrompt(params.prompt, params.goalType));
+  await assertCreemPromptAllowed({
+    prompt: composed,
+    externalId: params.moderationExternalId
+      ? `${params.moderationExternalId}:shot_${params.shotIdx + 1}`
+      : undefined,
+  });
   const payload = {
     model: params.model,
-    prompt: finalizeImagePromptForApi(composeFinalImagePrompt(params.prompt, params.goalType)),
+    prompt: composed,
     size: DREAM_IMAGE_SIZE,
     n: 1,
     // 优先要 b64_json：避免部分网关返回的外链域名在某些网络下无法解析
@@ -1756,6 +1765,11 @@ export async function submitDreamVisualJob(input: { storyId: string; highQuality
 
   const goalTypeStr = String(goal.type ?? "");
   const storyBody = String(story.content ?? "");
+  const moderationUserId = `user_${auth.user.id}`;
+  await assertCreemUserInputsAllowed({
+    parts: [story.keywords, story.free_text, storyBody.slice(0, 2000)],
+    externalId: `${moderationUserId}:story_${storyId}`,
+  });
   const useDeterministic =
     isDeterministicHomeShotsEnabled() && shouldUseDeterministicHomeVisuals(goalTypeStr, storyBody);
   const imageModel = resolveDreamImageModel(highQuality, imgCfg, useDeterministic);
@@ -1802,6 +1816,7 @@ export async function submitDreamVisualJob(input: { storyId: string; highQuality
       shotIdx: 0,
       supabase,
       bucketPathPrefix: basePath,
+      moderationExternalId: `${moderationUserId}:story_${storyId}`,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -1929,6 +1944,7 @@ export async function refreshDreamVisualJob(input: { storyId: string; highQualit
       shotIdx: nextIdx,
       supabase,
       bucketPathPrefix: basePath,
+      moderationExternalId: `user_${auth.user.id}:story_${storyId}`,
     });
     // 客户端每 2.5s 轮询会并发多个 refresh；慢请求若仍用进入时的 `urls` 做 [...urls, nextUrl] 写库，
     // 会把已生成到 6 张的 video_url 覆盖成更短数组，表现为只能切换前一两张。写前必须重读并避免用旧快照覆盖。
@@ -2119,11 +2135,22 @@ export async function submitDreamVideoJob(input: {
   if (goalError || !goal?.id) throw new Error("goal_not_found");
   if (String(goal.user_id) !== auth.user.id) throw new Error("forbidden");
 
+  const moderationUserId = `user_${auth.user.id}`;
+  await assertCreemUserInputsAllowed({
+    parts: [story.keywords, story.free_text],
+    externalId: `${moderationUserId}:story_${storyId}:video`,
+  });
+
   const prompt = await generateEnglishVideoPrompt({
     goalName: String(goal.name ?? ""),
     goalType: String(goal.type ?? ""),
     keywords: story.keywords,
     freeText: story.free_text,
+  });
+
+  await assertCreemPromptAllowed({
+    prompt,
+    externalId: `${moderationUserId}:story_${storyId}:video`,
   });
 
   const submitModel = String(videoCfg.submitModel ?? "").trim();

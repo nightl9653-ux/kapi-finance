@@ -31,6 +31,14 @@ function formatDreamTheaterActionError(message: string, zh: boolean): string {
       ? "网站刚完成部署，当前页面版本过旧。请按 Ctrl+Shift+R（Mac：Cmd+Shift+R）强制刷新，或关闭标签页后重新打开再试。"
       : "This tab is stale after a deploy. Hard-refresh (Ctrl+Shift+R) or reopen the page, then try again.";
   }
+  if (message === "prompt_rejected") {
+    return zh
+      ? "内容未通过安全审核，请修改关键词或描述后重试。"
+      : "Your content did not pass safety screening. Please revise and try again.";
+  }
+  if (message === "moderation_unavailable" || message === "moderation_not_configured") {
+    return zh ? "内容安全服务暂不可用，请稍后再试。" : "Content safety screening is temporarily unavailable. Please try again later.";
+  }
   return message;
 }
 

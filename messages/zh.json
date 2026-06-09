@@ -344,7 +344,7 @@
   },
   "pricing": {
     "title": "咔账 Plus 会员",
-    "subtitle": "解锁不限数量的财务目标等能力；金额以 USD 标价，支付结算方式上线前可先收藏本页。",
+    "subtitle": "解锁不限数量的财务目标等能力；金额以 USD 标价，通过 Creem 安全结账，登录后即可购买。",
     "badgePlus": "Plus",
     "badgeFree": "Free",
     "youArePlus": "你当前已是 Plus 会员，感谢支持。",
@@ -383,10 +383,11 @@
       }
     },
     "checkoutSuccess": "付款成功！Plus 或加量包通常会在约 1 分钟内到账；若状态未更新，请稍候刷新本页。",
-    "checkoutNote": "付款成功后约 1 分钟内自动开通 Plus（Creem Webhook 填 https://你的域名/api/billing/creem-webhook）。",
-    "signInToUpgrade": "登录后升级",
-    "comingSoon": "未配置付款链接",
-    "checkoutEnvHint": "请在 Vercel 配置 PLUS_PLAN_MONTHLY_CHECKOUT_URL 后 Redeploy；用 Free 账号登录可见「选择月度」。",
+    "checkoutNote": "付款成功后约 1 分钟内自动开通 Plus；如有问题请联系 support@919145.xyz。",
+    "signInToUpgrade": "登录后购买",
+    "signInToPurchase": "登录后购买",
+    "comingSoon": "即将开放",
+    "checkoutEnvHint": "",
     "alreadyPlus": "已是 Plus 会员",
     "creditPacks": {
       "title": "AI 加量包（文生图）",
@@ -394,7 +395,7 @@
       "plusOnly": "仅 Plus 会员可购买与使用加量包。",
       "validDays": "购买后 {days} 天内有效",
       "buy": "购买",
-      "comingSoon": "支付链接配置中",
+      "comingSoon": "即将开放",
       "standard": {
         "title": "普通画面小包",
         "desc": "+20 张普通镜头（约 3 次完整普通画面生成）· $2.99"
@@ -404,7 +405,7 @@
         "desc": "+10 张高质量镜头（约 3 次完整高质量生成）· $2.99"
       }
     },
-    "ctaDisabledHint": "订阅入口即将开放",
+    "ctaDisabledHint": "",
     "compareTitle": "Free 与 Plus",
     "compareFeatureColumn": "对比项",
     "compareBlurb": "以下对比随产品迭代可能调整，以应用内实际规则为准。",

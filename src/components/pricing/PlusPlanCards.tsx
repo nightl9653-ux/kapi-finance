@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const PLAN_KEYS = ["monthly", "quarterly", "yearly", "lifetime"] as const;
+const PLAN_KEYS = ["monthly", "quarterly", "yearly"] as const;
 
 type PlusCheckoutResponse = {
   ok?: boolean;
@@ -51,7 +51,7 @@ export function PlusPlanCards({
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {PLAN_KEYS.map((key) => {
           const recommended = key === "yearly";
           const checkoutUrl = urls[key];
