@@ -31,6 +31,7 @@ export function CreditPackCards(props: {
     signIn: string;
     buy: string;
     comingSoon: string;
+    plusOnlyCta: string;
     standardPackTitle: string;
     standardPackDesc: string;
     hqPackTitle: string;
@@ -85,6 +86,8 @@ export function CreditPackCards(props: {
             const { title, desc } = copyFor(pack.id);
             const checkoutUrl = urls[pack.id];
             const canBuy = tier === "plus" && Boolean(checkoutUrl);
+            const disabledLabel =
+              tier === null ? labels.signIn : tier === "plus" ? labels.comingSoon : labels.plusOnlyCta;
             return (
               <div key={pack.id} className="flex flex-col rounded-2xl border bg-white/80 p-5 shadow-sm">
                 <div className="text-sm font-medium">{title}</div>
@@ -104,8 +107,8 @@ export function CreditPackCards(props: {
                     {labels.buy}
                   </a>
                 ) : (
-                  <Button type="button" disabled className="mt-auto w-full rounded-full" title={labels.comingSoon}>
-                    {tier === null ? labels.signIn : labels.comingSoon}
+                  <Button type="button" disabled className="mt-auto w-full rounded-full" title={disabledLabel}>
+                    {disabledLabel}
                   </Button>
                 )}
               </div>

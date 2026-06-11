@@ -279,8 +279,8 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
       visualRuleUpdated: zh ? "规则已更新：当前为旧画面，点击「重新生成画面」刷新。" : "Rules updated: showing older visuals. Click Regenerate to refresh.",
       visualQuotaLine: (rem: number, lim: number) =>
         zh
-          ? `今日普通画面：剩余 ${rem}/${lim}（每次「生成/重新生成」并成功启动计 1 次，自动补镜头不计）`
-          : `Standard visuals today: ${rem}/${lim} left (each Generate/Regenerate start counts once; auto fill-ins do not).`,
+          ? `今日普通画面：剩余 ${rem}/${lim}（每次「生成/重新生成」并成功启动计 1 次，自动补镜头不计，每次 6 镜头）`
+          : `Standard visuals today: ${rem}/${lim} left (each Generate/Regenerate start counts once; auto fill-ins do not; 6 shots per run).`,
       visualHqQuotaLine: (rem: number, lim: number) =>
         zh
           ? `今日高质量画面：剩余 ${rem}/${lim}（与普通画面分开计次，每次 3 镜头）`

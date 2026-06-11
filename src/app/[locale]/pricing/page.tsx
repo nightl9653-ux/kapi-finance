@@ -80,6 +80,7 @@ export default async function PricingPage({
           signIn: ta("signIn"),
           buy: t("creditPacks.buy"),
           comingSoon: t("creditPacks.comingSoon"),
+          plusOnlyCta: t("creditPacks.plusOnlyCta"),
           standardPackTitle: t("creditPacks.standard.title"),
           standardPackDesc: t("creditPacks.standard.desc"),
           hqPackTitle: t("creditPacks.hq.title"),

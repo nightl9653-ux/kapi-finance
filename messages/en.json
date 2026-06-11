@@ -396,6 +396,7 @@
       "validDays": "Valid for {days} days after purchase",
       "buy": "Buy",
       "comingSoon": "Coming soon",
+      "plusOnlyCta": "Plus members only",
       "standard": {
         "title": "Standard visual pack",
         "desc": "+20 standard shots (~3 full standard runs) · $2.99"

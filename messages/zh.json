@@ -396,6 +396,7 @@
       "validDays": "购买后 {days} 天内有效",
       "buy": "购买",
       "comingSoon": "即将开放",
+      "plusOnlyCta": "仅会员可购买",
       "standard": {
         "title": "普通画面小包",
         "desc": "+20 张普通镜头（约 3 次完整普通画面生成）· $2.99"
