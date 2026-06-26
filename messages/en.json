@@ -10,8 +10,27 @@
     "pricing": "Pricing",
     "settings": "Settings",
     "quickRecord": "Quick record",
+    "banquetParty": "Banquet & party",
+    "houseRenovation": "Home renovation",
     "menu": "Menu",
-    "more": "More"
+    "more": "More",
+    "openMenu": "Open navigation",
+    "closeMenu": "Close navigation",
+    "navSectionPrimary": "Main",
+    "navSectionSecondary": "Tools & account",
+    "swipeHint": "Swipe right from the left screen edge to open"
+  },
+  "featurePages": {
+    "supabaseMissing": "Configure Supabase environment variables to use this feature.",
+    "comingSoon": "Dedicated planners are coming soon. Use goals and transactions to track related budgets and spending for now.",
+    "goToGoals": "Go to goals",
+    "goToTransactions": "Go to transactions",
+    "banquetParty": {
+      "lead": "Budget and track spending for weddings, birthdays, and celebrations."
+    },
+    "houseRenovation": {
+      "lead": "Plan renovation budgets by structure, finishes, and appliances."
+    }
   },
   "goals": {
     "travel": "Travel",
@@ -88,6 +107,7 @@
     "catEducation": "Education",
     "catEntertainment": "Entertainment",
     "catSocial": "Gifts & social",
+    "catBanquet": "Banquets & parties",
     "catUtilities": "Utilities",
     "catExpenseOther": "Other (expense)",
     "catSalary": "Salary",
@@ -509,6 +529,24 @@
         "iOS Shortcuts + clipboard workflow",
         "AI pre-fills amounts and categories—you confirm before saving",
         "Same daily scan quota as receipt scan on the transactions page"
+      ]
+    },
+    "banquetParty": {
+      "lead": "Budget weddings, birthdays, and celebrations: estimate per-table costs, venue, catering, and décor—and track spending.",
+      "bullets": [
+        "Templates by event type, guests, and table count",
+        "Line items for venue, catering, photo, attire, and more",
+        "Roll up actual spend from linked transactions",
+        "Deadline reminders and overspend alerts (expanding)"
+      ]
+    },
+    "houseRenovation": {
+      "lead": "Plan home renovation by phase: structure, finishes, appliances, and labor—with budgets tied to your savings goals.",
+      "bullets": [
+        "Hard costs: plumbing, electrical, carpentry, paint",
+        "Materials, furniture, and appliance lists with quotes",
+        "Track spend by construction phase",
+        "Link to housing savings goals (expanding)"
       ]
     },
     "aiAssistant": {

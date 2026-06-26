@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -15,15 +15,35 @@ type AuthState =
   | { status: "signedOut" }
   | { status: "signedIn"; email: string | null };
 
-export function AuthStatus() {
+export type InitialAuth = { email: string | null } | null;
+
+type AuthContextValue = {
+  state: AuthState;
+  authHref: string;
+  isPending: boolean;
+  signOut: () => void;
+};
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+function authFromInitial(initialAuth: InitialAuth | undefined): AuthState {
+  if (!isSupabaseConfigured) return { status: "signedOut" };
+  if (initialAuth === undefined) return { status: "loading" };
+  if (initialAuth === null) return { status: "signedOut" };
+  return { status: "signedIn", email: initialAuth.email };
+}
+
+function useAuthContext() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("Auth components must be used within AuthProvider");
+  return ctx;
+}
+
+export function AuthProvider({ initialAuth, children }: { initialAuth?: InitialAuth; children: ReactNode }) {
   const locale = useLocale();
-  const t = useTranslations("auth");
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [state, setState] = useState<AuthState>(() =>
-    isSupabaseConfigured ? { status: "loading" } : { status: "signedOut" },
-  );
-
+  const [state, setState] = useState<AuthState>(() => authFromInitial(initialAuth));
   const authHref = useMemo(() => `/${locale}/auth?force=1`, [locale]);
 
   useEffect(() => {
@@ -34,16 +54,22 @@ export function AuthStatus() {
     const supabase = createSupabaseBrowserClient();
     let cancelled = false;
 
-    supabase.auth
-      .getUser()
-      .then(({ data }) => {
-        if (cancelled) return;
-        setState(data.user ? { status: "signedIn", email: data.user.email ?? null } : { status: "signedOut" });
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setState({ status: "signedOut" });
-      });
+    async function syncAuth() {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (cancelled) return;
+
+      const sessionUser = sessionData.session?.user;
+      if (sessionUser) {
+        setState({ status: "signedIn", email: sessionUser.email ?? null });
+        return;
+      }
+
+      const { data } = await supabase.auth.getUser();
+      if (cancelled) return;
+      setState(data.user ? { status: "signedIn", email: data.user.email ?? null } : { status: "signedOut" });
+    }
+
+    void syncAuth();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setState(session?.user ? { status: "signedIn", email: session.user.email ?? null } : { status: "signedOut" });
@@ -55,7 +81,7 @@ export function AuthStatus() {
     };
   }, []);
 
-  const onSignOut = () => {
+  const signOut = () => {
     startTransition(async () => {
       const supabase = createSupabaseBrowserClient();
       await supabase.auth.signOut();
@@ -64,9 +90,43 @@ export function AuthStatus() {
     });
   };
 
+  return <AuthContext.Provider value={{ state, authHref, isPending, signOut }}>{children}</AuthContext.Provider>;
+}
+
+export function AuthUserEmail({ placement }: { placement: "header" | "menu" }) {
+  const { state } = useAuthContext();
+
+  if (state.status !== "signedIn" || !state.email) {
+    return null;
+  }
+
+  if (placement === "menu") {
+    return (
+      <div className="border-b border-border/60 px-4 py-2.5">
+        <p className="truncate text-xs text-muted-foreground" title={state.email}>
+          {state.email}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <span
+      className="hidden max-w-[220px] shrink-0 truncate text-xs text-muted-foreground md:inline"
+      title={state.email}
+    >
+      {state.email}
+    </span>
+  );
+}
+
+export function AuthStatus() {
+  const t = useTranslations("auth");
+  const { state, authHref, isPending, signOut } = useAuthContext();
+
   if (state.status === "loading") {
     return (
-      <Button variant="secondary" size="sm" className="rounded-full" disabled>
+      <Button variant="secondary" size="sm" className="shrink-0 rounded-full" disabled>
         {t("loading")}
       </Button>
     );
@@ -76,7 +136,7 @@ export function AuthStatus() {
     return (
       <Link
         href={authHref}
-        className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "rounded-full")}
+        className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "shrink-0 rounded-full")}
       >
         {t("signIn")}
       </Link>
@@ -84,14 +144,8 @@ export function AuthStatus() {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="hidden max-w-[220px] truncate text-xs text-muted-foreground sm:block">
-        {state.email ?? ""}
-      </div>
-      <Button variant="secondary" size="sm" className="rounded-full" onClick={onSignOut} disabled={isPending}>
-        {t("signOut")}
-      </Button>
-    </div>
+    <Button variant="secondary" size="sm" className="shrink-0 rounded-full" onClick={signOut} disabled={isPending}>
+      {t("signOut")}
+    </Button>
   );
 }
-

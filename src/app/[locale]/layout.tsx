@@ -6,7 +6,9 @@ import { LegalConsentRecorder } from "@/components/auth/LegalConsentRecorder";
 import { AppFooter } from "@/components/AppFooter";
 import { AppHeader } from "@/components/AppHeader";
 import { PwaRegister } from "@/components/PwaRegister";
+import { isSupabaseConfigured } from "@/lib/env";
 import { getSiteUrl, siteDescription, siteName } from "@/lib/site";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const viewport: Viewport = {
   themeColor: "#FAF9F7",
@@ -55,12 +57,21 @@ export default async function LocaleLayout({
   const locale = raw === "zh" ? "zh" : "en";
   const messages = await getMessages();
 
+  let initialAuth: { email: string | null } | null = null;
+  if (isSupabaseConfigured) {
+    const supabase = await createSupabaseServerClient();
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+      initialAuth = { email: data.user.email ?? null };
+    }
+  }
+
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <PwaRegister />
       <LegalConsentRecorder />
       <div className="flex min-h-full flex-col bg-[#FAF9F7] text-foreground">
-        <AppHeader />
+        <AppHeader initialAuth={initialAuth} />
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
         <AppFooter locale={locale} />
       </div>

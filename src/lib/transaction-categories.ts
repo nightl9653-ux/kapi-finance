@@ -9,6 +9,7 @@ export const EXPENSE_CATEGORY_KEYS = [
   "education",
   "entertainment",
   "social",
+  "banquet",
   "utilities",
   "other",
 ] as const;
@@ -73,6 +74,7 @@ const PRESET_MSG: Record<string, string> = {
   education: "catEducation",
   entertainment: "catEntertainment",
   social: "catSocial",
+  banquet: "catBanquet",
   utilities: "catUtilities",
   salary: "catSalary",
   bonus: "catBonus",

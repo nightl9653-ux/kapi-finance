@@ -8,6 +8,8 @@ export type GuestFeatureKey =
   | "goals"
   | "transactions"
   | "quickRecord"
+  | "banquetParty"
+  | "houseRenovation"
   | "aiAssistant"
   | "reports"
   | "settings";

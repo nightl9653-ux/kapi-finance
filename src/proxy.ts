@@ -22,6 +22,8 @@ const PUBLIC_PATHS = new Set([
   "/goals",
   "/transactions",
   "/quick-record",
+  "/banquet-party",
+  "/house-renovation",
   "/ai-assistant",
   "/reports",
   "/settings",

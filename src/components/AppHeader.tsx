@@ -3,96 +3,84 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 
-import { AuthStatus } from "@/components/auth/AuthStatus";
+import { AuthProvider, AuthStatus, AuthUserEmail, type InitialAuth } from "@/components/auth/AuthStatus";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { MobileNavDrawer } from "@/components/MobileNavDrawer";
 import { NotificationsEntry } from "@/components/NotificationsEntry";
 
-export function AppHeader() {
+export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
   const t = useTranslations("nav");
   const locale = useLocale();
 
-  const primaryNav = [
+  const navPrimary = [
     { href: `/${locale}`, label: t("dashboard") },
     { href: `/${locale}/goals`, label: t("goals") },
     { href: `/${locale}/transactions`, label: t("transactions") },
     { href: `/${locale}/quick-record`, label: t("quickRecord") },
+    { href: `/${locale}/banquet-party`, label: t("banquetParty") },
+    { href: `/${locale}/house-renovation`, label: t("houseRenovation") },
   ];
 
-  const secondaryNav = [
+  const navSecondary = [
     { href: `/${locale}/ai-assistant`, label: t("aiAssistant") },
     { href: `/${locale}/reports`, label: t("reports") },
     { href: `/${locale}/pricing`, label: t("pricing") },
     { href: `/${locale}/settings`, label: t("settings") },
   ];
 
-  return (
-    <header className="sticky top-0 z-50 border-b bg-[#FAF9F7]/90 backdrop-blur">
-      <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center justify-between gap-3 px-4 py-2">
-        <Link
-          href={`/${locale}`}
-          className="max-w-[min(12rem,42vw)] shrink-0 font-semibold leading-tight tracking-tight kapi-line-clamp-2"
-        >
-          {t("brand")}
-        </Link>
+  const linkClassName =
+    "whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground";
 
-        {/* Mobile: collapse all links into one menu to avoid crowding */}
-        <details className="relative md:hidden">
-          <summary className="list-none rounded-full border bg-white px-3 py-1 text-sm text-muted-foreground">
-            {t("menu")}
-          </summary>
-          <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border bg-white shadow-lg">
-            <nav className="flex flex-col py-1">
-              {[...primaryNav, ...secondaryNav].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="px-3 py-2 text-sm text-foreground hover:bg-muted/40"
-                >
+  return (
+    <AuthProvider initialAuth={initialAuth}>
+      <header className="sticky top-0 z-50 border-b bg-[#FAF9F7]/90 backdrop-blur">
+        <div className="mx-auto w-full max-w-5xl px-4">
+          <div className="flex min-h-14 items-center justify-between gap-2 py-2 md:min-h-0 md:py-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <MobileNavDrawer
+                brand={t("brand")}
+                openLabel={t("openMenu")}
+                closeLabel={t("closeMenu")}
+                primaryLabel={t("navSectionPrimary")}
+                secondaryLabel={t("navSectionSecondary")}
+                swipeHint={t("swipeHint")}
+                primaryNav={navPrimary}
+                secondaryNav={navSecondary}
+              />
+              <Link
+                href={`/${locale}`}
+                className="min-w-0 font-semibold leading-tight tracking-tight kapi-line-clamp-2"
+              >
+                {t("brand")}
+              </Link>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+              <NotificationsEntry />
+              <AuthUserEmail placement="header" />
+              <AuthStatus />
+              <LocaleSwitcher />
+            </div>
+          </div>
+
+          <nav className="hidden space-y-1.5 border-t border-border/60 pb-3 pt-2 md:block" aria-label={t("menu")}>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+              {navPrimary.map((item) => (
+                <Link key={item.href} href={item.href} className={linkClassName}>
                   {item.label}
                 </Link>
               ))}
-            </nav>
-          </div>
-        </details>
-
-        {/* Desktop/tablet: show primary nav + a More dropdown for secondary links */}
-        <nav className="hidden min-w-0 flex-1 items-center gap-4 md:ml-6 md:flex">
-          {primaryNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              {item.label}
-            </Link>
-          ))}
-
-          <details className="relative">
-            <summary className="list-none cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-              {t("more")}
-            </summary>
-            <div className="absolute left-0 mt-2 w-52 overflow-hidden rounded-xl border bg-white shadow-lg">
-              <nav className="flex flex-col py-1">
-                {secondaryNav.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="px-3 py-2 text-sm text-foreground hover:bg-muted/40"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
             </div>
-          </details>
-        </nav>
-
-        <div className="flex shrink-0 items-center gap-2">
-          <NotificationsEntry />
-          <AuthStatus />
-          <LocaleSwitcher />
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+              {navSecondary.map((item) => (
+                <Link key={item.href} href={item.href} className={linkClassName}>
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </nav>
         </div>
-      </div>
-    </header>
+      </header>
+    </AuthProvider>
   );
 }

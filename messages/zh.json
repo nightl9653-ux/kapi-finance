@@ -10,8 +10,27 @@
     "pricing": "会员价格",
     "settings": "设置",
     "quickRecord": "快捷记账",
+    "banquetParty": "宴会派对",
+    "houseRenovation": "房屋装修",
     "menu": "菜单",
-    "more": "更多"
+    "more": "更多",
+    "openMenu": "打开导航",
+    "closeMenu": "关闭导航",
+    "navSectionPrimary": "常用",
+    "navSectionSecondary": "工具与账户",
+    "swipeHint": "从屏幕左边缘向右滑可打开导航"
+  },
+  "featurePages": {
+    "supabaseMissing": "请先配置 Supabase 环境变量后再使用此功能。",
+    "comingSoon": "专项规划工具正在完善中。您可先通过目标管理与记账记录相关预算与支出。",
+    "goToGoals": "前往目标管理",
+    "goToTransactions": "前往记账",
+    "banquetParty": {
+      "lead": "为婚礼、寿宴、满月等场合做预算与支出跟踪。"
+    },
+    "houseRenovation": {
+      "lead": "按硬装、软装与家电分项规划装修预算。"
+    }
   },
   "goals": {
     "housing": "住房",
@@ -88,6 +107,7 @@
     "catEducation": "教育",
     "catEntertainment": "娱乐",
     "catSocial": "人情往来",
+    "catBanquet": "宴会",
     "catUtilities": "水电燃气",
     "catExpenseOther": "其他（支出）",
     "catSalary": "工资",
@@ -509,6 +529,24 @@
         "iOS 快捷指令 + 剪贴板流程",
         "识别金额与分类，保存前可修改",
         "与记账页扫单共用每日额度"
+      ]
+    },
+    "banquetParty": {
+      "lead": "为婚礼、寿宴、满月等场合做预算：按桌数、场地、餐饮与装饰分项估算，并跟踪实际支出。",
+      "bullets": [
+        "宴会类型与人数/桌数模板",
+        "场地、餐饮、摄影、礼服等分项预算",
+        "与记账联动，按类别汇总已花费用",
+        "临近日期提醒与超支预警（持续完善）"
+      ]
+    },
+    "houseRenovation": {
+      "lead": "房屋装修专项规划：硬装、软装、家电与人工分项，按阶段控制预算并与目标储蓄对齐。",
+      "bullets": [
+        "水电、泥木、油漆等硬装分项",
+        "建材、家具、家电清单与报价",
+        "按施工阶段记录支出进度",
+        "与住房类储蓄目标联动（持续完善）"
       ]
     },
     "aiAssistant": {
