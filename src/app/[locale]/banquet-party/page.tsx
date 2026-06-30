@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { redirect } from "next/navigation";
 
 import { FeatureGuestLanding } from "@/components/marketing/FeatureGuestLanding";
-import { buttonVariants } from "@/components/ui/button";
 import type { Locale } from "@/i18n/locales";
-import { cn } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -26,29 +24,14 @@ export default async function BanquetPartyPage({ params }: { params: Promise<{ l
   const supabase = await createSupabaseServerClient();
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError || !auth.user) {
-    return <FeatureGuestLanding locale={locale} feature="banquetParty" signInNext={`/${locale}/banquet-party`} />;
+    return (
+      <FeatureGuestLanding
+        locale={locale}
+        feature="banquetParty"
+        signInNext={`/${locale}/banquet-studio`}
+      />
+    );
   }
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{nav("banquetParty")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("banquetParty.lead")}</p>
-      </div>
-      <div className="rounded-2xl border bg-white p-6">
-        <p className="text-sm text-muted-foreground">{t("comingSoon")}</p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link href={`/${locale}/goals`} className={cn(buttonVariants({ className: "rounded-full" }))}>
-            {t("goToGoals")}
-          </Link>
-          <Link
-            href={`/${locale}/transactions`}
-            className={cn(buttonVariants({ variant: "outline", className: "rounded-full" }))}
-          >
-            {t("goToTransactions")}
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+  redirect(`/${locale}/banquet-studio`);
 }
