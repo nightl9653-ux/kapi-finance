@@ -35,6 +35,51 @@ create table if not exists financial_goals (
   updated_at timestamp default now()
 );
 
+-- 房屋装修/建造项目（材料 jsonb）
+create table if not exists renovation_projects (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade not null,
+  name text not null,
+  project_type text not null check (project_type in ('renovation', 'construction')),
+  template_id text,
+  area_sqm decimal(10, 2),
+  budget_cap decimal(12, 2),
+  address text,
+  start_date date,
+  target_end_date date,
+  current_phase text,
+  materials jsonb not null default '[]'::jsonb,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  currency text not null default 'USD'
+);
+
+create index if not exists renovation_projects_user_id_idx on renovation_projects (user_id);
+create index if not exists renovation_projects_updated_at_idx on renovation_projects (user_id, updated_at desc);
+
+-- 宴会派对（材料 / 宾客 / 时间线 / 色盘存 jsonb）
+create table if not exists banquet_parties (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade not null,
+  name text not null,
+  party_date date not null,
+  character_id text not null,
+  party_type_id text,
+  materials jsonb not null default '[]'::jsonb,
+  color_palette jsonb not null default '{}'::jsonb,
+  guests jsonb not null default '[]'::jsonb,
+  timeline jsonb not null default '[]'::jsonb,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  currency text not null default 'USD',
+  budget_cap decimal(12, 2)
+);
+
+create index if not exists banquet_parties_user_id_idx on banquet_parties (user_id);
+create index if not exists banquet_parties_updated_at_idx on banquet_parties (user_id, updated_at desc);
+
 -- 交易记录表
 -- 产品规则（待入账 vs 已入账）：自动导入/扫账单时以「消费时间」（交易发生时间）界定 occurred_on 与 timestamp，不以银行最终入账时间为准。
 -- 时区（跨境卡等）：库内「交易瞬间」列用 timestamptz，存绝对时间（写入侧用 ISO-8601 / UTC 语义）；展示时按用户所选/设备时区换算。
@@ -67,11 +112,23 @@ create table if not exists transactions (
   images text[],
   goal_allocations jsonb default '{}',
   is_auto_recorded boolean default false,
-  created_at timestamp default now()
+  created_at timestamp default now(),
+  -- 可选：挂到某场宴会派对（材料一键记账等）
+  party_id uuid references banquet_parties(id) on delete set null,
+  -- 可选：挂到装修/建造项目（材料一键记账等）
+  renovation_project_id uuid references renovation_projects(id) on delete set null
 );
 
 create index if not exists transactions_user_occurred_on_idx
 on transactions (user_id, occurred_on);
+
+create index if not exists transactions_user_party_id_idx
+on transactions (user_id, party_id)
+where party_id is not null;
+
+create index if not exists transactions_user_renovation_project_id_idx
+on transactions (user_id, renovation_project_id)
+where renovation_project_id is not null;
 
 -- 预算方案（每月一份；AI 可生成并保存）
 create table if not exists budgets (
@@ -341,6 +398,8 @@ on conflict (id) do nothing;
 -- 启用 RLS（行级安全）
 alter table profiles enable row level security;
 alter table financial_goals enable row level security;
+alter table renovation_projects enable row level security;
+alter table banquet_parties enable row level security;
 alter table transactions enable row level security;
 alter table notifications enable row level security;
 alter table ai_usage enable row level security;
@@ -395,6 +454,50 @@ with check (user_id = auth.uid());
 drop policy if exists "goals_delete_own" on financial_goals;
 create policy "goals_delete_own"
 on financial_goals for delete
+using (user_id = auth.uid());
+
+-- renovation_projects: CRUD limited to owner
+drop policy if exists "renovation_projects_select_own" on renovation_projects;
+create policy "renovation_projects_select_own"
+on renovation_projects for select
+using (user_id = auth.uid());
+
+drop policy if exists "renovation_projects_insert_own" on renovation_projects;
+create policy "renovation_projects_insert_own"
+on renovation_projects for insert
+with check (user_id = auth.uid());
+
+drop policy if exists "renovation_projects_update_own" on renovation_projects;
+create policy "renovation_projects_update_own"
+on renovation_projects for update
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+drop policy if exists "renovation_projects_delete_own" on renovation_projects;
+create policy "renovation_projects_delete_own"
+on renovation_projects for delete
+using (user_id = auth.uid());
+
+-- banquet_parties: CRUD limited to owner
+drop policy if exists "banquet_parties_select_own" on banquet_parties;
+create policy "banquet_parties_select_own"
+on banquet_parties for select
+using (user_id = auth.uid());
+
+drop policy if exists "banquet_parties_insert_own" on banquet_parties;
+create policy "banquet_parties_insert_own"
+on banquet_parties for insert
+with check (user_id = auth.uid());
+
+drop policy if exists "banquet_parties_update_own" on banquet_parties;
+create policy "banquet_parties_update_own"
+on banquet_parties for update
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+drop policy if exists "banquet_parties_delete_own" on banquet_parties;
+create policy "banquet_parties_delete_own"
+on banquet_parties for delete
 using (user_id = auth.uid());
 
 -- transactions: CRUD limited to owner

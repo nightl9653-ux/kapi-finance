@@ -306,9 +306,10 @@ export function RecurringBillForm({
                 step="0.0001"
                 value={currency === "USD" ? "1" : fxRate}
                 onChange={(e) => setFxRate(e.target.value)}
-                disabled={currency === "USD" || fxMode === "auto"}
+                readOnly={currency === "USD" || fxMode === "auto"}
                 required={currency !== "USD"}
                 placeholder="1.0"
+                className={currency === "USD" || fxMode === "auto" ? "bg-muted/40" : undefined}
               />
             </div>
           </div>

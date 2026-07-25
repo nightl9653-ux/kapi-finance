@@ -194,9 +194,11 @@ export function FxPicker({
             step="0.0001"
             value={effectiveFxRate}
             onChange={(e) => setFxRate(e.target.value)}
-            disabled={currency === "USD" || fxMode === "auto"}
+            // 用 readOnly 而非 disabled：disabled 字段不会进 FormData，自动汇率保存会丢汇率导致 invalid
+            readOnly={currency === "USD" || fxMode === "auto"}
             required={currency !== "USD"}
             placeholder="1.0"
+            className={currency === "USD" || fxMode === "auto" ? "bg-muted/40" : undefined}
           />
         </div>
       </div>

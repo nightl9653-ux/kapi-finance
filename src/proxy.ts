@@ -41,8 +41,9 @@ function isRegionBlockedPage(pathname: string, locale: "en" | "zh") {
 
 function isPublicPath(pathname: string, locale: "en" | "zh") {
   const rest = pathname === `/${locale}` ? "/" : pathname.slice(`/${locale}`.length);
-  // Landing only — /banquet-studio requires sign-in
+  // Landing only — /banquet-studio and /renovation-studio require sign-in
   if (rest === "/banquet-party") return true;
+  if (rest === "/house-renovation") return true;
   for (const p of PUBLIC_PATHS) {
     if (rest === p || rest.startsWith(`${p}/`)) return true;
   }

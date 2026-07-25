@@ -13,6 +13,21 @@ import { cn } from "@/lib/utils";
 
 const RSVP_OPTIONS: GuestRsvp[] = ["pending", "confirmed", "declined"];
 
+type GuestDraft = { tableLabel: string; dietaryNotes: string; contact: string };
+
+/** 合并旧 phone/email 到单一联系方式 */
+function guestContact(g: Guest): string {
+  return g.contact?.trim() || g.phone?.trim() || g.email?.trim() || "";
+}
+
+function emptyDraft(g: Guest): GuestDraft {
+  return {
+    tableLabel: g.tableLabel ?? "",
+    dietaryNotes: g.dietaryNotes ?? "",
+    contact: guestContact(g),
+  };
+}
+
 export function PartyGuestsTab({
   party,
   onChange,
@@ -25,6 +40,10 @@ export function PartyGuestsTab({
   const { confirmed, total } = getGuestHeadcount(party);
   const [name, setName] = useState("");
   const [count, setCount] = useState(1);
+  /** 文本字段本地草稿：避免每键都写库导致丢字 */
+  const [drafts, setDrafts] = useState<Record<string, GuestDraft>>({});
+
+  const draftOf = (g: Guest): GuestDraft => drafts[g.id] ?? emptyDraft(g);
 
   const addGuest = () => {
     if (!name.trim()) return;
@@ -45,8 +64,42 @@ export function PartyGuestsTab({
     onChange(guests.map((g) => (g.id === id ? { ...g, ...patch } : g)));
   };
 
+  const setDraftField = (id: string, field: keyof GuestDraft, value: string) => {
+    setDrafts((prev) => {
+      const guest = guests.find((g) => g.id === id);
+      const base = prev[id] ?? (guest ? emptyDraft(guest) : { tableLabel: "", dietaryNotes: "", contact: "" });
+      return { ...prev, [id]: { ...base, [field]: value } };
+    });
+  };
+
+  const commitDraft = (g: Guest) => {
+    const d = draftOf(g);
+    const tableLabel = d.tableLabel.trim() || undefined;
+    const dietaryNotes = d.dietaryNotes.trim() || undefined;
+    const contact = d.contact.trim() || undefined;
+    const same =
+      (g.tableLabel ?? "") === (tableLabel ?? "") &&
+      (g.dietaryNotes ?? "") === (dietaryNotes ?? "") &&
+      guestContact(g) === (contact ?? "");
+    setDrafts((prev) => {
+      if (!(g.id in prev)) return prev;
+      const next = { ...prev };
+      delete next[g.id];
+      return next;
+    });
+    if (same) return;
+    // 写入 contact，并清掉旧的 phone/email 字段
+    updateGuest(g.id, { tableLabel, dietaryNotes, contact, phone: undefined, email: undefined });
+  };
+
   const removeGuest = (id: string) => {
     if (!confirm(t("deleteGuestConfirm"))) return;
+    setDrafts((prev) => {
+      if (!(id in prev)) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
     onChange(guests.filter((g) => g.id !== id));
   };
 
@@ -93,40 +146,84 @@ export function PartyGuestsTab({
         <p className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">{t("noGuests")}</p>
       ) : (
         <ul className="divide-y overflow-hidden rounded-2xl border bg-white/80">
-          {guests.map((g) => (
-            <li key={g.id} className="space-y-2 p-4">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <p className="font-medium">{g.name}</p>
-                  <p className="text-xs text-muted-foreground">{t("guestCountLabel", { n: g.count })}</p>
-                </div>
-                <button type="button" className="text-xs text-muted-foreground hover:text-destructive" onClick={() => removeGuest(g.id)}>
-                  {t("delete")}
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {RSVP_OPTIONS.map((rsvp) => (
-                  <button
-                    key={rsvp}
-                    type="button"
-                    onClick={() => updateGuest(g.id, { rsvp })}
-                    className={cn(
-                      "rounded-full border px-2.5 py-1 text-xs",
-                      g.rsvp === rsvp ? "border-foreground bg-foreground text-background" : "text-muted-foreground",
-                    )}
-                  >
-                    {t(`rsvp.${rsvp}`)}
+          {guests.map((g) => {
+            const draft = draftOf(g);
+            return (
+              <li key={g.id} className="space-y-2 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-medium">
+                      {g.name}
+                      {g.tableLabel?.trim() ? (
+                        <span className="ml-2 text-xs font-normal text-muted-foreground">· {g.tableLabel.trim()}</span>
+                      ) : null}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{t("guestCountLabel", { n: g.count })}</p>
+                  </div>
+                  <button type="button" className="text-xs text-muted-foreground hover:text-destructive" onClick={() => removeGuest(g.id)}>
+                    {t("delete")}
                   </button>
-                ))}
-              </div>
-              <Input
-                value={g.dietaryNotes ?? ""}
-                onChange={(e) => updateGuest(g.id, { dietaryNotes: e.target.value })}
-                placeholder={t("guestDietaryPlaceholder")}
-                className="text-sm"
-              />
-            </li>
-          ))}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {RSVP_OPTIONS.map((rsvp) => (
+                    <button
+                      key={rsvp}
+                      type="button"
+                      onClick={() => updateGuest(g.id, { rsvp })}
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-xs",
+                        g.rsvp === rsvp ? "border-foreground bg-foreground text-background" : "text-muted-foreground",
+                      )}
+                    >
+                      {t(`rsvp.${rsvp}`)}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label htmlFor={`guest-table-${g.id}`} className="text-xs text-muted-foreground">
+                      {t("guestTableLabel")}
+                    </Label>
+                    <Input
+                      id={`guest-table-${g.id}`}
+                      value={draft.tableLabel}
+                      onChange={(e) => setDraftField(g.id, "tableLabel", e.target.value)}
+                      onBlur={() => commitDraft(g)}
+                      placeholder={t("guestTablePlaceholder")}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor={`guest-dietary-${g.id}`} className="text-xs text-muted-foreground">
+                      {t("guestDietaryLabel")}
+                    </Label>
+                    <Input
+                      id={`guest-dietary-${g.id}`}
+                      value={draft.dietaryNotes}
+                      onChange={(e) => setDraftField(g.id, "dietaryNotes", e.target.value)}
+                      onBlur={() => commitDraft(g)}
+                      placeholder={t("guestDietaryPlaceholder")}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label htmlFor={`guest-contact-${g.id}`} className="text-xs text-muted-foreground">
+                      {t("guestContactLabel")}
+                    </Label>
+                    <Input
+                      id={`guest-contact-${g.id}`}
+                      value={draft.contact}
+                      onChange={(e) => setDraftField(g.id, "contact", e.target.value)}
+                      onBlur={() => commitDraft(g)}
+                      placeholder={t("guestContactPlaceholder")}
+                      className="text-sm"
+                      autoComplete="off"
+                    />
+                  </div>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

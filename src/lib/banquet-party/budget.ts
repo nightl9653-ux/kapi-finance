@@ -12,6 +12,9 @@ export interface PartyBudgetSummary {
   totalPlanned: number;
   totalPurchased: number;
   totalPending: number;
+  budgetCap?: number;
+  overCap: boolean;
+  remaining?: number;
   byCategory: CategoryBudget[];
   decorSetupDone: number;
   decorSetupTotal: number;
@@ -34,10 +37,17 @@ export function getPartyBudgetSummary(party: Party): PartyBudgetSummary {
   });
 
   const decorItems = party.materials.filter((m) => m.category === "decor");
+  const totalPlanned = byCategory.reduce((s, c) => s + c.planned, 0);
+  const totalPurchased = byCategory.reduce((s, c) => s + c.purchased, 0);
+  const budgetCap = party.budgetCap != null && party.budgetCap > 0 ? party.budgetCap : undefined;
+  const overCap = budgetCap != null && totalPlanned > budgetCap;
   return {
-    totalPlanned: byCategory.reduce((s, c) => s + c.planned, 0),
-    totalPurchased: byCategory.reduce((s, c) => s + c.purchased, 0),
+    totalPlanned,
+    totalPurchased,
     totalPending: party.materials.filter((m) => !m.isPurchased).length,
+    budgetCap,
+    overCap,
+    remaining: budgetCap != null ? budgetCap - totalPlanned : undefined,
     byCategory,
     decorSetupDone: decorItems.filter((m) => m.isSetup).length,
     decorSetupTotal: decorItems.length,
@@ -60,9 +70,10 @@ export function daysUntilParty(date: string): number {
 
 export function filterMaterialsForPrep(
   materials: Material[],
-  sub: "shopping" | "menu" | "decor",
+  sub: "shopping" | "menu" | "decor" | "misc",
 ): Material[] {
   if (sub === "menu") return materials.filter((m) => m.category === "food" || m.category === "drink");
   if (sub === "decor") return materials.filter((m) => m.category === "decor");
+  if (sub === "misc") return materials.filter((m) => m.category === "misc");
   return materials;
 }

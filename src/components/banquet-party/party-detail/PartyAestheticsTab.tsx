@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { ColorCarousel, ColorComposition } from "@/components/banquet-party/ColorCarousel";
+import { DecorSummary } from "@/components/banquet-party/party-detail/DecorSummary";
 import { filterCarouselImages } from "@/lib/banquet-party/carousel";
 import { getSoulCharacter } from "@/lib/banquet-party/characters";
 import type { Party } from "@/lib/banquet-party/types";
@@ -45,6 +46,8 @@ export function PartyAestheticsTab({ party }: { party: Party }) {
           accents={palette.accents}
         />
       </div>
+
+      <DecorSummary party={party} />
     </div>
   );
 }

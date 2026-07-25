@@ -77,7 +77,8 @@ async function createTransaction(formData: FormData) {
   const amountRaw = Number(formData.get("amount"));
   const type = String(formData.get("type") ?? "");
   const currency = coerceCurrency(formData.get("currency"));
-  const fxRateRaw = Number(formData.get("fx_rate") ?? "");
+  const fxRateParsed = Number(formData.get("fx_rate") ?? "");
+  const fxRateRaw = Number.isFinite(fxRateParsed) && fxRateParsed > 0 ? fxRateParsed : null;
   const category = coerceTransactionCategory(
     type,
     String(formData.get("category_preset") ?? ""),
@@ -113,11 +114,11 @@ async function createTransaction(formData: FormData) {
   let amountBase: number;
   let fxRate: number;
   try {
-    const out = computeAmountBase({ amount: amountRaw, currency, fxRate: Number.isFinite(fxRateRaw) ? fxRateRaw : null });
+    const out = computeAmountBase({ amount: amountRaw, currency, fxRate: fxRateRaw });
     amountBase = out.amountBase;
     fxRate = out.fxRate;
   } catch {
-    redirect(transactionsSearchPath(locale, { error: "invalid", date: contextDate }));
+    redirect(transactionsSearchPath(locale, { error: "fx_invalid", date: contextDate }));
   }
 
   const { error } = await supabase.from("transactions").insert({
@@ -151,7 +152,8 @@ async function createRecurringBill(formData: FormData) {
   const amountRaw = Number(formData.get("amount"));
   const type = String(formData.get("type") ?? "");
   const currency = coerceCurrency(formData.get("currency"));
-  const fxRateRaw = Number(formData.get("fx_rate") ?? "");
+  const fxRateParsed = Number(formData.get("fx_rate") ?? "");
+  const fxRateRaw = Number.isFinite(fxRateParsed) && fxRateParsed > 0 ? fxRateParsed : null;
   const category = coerceTransactionCategory(
     type,
     String(formData.get("category_preset") ?? ""),
@@ -177,9 +179,9 @@ async function createRecurringBill(formData: FormData) {
 
   let fxRate: number;
   try {
-    fxRate = computeAmountBase({ amount: amountRaw, currency, fxRate: Number.isFinite(fxRateRaw) ? fxRateRaw : null }).fxRate;
+    fxRate = computeAmountBase({ amount: amountRaw, currency, fxRate: fxRateRaw }).fxRate;
   } catch {
-    redirect(transactionsSearchPath(locale, { error: "invalid" }));
+    redirect(transactionsSearchPath(locale, { error: "fx_invalid" }));
   }
 
   const endDate = endDateRaw && /^\d{4}-\d{2}-\d{2}$/.test(endDateRaw) ? endDateRaw : null;
@@ -227,7 +229,8 @@ async function updateTransaction(formData: FormData) {
   const amountRaw = Number(formData.get("amount"));
   const type = String(formData.get("type") ?? "");
   const currency = coerceCurrency(formData.get("currency"));
-  const fxRateRaw = Number(formData.get("fx_rate") ?? "");
+  const fxRateParsed = Number(formData.get("fx_rate") ?? "");
+  const fxRateRaw = Number.isFinite(fxRateParsed) && fxRateParsed > 0 ? fxRateParsed : null;
   const category = coerceTransactionCategory(
     type,
     String(formData.get("category_preset") ?? ""),
@@ -252,11 +255,11 @@ async function updateTransaction(formData: FormData) {
   let amountBase: number;
   let fxRate: number;
   try {
-    const out = computeAmountBase({ amount: amountRaw, currency, fxRate: Number.isFinite(fxRateRaw) ? fxRateRaw : null });
+    const out = computeAmountBase({ amount: amountRaw, currency, fxRate: fxRateRaw });
     amountBase = out.amountBase;
     fxRate = out.fxRate;
   } catch {
-    redirect(transactionsSearchPath(locale, { error: "invalid", date: contextDate }));
+    redirect(transactionsSearchPath(locale, { error: "fx_invalid", date: contextDate }));
   }
 
   const ts = recordedAt ? new Date(recordedAt) : new Date();
@@ -381,7 +384,7 @@ export default async function TransactionsPage({
 
   const { data: rows, error } = await supabase
     .from("transactions")
-    .select("id,amount,currency,fx_rate,amount_base,type,category,sub_category,merchant,note,occurred_on,timestamp,created_at")
+    .select("id,amount,currency,fx_rate,amount_base,type,category,sub_category,merchant,note,occurred_on,timestamp,created_at,party_id")
     .eq("user_id", auth.user.id)
     .order("timestamp", { ascending: false })
     .limit(100);
@@ -389,6 +392,16 @@ export default async function TransactionsPage({
   if (error) {
     redirect(`/${locale}/transactions?error=unknown`);
   }
+
+  const { data: partyRows } = await supabase
+    .from("banquet_parties")
+    .select("id,name")
+    .eq("user_id", auth.user.id)
+    .limit(100);
+
+  const partyNameById = new Map(
+    (partyRows ?? []).map((p) => [String(p.id), String(p.name ?? "")]),
+  );
 
   const editingRowId =
     editQueryActive && editParam && rows?.length
@@ -404,6 +417,9 @@ export default async function TransactionsPage({
           <div className="mt-2 space-y-2">
             <p className="text-sm text-muted-foreground">
               {t("subtitle", { scanLimit: aiLimits.scan, voiceLimit: aiLimits.voice })}
+            </p>
+            <p className="rounded-xl border border-amber-200/80 bg-amber-50/70 px-3 py-2 text-sm leading-relaxed text-amber-950/90">
+              {t("banquetTip")}
             </p>
 
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -433,6 +449,8 @@ export default async function TransactionsPage({
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           {errorKey === "invalid"
             ? t("errorInvalid")
+            : errorKey === "fx_invalid"
+              ? t("errorFxInvalid")
             : errorKey === "recurring_unavailable"
               ? t("errorRecurringUnavailable")
               : errorKey === "recurring_forbidden"
@@ -545,7 +563,7 @@ export default async function TransactionsPage({
 
       <RecurringBillForm locale={locale} action={createRecurringBill} />
 
-      <div className="rounded-2xl border bg-white/70 p-6">
+      <div id="recent-records" className="scroll-mt-24 rounded-2xl border bg-white/70 p-6">
         <h2 className="text-base font-medium">{t("listTitle")}</h2>
         <ScrollTransactionEditIntoView rowId={editingRowId} />
         <div className="mt-4 space-y-3">
@@ -700,6 +718,9 @@ export default async function TransactionsPage({
                     <div className="text-xs text-muted-foreground">
                       {formatRecordTime(row.timestamp as string, locale)}
                       {row.merchant ? ` · ${row.merchant}` : ""}
+                      {row.party_id && partyNameById.get(String(row.party_id))
+                        ? ` · ${t("partyLinked", { name: partyNameById.get(String(row.party_id))! })}`
+                        : ""}
                       {row.note ? ` · ${row.note}` : ""}
                     </div>
                   </div>

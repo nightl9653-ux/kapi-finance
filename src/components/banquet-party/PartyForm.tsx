@@ -11,8 +11,9 @@ import { getPlant } from "@/lib/banquet-party/plants";
 import { defaultMenuCourseForCategory } from "@/lib/banquet-party/menu";
 import { newMaterialId, newPartyId, newTimelineTaskId } from "@/lib/banquet-party/storage";
 import { createDefaultTimeline } from "@/lib/banquet-party/timeline";
-import { getPartyTemplate, PARTY_TEMPLATES } from "@/lib/banquet-party/templates";
+import { EXTENDED_PARTY_TEMPLATES, FEATURED_PARTY_TEMPLATES, getPartyTemplate, isFeaturedPartyTemplate } from "@/lib/banquet-party/templates";
 import type { Material, Party } from "@/lib/banquet-party/types";
+import { BASE_CURRENCY, PROJECT_CURRENCIES, coerceCurrency, type Currency } from "@/lib/fx";
 import { cn } from "@/lib/utils";
 
 export function PartyForm({
@@ -24,13 +25,16 @@ export function PartyForm({
   mode: "create" | "edit";
   initial?: Party;
   onCancel: () => void;
-  onSave: (party: Party) => void;
+  onSave: (party: Party) => void | Promise<void>;
 }) {
   const t = useTranslations("banquetParty");
   const [partyTypeId, setPartyTypeId] = useState(initial?.partyTypeId ?? "custom");
   const [name, setName] = useState(initial?.name ?? "");
   const [date, setDate] = useState(initial?.date ?? new Date().toISOString().slice(0, 10));
   const [characterId, setCharacterId] = useState(initial?.characterId ?? SOUL_CHARACTERS[0]!.id);
+  const [currency, setCurrency] = useState<Currency>(coerceCurrency(initial?.currency ?? BASE_CURRENCY));
+  const [budgetCap, setBudgetCap] = useState(initial?.budgetCap?.toString() ?? "");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (mode === "edit") return;
@@ -66,9 +70,11 @@ export function PartyForm({
           category: m.category,
           plantColor: plant,
           isPurchased: false,
-          texture: m.texture,
+          miscType: m.miscType,
           flavor: m.flavor,
           drinkType: m.drinkType,
+          decorZone: m.decorZone,
+          decorAtmosphere: m.decorAtmosphere,
           menuCourse: m.menuCourse ?? defaultMenuCourseForCategory(m.category),
         },
       ];
@@ -77,15 +83,28 @@ export function PartyForm({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || submitting) return;
+
+    const cap = budgetCap.trim() ? Number(budgetCap) : undefined;
+    const parsedCap = Number.isFinite(cap) && cap! > 0 ? cap : undefined;
 
     const base: Party = initial
-      ? { ...initial, name: name.trim(), date, characterId, partyTypeId: partyTypeId === "custom" ? undefined : partyTypeId }
+      ? {
+          ...initial,
+          name: name.trim(),
+          date,
+          characterId,
+          currency,
+          budgetCap: parsedCap,
+          partyTypeId: partyTypeId === "custom" ? undefined : partyTypeId,
+        }
       : {
           id: newPartyId(),
           name: name.trim(),
           date,
           characterId,
+          currency,
+          budgetCap: parsedCap,
           partyTypeId: partyTypeId === "custom" ? undefined : partyTypeId,
           materials: buildMaterialsFromTemplate(partyTypeId),
           colorPalette: { primary: null, secondaries: [], accents: [], distribution: [] },
@@ -94,8 +113,12 @@ export function PartyForm({
           createdAt: new Date().toISOString(),
         };
 
-    onSave(base);
+    setSubmitting(true);
+    void Promise.resolve(onSave(base)).finally(() => setSubmitting(false));
   };
+
+  const selectedTpl = getPartyTemplate(partyTypeId);
+  const dropdownValue = isFeaturedPartyTemplate(partyTypeId) ? "" : partyTypeId;
 
   return (
     <form onSubmit={submit} className="space-y-4 rounded-2xl border bg-gradient-to-br from-[#F4EFEA] to-[#FAF9F7] p-5">
@@ -104,7 +127,7 @@ export function PartyForm({
       <div className="space-y-2">
         <Label>{t("pickPartyType")}</Label>
         <div className="grid gap-2 sm:grid-cols-3">
-          {PARTY_TEMPLATES.map((tpl) => (
+          {FEATURED_PARTY_TEMPLATES.map((tpl) => (
             <button
               key={tpl.id}
               type="button"
@@ -122,12 +145,57 @@ export function PartyForm({
       </div>
 
       <div className="space-y-1">
+        <Label>{t("partyTypeMoreLabel")}</Label>
+        <select
+          className="flex h-9 w-full rounded-md border bg-white px-3 text-sm"
+          value={dropdownValue}
+          onChange={(e) => applyTemplate(e.target.value)}
+        >
+          <option value="">{t("partyTypeMorePlaceholder")}</option>
+          {EXTENDED_PARTY_TEMPLATES.map((tpl) => (
+            <option key={tpl.id} value={tpl.id}>
+              {t(`partyType.${tpl.nameKey}`)}
+            </option>
+          ))}
+        </select>
+        {selectedTpl && !isFeaturedPartyTemplate(partyTypeId) ? (
+          <p className="text-xs leading-relaxed text-muted-foreground">{t(`partyType.${selectedTpl.descKey}`)}</p>
+        ) : null}
+      </div>
+
+      <div className="space-y-1">
         <Label>{t("partyName")}</Label>
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("partyNamePlaceholder")} required />
       </div>
       <div className="space-y-1">
         <Label>{t("partyDate")}</Label>
         <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+      </div>
+      <div className="space-y-1">
+        <Label>{t("currency")}</Label>
+        <select
+          className="flex h-9 w-full rounded-md border bg-white px-3 text-sm"
+          value={currency}
+          onChange={(e) => setCurrency(coerceCurrency(e.target.value))}
+        >
+          {PROJECT_CURRENCIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-muted-foreground">{t("currencyHint")}</p>
+      </div>
+      <div className="space-y-1">
+        <Label>{t("budgetCap")}</Label>
+        <Input
+          type="number"
+          min={0}
+          value={budgetCap}
+          onChange={(e) => setBudgetCap(e.target.value)}
+          placeholder={t("budgetCapPlaceholder")}
+        />
+        <p className="text-xs text-muted-foreground">{t("budgetCapHint")}</p>
       </div>
       <div className="space-y-2">
         <Label>{t("pickSoulCharacter")}</Label>
@@ -151,11 +219,17 @@ export function PartyForm({
       {mode === "create" && partyTypeId === "daughterBirthday" ? (
         <p className="text-xs text-muted-foreground">{t("daughterBirthdayHint")}</p>
       ) : null}
+      {mode === "create" && partyTypeId === "gardenDinner" ? (
+        <p className="text-xs text-muted-foreground">{t("gardenDinnerHint")}</p>
+      ) : null}
+      {mode === "create" && partyTypeId === "networkingSalon" ? (
+        <p className="text-xs text-muted-foreground">{t("networkingSalonHint")}</p>
+      ) : null}
       <div className="flex gap-2">
-        <Button type="button" variant="outline" className="rounded-full" onClick={onCancel}>
+        <Button type="button" variant="outline" className="rounded-full" onClick={onCancel} disabled={submitting}>
           {t("cancel")}
         </Button>
-        <Button type="submit" className="rounded-full">
+        <Button type="submit" className="rounded-full" disabled={submitting}>
           {mode === "create" ? t("createAndOpen") : t("saveParty")}
         </Button>
       </div>
