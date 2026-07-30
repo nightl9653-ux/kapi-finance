@@ -5,6 +5,7 @@
     "goals": "Goals",
     "transactions": "Transactions",
     "notifications": "Notifications",
+    "meetings": "Connections",
     "aiAssistant": "AI Assistant",
     "reports": "Reports",
     "pricing": "Pricing",
@@ -30,6 +31,9 @@
     },
     "houseRenovation": {
       "lead": "Plan renovation budgets by structure, finishes, and appliances."
+    },
+    "meetings": {
+      "lead": "Friend profiles and meetup notes: one record per meeting, with a relationship score."
     }
   },
   "banquetParty": {
@@ -882,6 +886,86 @@
     "recurringEdit": "Edit",
     "recurringMonthInYear": "Month {n}"
   },
+  "meetingsPage": {
+    "subtitle": "Friend profiles and meetup notes: one record per meeting; scores track the relationship. Gift money still goes under Transactions → Gifts & social.",
+    "loading": "Loading…",
+    "loadError": "Couldn’t load. Check your connection and try again.",
+    "saveError": "Couldn’t save. Please try again.",
+    "schemaMissing": "Cloud tables for Connections are missing. Run migration 20260730120000_social_meetings.sql in the Supabase SQL Editor.",
+    "retry": "Retry",
+    "friendsTitle": "Friends",
+    "recordsTitle": "Meetups",
+    "recentTitle": "Recent meetups",
+    "newFriend": "Add friend",
+    "editFriend": "Edit friend",
+    "deleteFriend": "Delete friend",
+    "deleteFriendConfirm": "Delete this friend and all their meetup records? This cannot be undone.",
+    "newMeeting": "Log a meetup",
+    "editMeeting": "Edit meetup",
+    "deleteMeetingConfirm": "Delete this meetup record?",
+    "name": "Name",
+    "alias": "Nickname",
+    "relation": "Relation",
+    "relationPlaceholder": "e.g. classmate, neighbor, client",
+    "phone": "Phone",
+    "email": "Email",
+    "notes": "Notes",
+    "friend": "Friend",
+    "metOn": "Date",
+    "occasion": "Occasion",
+    "occasionPlaceholder": "e.g. coffee, chance meeting, banquet",
+    "score": "Score",
+    "feeling": "How it felt",
+    "feelingPlaceholder": "A short note about this meetup…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back to list",
+    "edit": "Edit",
+    "delete": "Delete",
+    "meetupCount": "Meetups",
+    "meetupCountShort": "{count}×",
+    "averageScore": "Average",
+    "lastMet": "Last meetup",
+    "lastMetOn": "Last {date}",
+    "noFriends": "No friends yet. Add someone, then log a meetup.",
+    "noMeetingsYet": "No meetups yet",
+    "noMeetingsForFriend": "No meetup records yet.",
+    "noRecent": "No meetup records yet.",
+    "needFriendFirst": "Add at least one friend before logging a meetup.",
+    "goToTransactions": "Go to transactions",
+    "adviceTitle": "Relationship tips",
+    "adviceDisclaimer": "Saved only on this friend. Pick from the dropdown, or write your own.",
+    "adviceSelectPlaceholder": "Choose a tip…",
+    "adviceContextualGroup": "From meetup history",
+    "adviceCommonGroup": "Common",
+    "adviceAdd": "Add",
+    "adviceCustomPlaceholder": "Write a custom tip…",
+    "adviceCustomAdd": "Add custom",
+    "adviceCustomTag": "Custom",
+    "adviceSavedEmpty": "No tips yet. Pick one above, or add a custom note.",
+    "adviceRemove": "Remove",
+    "advice": {
+      "firstMeetup": "No meetup notes with {name} yet. Plan a light get-together, or log how a chance meeting felt.",
+      "thinData": "Only {count} meetup(s) with {name} so far. Log a few more before drawing strong conclusions.",
+      "reconnectLong": "It has been {days} days since you met {name} (avg {avg}). A short check-in or light invite is safer than a sudden deep talk.",
+      "reconnectWarm": "{days} days without seeing {name}, but the average stays solid ({avg}). Worth a gentle ping—a hello or low-key invite.",
+      "checkInSoon": "{days} days since {name}, and the bond looks warm (avg {avg}). A light touch soon helps keep the heat.",
+      "keepDistance": "Average with {name} is low ({avg}). Protect your energy: less proactive effort; polite contact is enough if needed.",
+      "gentleBoundary": "Average with {name} runs cool ({avg}). Keep meetups short and clear; watch before going deeper.",
+      "deepenBond": "Average with {name} is high ({avg}). A slightly richer shared plan—or remembering what they care about—can help.",
+      "strikeWhileWarm": "Your latest meetup with {name} scored high ({score}). A quick thank-you or next small plan often lands well now.",
+      "repairGently": "The latest score with {name} ({score}) is well below their average ({avg}). Clarify what happened before repairing—or cool off first.",
+      "coolingTrend": "Recent scores with {name} ({recent}) are cooler than earlier ones ({earlier}). Slow down, lower expectations, and observe.",
+      "steadyGood": "Things with {name} look steady and warm (avg {avg}). Keep a natural pace—no need to force it.",
+      "logMoreFeelings": "Few meetup notes with {name} include feelings. A sentence or two each time will improve these tips.",
+      "sendHello": "Send {name} a light check-in—no agenda.",
+      "shortCoffee": "Invite {name} to a short meetup (coffee/walk), about an hour.",
+      "politeOnly": "Keep things polite with {name} for now; don’t push deeper.",
+      "noteWhatTheyLike": "Jot down what {name} cares about (food, hobbies, family) for next time.",
+      "lowerPace": "Slow the pace with {name}; observe before investing more.",
+      "thankFollowUp": "After meeting {name}, send a quick thank-you or small follow-up."
+    }
+  },
   "aiAssistantPage": {
     "subtitle": "Ask in plain language for general budgeting, saving, and goal planning guidance. Your real balances live in the app.",
     "budget": {
@@ -1237,6 +1321,16 @@
         "Materials list by category, phase, room, and purchase progress",
         "Overview of planned vs purchased, with optional budget-cap alerts",
         "“Log to ledger” posts housing expenses and links them to the project"
+      ]
+    },
+    "meetings": {
+      "lead": "Social connections: a profile per friend, and one meetup note each time—same ledger mindset, for relationships.",
+      "bullets": [
+        "Friend profiles with meetup count and average score",
+        "Meetup records: date, occasion, score (−10–10), and notes",
+        "On each friend, pick tips from a dropdown or add custom ones",
+        "Optional links to gift transactions or banquet guests",
+        "After a party, jump in to log today’s guests"
       ]
     },
     "aiAssistant": {

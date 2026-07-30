@@ -130,6 +130,43 @@ create index if not exists transactions_user_renovation_project_id_idx
 on transactions (user_id, renovation_project_id)
 where renovation_project_id is not null;
 
+-- 往来：朋友档案 + 见面记录（须在 transactions / banquet_parties 之后，因可选外键）
+create table if not exists social_contacts (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade not null,
+  name text not null,
+  alias text,
+  relation text,
+  phone text,
+  email text,
+  notes text,
+  advice_items jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists social_contacts_user_id_idx on social_contacts (user_id);
+create index if not exists social_contacts_updated_at_idx on social_contacts (user_id, updated_at desc);
+
+create table if not exists social_meetings (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade not null,
+  contact_id uuid references social_contacts(id) on delete cascade not null,
+  met_on date not null,
+  occasion text,
+  score smallint not null default 0,
+  feeling text,
+  party_id uuid references banquet_parties(id) on delete set null,
+  transaction_id uuid references transactions(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint social_meetings_score_range check (score >= -10 and score <= 10)
+);
+
+create index if not exists social_meetings_user_id_idx on social_meetings (user_id);
+create index if not exists social_meetings_contact_id_idx on social_meetings (contact_id);
+create index if not exists social_meetings_met_on_idx on social_meetings (user_id, met_on desc);
+
 -- 预算方案（每月一份；AI 可生成并保存）
 create table if not exists budgets (
   id uuid default gen_random_uuid() primary key,
@@ -400,6 +437,8 @@ alter table profiles enable row level security;
 alter table financial_goals enable row level security;
 alter table renovation_projects enable row level security;
 alter table banquet_parties enable row level security;
+alter table social_contacts enable row level security;
+alter table social_meetings enable row level security;
 alter table transactions enable row level security;
 alter table notifications enable row level security;
 alter table ai_usage enable row level security;
@@ -498,6 +537,49 @@ with check (user_id = auth.uid());
 drop policy if exists "banquet_parties_delete_own" on banquet_parties;
 create policy "banquet_parties_delete_own"
 on banquet_parties for delete
+using (user_id = auth.uid());
+
+-- social_contacts / social_meetings: CRUD limited to owner
+drop policy if exists "social_contacts_select_own" on social_contacts;
+create policy "social_contacts_select_own"
+on social_contacts for select
+using (user_id = auth.uid());
+
+drop policy if exists "social_contacts_insert_own" on social_contacts;
+create policy "social_contacts_insert_own"
+on social_contacts for insert
+with check (user_id = auth.uid());
+
+drop policy if exists "social_contacts_update_own" on social_contacts;
+create policy "social_contacts_update_own"
+on social_contacts for update
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+drop policy if exists "social_contacts_delete_own" on social_contacts;
+create policy "social_contacts_delete_own"
+on social_contacts for delete
+using (user_id = auth.uid());
+
+drop policy if exists "social_meetings_select_own" on social_meetings;
+create policy "social_meetings_select_own"
+on social_meetings for select
+using (user_id = auth.uid());
+
+drop policy if exists "social_meetings_insert_own" on social_meetings;
+create policy "social_meetings_insert_own"
+on social_meetings for insert
+with check (user_id = auth.uid());
+
+drop policy if exists "social_meetings_update_own" on social_meetings;
+create policy "social_meetings_update_own"
+on social_meetings for update
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+drop policy if exists "social_meetings_delete_own" on social_meetings;
+create policy "social_meetings_delete_own"
+on social_meetings for delete
 using (user_id = auth.uid());
 
 -- transactions: CRUD limited to owner

@@ -5,6 +5,7 @@
     "goals": "目标管理",
     "transactions": "记账",
     "notifications": "通知",
+    "meetings": "往来",
     "aiAssistant": "AI助手",
     "reports": "报表",
     "pricing": "会员价格",
@@ -30,6 +31,9 @@
     },
     "houseRenovation": {
       "lead": "按硬装、软装与家电分项规划装修预算。"
+    },
+    "meetings": {
+      "lead": "朋友档案与见面感受：每次见面一条记录，分数是关系维度。"
     }
   },
   "banquetParty": {
@@ -882,6 +886,86 @@
     "recurringEdit": "编辑",
     "recurringMonthInYear": "{n}月"
   },
+  "meetingsPage": {
+    "subtitle": "朋友档案与见面记录：每次见面一条，分数是关系维度。礼金仍走记账里的「人情往来」。",
+    "loading": "加载中…",
+    "loadError": "加载失败，请检查网络后重试。",
+    "saveError": "保存失败，请稍后重试。",
+    "schemaMissing": "往来云端表尚未创建。请在 Supabase SQL Editor 执行迁移 20260730120000_social_meetings.sql。",
+    "retry": "重试",
+    "friendsTitle": "朋友",
+    "recordsTitle": "见面记录",
+    "recentTitle": "最近见面",
+    "newFriend": "新建朋友",
+    "editFriend": "编辑朋友",
+    "deleteFriend": "删除朋友",
+    "deleteFriendConfirm": "删除这位朋友及其全部见面记录？此操作无法撤销。",
+    "newMeeting": "记一次见面",
+    "editMeeting": "编辑见面",
+    "deleteMeetingConfirm": "删除这条见面记录？",
+    "name": "姓名",
+    "alias": "备注名",
+    "relation": "关系",
+    "relationPlaceholder": "如：同学、邻居、客户",
+    "phone": "电话",
+    "email": "邮箱",
+    "notes": "长期备注",
+    "friend": "朋友",
+    "metOn": "日期",
+    "occasion": "场合",
+    "occasionPlaceholder": "如：喝茶、偶遇、宴席",
+    "score": "分数",
+    "feeling": "感受",
+    "feelingPlaceholder": "这次见面的感受…",
+    "save": "保存",
+    "cancel": "取消",
+    "back": "返回列表",
+    "edit": "编辑",
+    "delete": "删除",
+    "meetupCount": "见面次数",
+    "meetupCountShort": "{count} 次",
+    "averageScore": "均分",
+    "lastMet": "最近见面",
+    "lastMetOn": "最近 {date}",
+    "noFriends": "还没有朋友档案。先新建一位，再记见面。",
+    "noMeetingsYet": "尚无见面",
+    "noMeetingsForFriend": "还没有见面记录。",
+    "noRecent": "还没有见面记录。",
+    "needFriendFirst": "请先新建至少一位朋友，再记见面。",
+    "goToTransactions": "前往记账",
+    "adviceTitle": "交往建议",
+    "adviceDisclaimer": "只保存在这位朋友下。可从下拉选一条添加，也可自己写。",
+    "adviceSelectPlaceholder": "选择一条建议…",
+    "adviceContextualGroup": "根据见面记录",
+    "adviceCommonGroup": "常用",
+    "adviceAdd": "添加",
+    "adviceCustomPlaceholder": "自定义交往建议…",
+    "adviceCustomAdd": "添加自定义",
+    "adviceCustomTag": "自定义",
+    "adviceSavedEmpty": "尚未添加建议。从上方下拉选择，或写一条自定义。",
+    "adviceRemove": "移除",
+    "advice": {
+      "firstMeetup": "和{name}还没有见面记录。可先安排一次轻松短聚，或把偶然碰上的感受记下来。",
+      "thinData": "和{name}只有 {count} 次记录，样本还薄。先多记几次，再下重判断。",
+      "reconnectLong": "和{name}已有 {days} 天未见（均分 {avg}）。发条近况或约一次短聚，比突然深聊更稳。",
+      "reconnectWarm": "和{name}已 {days} 天未见，但均分不错（{avg}）。值得主动续上：一句问候或轻量邀约即可。",
+      "checkInSoon": "和{name}已 {days} 天未见，关系偏暖（均分 {avg}）。近期保持一次轻联系，避免热度掉下去。",
+      "keepDistance": "和{name}的均分偏低（{avg}）。优先保护精力：减少主动投入，必要时只维持礼貌往来。",
+      "gentleBoundary": "和{name}的均分偏冷（{avg}）。见面宜短、边界清晰，先观察再决定是否加深。",
+      "deepenBond": "和{name}均分较高（{avg}）。可以考虑稍深一点的共同安排，或记住对方在意的小事。",
+      "strikeWhileWarm": "刚和{name}有一次高分见面（{score}）。趁热乎跟进一句感谢或下一步小约定，效果通常更好。",
+      "repairGently": "最近一次和{name}的分数（{score}）明显低于均分（{avg}）。先弄清原因，再决定是轻声修补还是先降温。",
+      "coolingTrend": "和{name}近两次均分（{recent}）低于更早记录（{earlier}）。可放慢节奏、降低期待，先观察一阵。",
+      "steadyGood": "和{name}目前状态平稳偏暖（均分 {avg}）。维持自然节奏即可，不必用力过猛。",
+      "logMoreFeelings": "和{name}的见面里感受文字偏少。多写一两句当下感受，以后建议会更准。",
+      "sendHello": "给{name}发一条轻松近况问候，不谈正事。",
+      "shortCoffee": "约{name}一次短聚（咖啡/散步），控制在一小时内。",
+      "politeOnly": "和{name}保持礼貌往来即可，暂不加深。",
+      "noteWhatTheyLike": "记下{name}在意的小事（忌口、兴趣、家人），下次用得上。",
+      "lowerPace": "放慢和{name}的互动节奏，先观察再投入。",
+      "thankFollowUp": "见面后给{name}补一句感谢或小跟进，巩固好感。"
+    }
+  },
   "aiAssistantPage": {
     "subtitle": "用自然语言提问，获得预算、储蓄与目标相关的一般性建议。具体账户数据以应用内为准。",
     "budget": {
@@ -1237,6 +1321,16 @@
         "材料清单：大类、阶段、空间与采购进度",
         "概览汇总计划/已采，支持预算上限提醒",
         "清单「记入记账」同步住房支出，并挂回项目"
+      ]
+    },
+    "meetings": {
+      "lead": "人情往来：为每位朋友建档案，每次见面记下场合、分数与感受——和记账同一心智，但管的是关系。",
+      "bullets": [
+        "朋友档案：累计见面与均分",
+        "见面记录：日期、场合、分数（-10～10）、感受",
+        "朋友页可下拉添加交往建议，并支持自定义",
+        "可选挂接礼金记账或宴会宾客",
+        "宴席结束后可一键给今日宾客补记"
       ]
     },
     "aiAssistant": {

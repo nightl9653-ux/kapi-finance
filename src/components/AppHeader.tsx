@@ -22,6 +22,7 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
   ];
 
   const navSecondary = [
+    { href: `/${locale}/meetings`, label: t("meetings") },
     { href: `/${locale}/ai-assistant`, label: t("aiAssistant") },
     { href: `/${locale}/reports`, label: t("reports") },
     { href: `/${locale}/pricing`, label: t("pricing") },
