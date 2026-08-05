@@ -16,6 +16,7 @@ import { TransactionsCurrencyPicker } from "@/components/transactions/Transactio
 import { FundPoolPlanner } from "@/components/goals/FundPoolPlanner";
 import { DreamTheater } from "@/components/goals/DreamTheater";
 import { FeatureGuestLanding } from "@/components/marketing/FeatureGuestLanding";
+import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
 
 type TxRow = { type: string | null; amount_base: number | null; timestamp: string | null };
 
@@ -270,19 +271,18 @@ export default async function GoalsPage({
     return <FeatureGuestLanding locale={locale} feature="goals" signInNext={`/${locale}/goals`} />;
   }
 
-  const [{ data: profile }, { data: goals, error }] = await Promise.all([
-    supabase.from("profiles").select("is_plus_member").eq("id", auth.user.id).maybeSingle(),
+  const [{ data: goals, error }, isPlus] = await Promise.all([
     supabase
       .from("financial_goals")
       .select("id,name,type,target_amount,current_amount,deadline,priority,created_at")
       .eq("user_id", auth.user.id)
       .order("created_at", { ascending: false }),
+    fetchUserIsPlusMember(supabase, auth.user.id),
   ]);
   if (error) {
     redirect(`/${locale}/goals?error=unknown`);
   }
 
-  const isPlus = Boolean(profile?.is_plus_member);
   const usedCount = goals?.length ?? 0;
 
   const { data: netRpc, error: netRpcError } = await supabase.rpc("goals_net_stats");

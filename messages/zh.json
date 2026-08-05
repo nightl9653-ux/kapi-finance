@@ -95,6 +95,8 @@
     "saveError": "保存失败，请稍后重试。",
     "currencyMigrationError": "数据库缺少 currency 列。请在 Supabase 执行迁移 20260713120000_project_currency.sql 后重试。",
     "retry": "重试",
+    "dressupImportOk": "已从宅宴导入宴会清单。",
+    "dressupImportError": "宅宴草稿导入失败，请稍后重试。",
     "tab": {
       "overview": "概览",
       "aesthetics": "美学",
@@ -523,6 +525,9 @@
     "saveError": "保存失败，请稍后重试。",
     "currencyMigrationError": "数据库缺少 currency 列。请在 Supabase 执行迁移 20260713120000_project_currency.sql 后重试。",
     "retry": "重试",
+    "dressupImportOk": "已从宅宴导入装修项目。",
+    "dressupImportError": "宅宴草稿导入失败，请稍后重试。",
+    "dressupImportMissing": "未找到宅宴草稿，请从宅宴重新导入。",
     "delete": "删除",
     "deleteConfirm": "确定删除此项目？材料清单将一并删除。",
     "deleteMaterial": "删除",

@@ -95,6 +95,8 @@
     "saveError": "Failed to save. Please try again.",
     "currencyMigrationError": "Missing currency column. Run migration 20260713120000_project_currency.sql in Supabase, then retry.",
     "retry": "Retry",
+    "dressupImportOk": "Imported a banquet list from 宅宴.",
+    "dressupImportError": "Could not import the 宅宴 draft. Please try again.",
     "tab": {
       "overview": "Overview",
       "aesthetics": "Aesthetics",
@@ -523,6 +525,9 @@
     "saveError": "Failed to save. Please try again.",
     "currencyMigrationError": "Missing currency column. Run migration 20260713120000_project_currency.sql in Supabase, then retry.",
     "retry": "Retry",
+    "dressupImportOk": "Imported a renovation project from 宅宴.",
+    "dressupImportError": "Could not import the 宅宴 draft. Please try again.",
+    "dressupImportMissing": "No 宅宴 draft found. Please import again from 宅宴.",
     "delete": "Delete",
     "deleteConfirm": "Delete this project and all materials?",
     "deleteMaterial": "Delete",

@@ -7,6 +7,7 @@ import { PlusPlanCards } from "@/components/pricing/PlusPlanCards";
 import { PricingCheckoutFlash } from "@/components/pricing/PricingCheckoutFlash";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
 
 type LocaleSeg = "zh" | "en";
 
@@ -26,12 +27,7 @@ export default async function PricingPage({
       const supabase = await createSupabaseServerClient();
       const { data: auth } = await supabase.auth.getUser();
       if (auth.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("is_plus_member")
-          .eq("id", auth.user.id)
-          .maybeSingle();
-        isPlus = Boolean(profile?.is_plus_member);
+        isPlus = await fetchUserIsPlusMember(supabase, auth.user.id);
       }
     } catch {
       isPlus = null;

@@ -11,6 +11,7 @@ create table if not exists profiles (
   occupation text,
   fixed_expenses jsonb default '[]',
   is_plus_member boolean default false,
+  plus_expires_at timestamptz,
   terms_version text,
   terms_accepted_at timestamptz,
   sanctions_attested_at timestamptz,
@@ -1023,7 +1024,9 @@ declare
   is_plus boolean;
   goal_count integer;
 begin
-  select coalesce(p.is_plus_member, false) into is_plus
+  select coalesce(p.is_plus_member, false)
+    and (p.plus_expires_at is null or p.plus_expires_at > now())
+  into is_plus
   from public.profiles p
   where p.id = new.user_id;
 

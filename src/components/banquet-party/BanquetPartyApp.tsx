@@ -1,15 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 
 import { PartyDetailClient } from "@/components/banquet-party/PartyDetailClient";
 import { PartyForm } from "@/components/banquet-party/PartyForm";
 import { Button } from "@/components/ui/button";
+import { takeDressupImport } from "@/lib/dressup-import/codec";
+import { mapDressupBanquetDraft } from "@/lib/dressup-import/map-banquet";
 import { calculateColorPalette } from "@/lib/banquet-party/palette";
 import { deleteParty, loadParties, upsertParty } from "@/lib/banquet-party/storage";
 import type { Party } from "@/lib/banquet-party/types";
+
+const IMPORT_MAX_AGE_MS = 30 * 60 * 1000;
 
 export function BanquetPartyApp({ userId }: { userId: string }) {
   const t = useTranslations("banquetParty");
@@ -21,6 +25,8 @@ export function BanquetPartyApp({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [importNote, setImportNote] = useState<string | null>(null);
+  const importTried = useRef(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -38,16 +44,57 @@ export function BanquetPartyApp({ userId }: { userId: string }) {
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    if (importTried.current) return;
+    importTried.current = true;
+
+    const envelope = takeDressupImport("banquet");
+    if (!envelope) return;
+    if (Date.now() - envelope.at > IMPORT_MAX_AGE_MS) return;
+
+    const party = mapDressupBanquetDraft(envelope.data);
+    void (async () => {
+      setSaving(true);
+      try {
+        const updated = await upsertParty(userId, party);
+        setParties(updated);
+        const opened =
+          updated.find((p) => p.name === party.name && p.date === party.date) ?? updated[0];
+        setActiveId(opened?.id ?? null);
+        setImportNote(t("dressupImportOk"));
+        const url = new URL(window.location.href);
+        if (url.searchParams.has("from")) {
+          url.searchParams.delete("from");
+          window.history.replaceState(null, "", url.pathname + url.search);
+        }
+      } catch {
+        setError(t("dressupImportError"));
+      } finally {
+        setSaving(false);
+      }
+    })();
+  }, [userId, t]);
+
   const active = parties.find((p) => p.id === activeId);
 
   if (active) {
     return (
-      <PartyDetailClient
-        party={active}
-        userId={userId}
-        onBack={() => setActiveId(null)}
-        onPartyUpdated={setParties}
-      />
+      <>
+        {importNote ? (
+          <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm text-emerald-900">
+            {importNote}
+            <button type="button" className="ml-2 underline" onClick={() => setImportNote(null)}>
+              {tCommon("cancel")}
+            </button>
+          </div>
+        ) : null}
+        <PartyDetailClient
+          party={active}
+          userId={userId}
+          onBack={() => setActiveId(null)}
+          onPartyUpdated={setParties}
+        />
+      </>
     );
   }
 
@@ -58,6 +105,15 @@ export function BanquetPartyApp({ userId }: { userId: string }) {
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{t("workflowHint")}</p>
       </div>
+
+      {importNote ? (
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-900">
+          {importNote}
+          <button type="button" className="ml-2 underline" onClick={() => setImportNote(null)}>
+            {tCommon("cancel")}
+          </button>
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
         <Button type="button" className="rounded-full" onClick={() => setCreating(true)}>

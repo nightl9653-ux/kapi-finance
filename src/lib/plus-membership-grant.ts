@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { type PlusPlanId, getPlusPlan } from "@/lib/plus-plans";
+import { type PlusPlanId, addPlusPlanDuration, getPlusPlan } from "@/lib/plus-plans";
 
 function isPlusOrdersTableMissingError(
   error: { code?: string; message?: string; details?: string } | null,
@@ -17,7 +17,7 @@ export async function grantPlusMembership(params: {
   planId: PlusPlanId;
   provider: string;
   externalOrderId: string;
-}): Promise<{ granted: boolean; reason?: string }> {
+}): Promise<{ granted: boolean; reason?: string; expiresAt?: string | null }> {
   if (!getPlusPlan(params.planId)) return { granted: false, reason: "unknown_plan" };
 
   const { data: existing } = await params.admin
@@ -42,12 +42,33 @@ export async function grantPlusMembership(params: {
     return { granted: false, reason: "order_insert_failed" };
   }
 
+  const { data: profile } = await params.admin
+    .from("profiles")
+    .select("is_plus_member, plus_expires_at")
+    .eq("id", params.userId)
+    .maybeSingle();
+
+  const now = new Date();
+  const currentExpRaw = (profile as { plus_expires_at?: string | null } | null)?.plus_expires_at ?? null;
+  const currentExp = currentExpRaw ? new Date(currentExpRaw) : null;
+  const alreadyLifetime = Boolean(profile?.is_plus_member) && currentExpRaw == null;
+
+  let plusExpiresAt: string | null;
+  if (params.planId === "lifetime" || alreadyLifetime) {
+    // 终身（含历史未写到期日的已开通用户）保持 null
+    plusExpiresAt = null;
+  } else {
+    const base = currentExp && currentExp.getTime() > now.getTime() ? currentExp : now;
+    const next = addPlusPlanDuration(base, params.planId);
+    plusExpiresAt = next ? next.toISOString() : null;
+  }
+
   const { error: profileErr } = await params.admin
     .from("profiles")
-    .update({ is_plus_member: true })
+    .update({ is_plus_member: true, plus_expires_at: plusExpiresAt })
     .eq("id", params.userId);
 
   if (profileErr) return { granted: false, reason: "profile_update_failed" };
 
-  return { granted: true };
+  return { granted: true, expiresAt: plusExpiresAt };
 }
