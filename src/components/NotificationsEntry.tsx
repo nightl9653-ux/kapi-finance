@@ -30,13 +30,11 @@ export function NotificationsEntry() {
 
     async function run() {
       try {
-        // 1) 确保“昨日未记账”通知被生成（幂等）
         await fetch("/api/notifications/ensure", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            // fallback for older servers
             today: getLocalISODate(),
           }),
           signal: ac.signal,
@@ -45,7 +43,6 @@ export function NotificationsEntry() {
           return null;
         });
 
-        // 2) 拉取未读数量（右上角角标）
         const { count, error } = await client
           .from("notifications")
           .select("id", { count: "exact", head: true })
@@ -54,7 +51,7 @@ export function NotificationsEntry() {
         if (error || cancelled) return;
         setUnread(count ?? 0);
       } catch {
-        // 开发环境偶发网络/会话问题，避免未捕获 Promise 触发 Next 红标
+        // ignore
       }
     }
 
@@ -71,15 +68,38 @@ export function NotificationsEntry() {
   return (
     <Link
       href={`/${locale}/notifications`}
-      className="relative inline-flex h-9 items-center rounded-full border bg-white/70 px-3 text-sm text-muted-foreground hover:text-foreground"
+      aria-label={t("label")}
+      title={t("label")}
+      className="relative inline-flex h-9 shrink-0 items-center justify-center rounded-full border bg-white/70 text-muted-foreground hover:text-foreground max-md:w-9 max-md:px-0 md:px-3 md:text-sm"
     >
-      {t("label")}
+      {/* 手机顶栏用图标，避免英文 Notifications 过长；桌面仍显示文字 */}
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden
+        className="md:hidden"
+      >
+        <path
+          d="M6 9a6 6 0 1 1 12 0c0 3.2.8 4.6 1.5 5.5.3.4 0 1-.5 1H5c-.5 0-.8-.6-.5-1C5.2 13.6 6 12.2 6 9Z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M10 18a2 2 0 0 0 4 0"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+      <span className="hidden md:inline">{t("label")}</span>
       {unread > 0 ? (
-        <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-foreground px-1.5 text-xs font-medium text-background">
+        <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-medium leading-4 text-background md:static md:ml-2 md:min-w-5 md:px-1.5 md:text-xs md:leading-none">
           {unread > 99 ? "99+" : unread}
         </span>
       ) : null}
     </Link>
   );
 }
-

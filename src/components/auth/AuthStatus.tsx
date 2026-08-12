@@ -7,6 +7,7 @@ import { createContext, useContext, useEffect, useMemo, useState, useTransition,
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { isSupabaseConfigured } from "@/lib/env";
+import { useHuaweiLikeDevice } from "@/lib/device";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 
@@ -123,10 +124,16 @@ export function AuthUserEmail({ placement }: { placement: "header" | "menu" }) {
 export function AuthStatus() {
   const t = useTranslations("auth");
   const { state, authHref, isPending, signOut } = useAuthContext();
+  const huaweiLike = useHuaweiLikeDevice();
 
   if (state.status === "loading") {
     return (
-      <Button variant="secondary" size="sm" className="shrink-0 rounded-full" disabled>
+      <Button
+        variant="secondary"
+        size="sm"
+        className={cn("shrink-0 rounded-full", huaweiLike && "px-2.5")}
+        disabled
+      >
         {t("loading")}
       </Button>
     );
@@ -136,7 +143,11 @@ export function AuthStatus() {
     return (
       <Link
         href={authHref}
-        className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "shrink-0 rounded-full")}
+        className={cn(
+          buttonVariants({ variant: "secondary", size: "sm" }),
+          "shrink-0 rounded-full",
+          huaweiLike && "px-2.5",
+        )}
       >
         {t("signIn")}
       </Link>
@@ -144,7 +155,13 @@ export function AuthStatus() {
   }
 
   return (
-    <Button variant="secondary" size="sm" className="shrink-0 rounded-full" onClick={signOut} disabled={isPending}>
+    <Button
+      variant="secondary"
+      size="sm"
+      className={cn("shrink-0 rounded-full", huaweiLike && "px-2.5")}
+      onClick={signOut}
+      disabled={isPending}
+    >
       {t("signOut")}
     </Button>
   );

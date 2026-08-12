@@ -1,6 +1,7 @@
 {
   "nav": {
     "brand": "Kash · Family Finance",
+    "brandShort": "Kash",
     "dashboard": "Dashboard",
     "goals": "Goals",
     "transactions": "Transactions",

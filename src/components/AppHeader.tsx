@@ -57,7 +57,7 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
       <header className="sticky top-0 z-50 border-b bg-[#FAF9F7]/90 backdrop-blur">
         <div className="mx-auto w-full max-w-5xl px-4">
           <div className="flex min-h-14 items-center justify-between gap-2 py-2 md:min-h-0 md:py-3">
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <MobileNavDrawer
                 brand={t("brand")}
                 openLabel={t("openMenu")}
@@ -70,13 +70,15 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
               />
               <Link
                 href={`/${locale}`}
-                className="min-w-0 font-semibold leading-tight tracking-tight kapi-line-clamp-2"
+                className="min-w-0 flex-1 truncate text-base font-semibold leading-tight tracking-tight md:text-[0.95rem]"
+                title={t("brand")}
               >
-                {t("brand")}
+                <span className="md:hidden">{t("brandShort")}</span>
+                <span className="hidden md:inline">{t("brand")}</span>
               </Link>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
               <NotificationsEntry />
               <AuthUserEmail placement="header" />
               <AuthStatus />
