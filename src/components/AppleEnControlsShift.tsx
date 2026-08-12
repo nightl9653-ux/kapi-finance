@@ -9,8 +9,12 @@ import { useAppleMobileDevice } from "@/lib/device";
 /** 与 AuthStatus 苹果英文 ms-[14px] 对应：整体左移量扣回，避免登录离语言更远 */
 const AUTH_NUDGE_PX = 14;
 
+/** 软导航 remount 时沿用上次测得的宽度，避免第一帧 width=0 */
+let cachedShiftPx = 0;
+
 /**
- * 仅苹果英文：把铃铛、登录整体往左挪到中文顶栏的位置；语言按钮不改。
+ * 仅苹果英文：在登录与语言之间留空档，把铃铛、登录整体往左挪。
+ * 测量在苹果中英文都做；切到英文时第一帧就用已算好的宽度。
  */
 export function AppleEnControlsShift() {
   const appleMobile = useAppleMobileDevice();
@@ -18,15 +22,16 @@ export function AppleEnControlsShift() {
   const t = useTranslations("auth");
   const auth = useAuthContextOptional();
   const measureRef = useRef<HTMLSpanElement>(null);
-  const [shiftPx, setShiftPx] = useState(0);
+  const [shiftPx, setShiftPx] = useState(() => cachedShiftPx);
 
   const signedIn = auth?.state.status === "signedIn";
   const enAuth = signedIn ? t("signOut") : t("signIn");
   const zhAuth = signedIn ? "退出登录" : "登录";
-  const active = appleMobile && locale === "en";
+  const showSpacer = appleMobile && locale === "en";
 
   useLayoutEffect(() => {
-    if (!active) {
+    if (!appleMobile) {
+      cachedShiftPx = 0;
       setShiftPx(0);
       return;
     }
@@ -40,10 +45,12 @@ export function AppleEnControlsShift() {
 
     const localeDiff = Math.max(0, enLocale.offsetWidth - zhLocale.offsetWidth);
     const authDiff = Math.max(0, zhAuthEl.offsetWidth - enAuthEl.offsetWidth);
-    setShiftPx(Math.max(0, localeDiff + authDiff - AUTH_NUDGE_PX));
-  }, [active, enAuth, zhAuth]);
+    const next = Math.max(0, localeDiff + authDiff - AUTH_NUDGE_PX);
+    cachedShiftPx = next;
+    setShiftPx(next);
+  }, [appleMobile, enAuth, zhAuth]);
 
-  if (!active) return null;
+  if (!appleMobile) return null;
 
   return (
     <>
@@ -77,7 +84,7 @@ export function AppleEnControlsShift() {
           {zhAuth}
         </span>
       </span>
-      <span aria-hidden className="shrink-0" style={{ width: shiftPx }} />
+      {showSpacer ? <span aria-hidden className="shrink-0" style={{ width: shiftPx }} /> : null}
     </>
   );
 }
