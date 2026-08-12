@@ -7,9 +7,7 @@ import { AuthProvider, AuthStatus, AuthUserEmail, type InitialAuth } from "@/com
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { MobileNavDrawer } from "@/components/MobileNavDrawer";
 import { NotificationsEntry } from "@/components/NotificationsEntry";
-import { useAppleMobileDevice } from "@/lib/device";
 import { getDressupPublicUrl } from "@/lib/dressup-origins";
-import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; external?: boolean };
 
@@ -32,7 +30,6 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
   const t = useTranslations("nav");
   const locale = useLocale();
   const dressupUrl = getDressupPublicUrl();
-  const appleMobile = useAppleMobileDevice();
 
   const navPrimary: NavItem[] = [
     { href: `/${locale}`, label: t("dashboard") },
@@ -82,17 +79,9 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
             </div>
 
             <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-              <div
-                className={cn(
-                  "flex items-center gap-1 sm:gap-2",
-                  // 仅苹果：铃铛与登录略松开；语言按钮仍贴右、不跟着挪
-                  appleMobile && "gap-2.5",
-                )}
-              >
-                <NotificationsEntry />
-                <AuthUserEmail placement="header" />
-                <AuthStatus />
-              </div>
+              <NotificationsEntry />
+              <AuthUserEmail placement="header" />
+              <AuthStatus />
               <LocaleSwitcher />
             </div>
           </div>
