@@ -143,7 +143,7 @@ export function AuthStatus() {
         className={cn(
           "shrink-0 rounded-full",
           huaweiLike && "px-2.5",
-          appleEnNudge && "ms-2",
+          appleEnNudge && "ms-3",
         )}
         disabled
       >
@@ -160,7 +160,7 @@ export function AuthStatus() {
           buttonVariants({ variant: "secondary", size: "sm" }),
           "shrink-0 rounded-full",
           huaweiLike && "px-2.5",
-          appleEnNudge && "ms-2",
+          appleEnNudge && "ms-3",
         )}
       >
         {t("signIn")}
@@ -175,7 +175,7 @@ export function AuthStatus() {
       className={cn(
         "shrink-0 rounded-full",
         huaweiLike && "px-2.5",
-        appleEnNudge && "ms-2",
+        appleEnNudge && "ms-3",
       )}
       onClick={signOut}
       disabled={isPending}
