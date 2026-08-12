@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 
 import { AuthProvider, AuthStatus, AuthUserEmail, type InitialAuth } from "@/components/auth/AuthStatus";
+import { AppleEnControlsShift } from "@/components/AppleEnControlsShift";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { MobileNavDrawer } from "@/components/MobileNavDrawer";
 import { NotificationsEntry } from "@/components/NotificationsEntry";
@@ -82,6 +83,7 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
               <NotificationsEntry />
               <AuthUserEmail placement="header" />
               <AuthStatus />
+              <AppleEnControlsShift />
               <LocaleSwitcher />
             </div>
           </div>

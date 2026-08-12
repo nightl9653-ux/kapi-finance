@@ -11,26 +11,18 @@ export function isAppleMobileUa(ua: string): boolean {
   return /iPhone|iPad|iPod/i.test(ua);
 }
 
-/** 跨软导航复用，避免每次 remount 先 false 再 true 造成顶栏闪一下 */
-let huaweiLikeCached: boolean | null = null;
-let appleMobileCached: boolean | null = null;
-
 export function useHuaweiLikeDevice(): boolean {
-  const [match, setMatch] = useState(() => huaweiLikeCached ?? false);
+  const [match, setMatch] = useState(false);
   useEffect(() => {
-    const next = isHuaweiLikeUa(navigator.userAgent || "");
-    huaweiLikeCached = next;
-    setMatch(next);
+    setMatch(isHuaweiLikeUa(navigator.userAgent || ""));
   }, []);
   return match;
 }
 
 export function useAppleMobileDevice(): boolean {
-  const [match, setMatch] = useState(() => appleMobileCached ?? false);
+  const [match, setMatch] = useState(false);
   useEffect(() => {
-    const next = isAppleMobileUa(navigator.userAgent || "");
-    appleMobileCached = next;
-    setMatch(next);
+    setMatch(isAppleMobileUa(navigator.userAgent || ""));
   }, []);
   return match;
 }

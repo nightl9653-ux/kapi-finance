@@ -128,9 +128,12 @@ export function AuthUserEmail({ placement }: { placement: "header" | "menu" }) {
 
 export function AuthStatus() {
   const t = useTranslations("auth");
+  const locale = useLocale();
   const { state, authHref, isPending, signOut } = useAuthContext();
   const huaweiLike = useHuaweiLikeDevice();
   const appleMobile = useAppleMobileDevice();
+  // 苹果英文：登录略离铃铛、靠语言一点（中文/华为不加）
+  const appleEnNudge = appleMobile && locale === "en";
 
   if (state.status === "loading") {
     return (
@@ -140,7 +143,7 @@ export function AuthStatus() {
         className={cn(
           "shrink-0 rounded-full",
           huaweiLike && "px-2.5",
-          appleMobile && "min-w-[5.5rem] justify-center",
+          appleEnNudge && "ms-[14px]",
         )}
         disabled
       >
@@ -157,8 +160,7 @@ export function AuthStatus() {
           buttonVariants({ variant: "secondary", size: "sm" }),
           "shrink-0 rounded-full",
           huaweiLike && "px-2.5",
-          // Sign in 宽于「登录」：固定槽宽，避免切语言挪位 / 叠字
-          appleMobile && "min-w-[4.25rem] justify-center",
+          appleEnNudge && "ms-[14px]",
         )}
       >
         {t("signIn")}
@@ -173,8 +175,7 @@ export function AuthStatus() {
       className={cn(
         "shrink-0 rounded-full",
         huaweiLike && "px-2.5",
-        // 「退出登录」宽于 Sign out
-        appleMobile && "min-w-[5.25rem] justify-center",
+        appleEnNudge && "ms-[14px]",
       )}
       onClick={signOut}
       disabled={isPending}
