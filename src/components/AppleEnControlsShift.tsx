@@ -1,0 +1,81 @@
+"use client";
+
+import { useLocale, useTranslations } from "next-intl";
+import { useLayoutEffect, useRef, useState } from "react";
+
+import { useAuthContextOptional } from "@/components/auth/AuthStatus";
+import { useAppleMobileDevice } from "@/lib/device";
+
+/**
+ * 仅苹果英文：在「登录」和「语言」之间留出空档，
+ * 把铃铛、登录整体往左挪到中文顶栏的位置；语言按钮本身不改。
+ */
+export function AppleEnControlsShift() {
+  const appleMobile = useAppleMobileDevice();
+  const locale = useLocale();
+  const t = useTranslations("auth");
+  const auth = useAuthContextOptional();
+  const measureRef = useRef<HTMLSpanElement>(null);
+  const [shiftPx, setShiftPx] = useState(0);
+
+  const signedIn = auth?.state.status === "signedIn";
+  const enAuth = signedIn ? t("signOut") : t("signIn");
+  const zhAuth = signedIn ? "退出登录" : "登录";
+  const active = appleMobile && locale === "en";
+
+  useLayoutEffect(() => {
+    if (!active) {
+      setShiftPx(0);
+      return;
+    }
+    const root = measureRef.current;
+    if (!root) return;
+    const enLocale = root.querySelector<HTMLElement>("[data-m='en-locale']");
+    const zhLocale = root.querySelector<HTMLElement>("[data-m='zh-locale']");
+    const enAuthEl = root.querySelector<HTMLElement>("[data-m='en-auth']");
+    const zhAuthEl = root.querySelector<HTMLElement>("[data-m='zh-auth']");
+    if (!enLocale || !zhLocale || !enAuthEl || !zhAuthEl) return;
+
+    const localeDiff = Math.max(0, enLocale.offsetWidth - zhLocale.offsetWidth);
+    const authDiff = Math.max(0, zhAuthEl.offsetWidth - enAuthEl.offsetWidth);
+    setShiftPx(localeDiff + authDiff);
+  }, [active, enAuth, zhAuth]);
+
+  if (!active) return null;
+
+  return (
+    <>
+      <span
+        ref={measureRef}
+        aria-hidden
+        className="pointer-events-none fixed left-0 top-0 -z-50 flex gap-2 opacity-0"
+      >
+        <span
+          data-m="en-locale"
+          className="inline-flex h-8 shrink-0 items-center justify-center rounded-full border px-3 text-sm font-medium"
+        >
+          English
+        </span>
+        <span
+          data-m="zh-locale"
+          className="inline-flex h-8 shrink-0 items-center justify-center rounded-full border px-3 text-sm font-medium"
+        >
+          中文
+        </span>
+        <span
+          data-m="en-auth"
+          className="inline-flex h-8 shrink-0 items-center justify-center rounded-full border px-3 text-sm font-medium"
+        >
+          {enAuth}
+        </span>
+        <span
+          data-m="zh-auth"
+          className="inline-flex h-8 shrink-0 items-center justify-center rounded-full border px-3 text-sm font-medium"
+        >
+          {zhAuth}
+        </span>
+      </span>
+      <span aria-hidden className="shrink-0" style={{ width: shiftPx }} />
+    </>
+  );
+}

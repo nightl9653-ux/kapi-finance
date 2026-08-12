@@ -40,6 +40,11 @@ function useAuthContext() {
   return ctx;
 }
 
+/** Safe for optional consumers under AuthProvider (e.g. header spacers). */
+export function useAuthContextOptional() {
+  return useContext(AuthContext);
+}
+
 export function AuthProvider({ initialAuth, children }: { initialAuth?: InitialAuth; children: ReactNode }) {
   const locale = useLocale();
   const router = useRouter();
