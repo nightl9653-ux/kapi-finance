@@ -77,7 +77,7 @@ export function NotificationsEntry() {
       title={t("label")}
       className={cn(
         "relative inline-flex h-9 shrink-0 items-center justify-center rounded-full border bg-white/70 text-muted-foreground hover:text-foreground max-md:w-9 max-md:px-0 md:px-3 md:text-sm",
-        appleZhBellNudge && "-translate-x-1.5",
+        appleZhBellNudge && "-translate-x-2",
       )}
     >
       {/* 手机顶栏用图标，避免英文 Notifications 过长；桌面仍显示文字 */}
