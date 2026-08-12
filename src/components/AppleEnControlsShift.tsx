@@ -6,9 +6,11 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { useAuthContextOptional } from "@/components/auth/AuthStatus";
 import { useAppleMobileDevice } from "@/lib/device";
 
+/** 与 AuthStatus 苹果英文 ms-2（8px）对应：整体左移量扣回，避免登录离语言更远 */
+const AUTH_NUDGE_PX = 8;
+
 /**
- * 仅苹果英文：在「登录」和「语言」之间留出空档，
- * 把铃铛、登录整体往左挪到中文顶栏的位置；语言按钮本身不改。
+ * 仅苹果英文：把铃铛、登录整体往左挪到中文顶栏的位置；语言按钮不改。
  */
 export function AppleEnControlsShift() {
   const appleMobile = useAppleMobileDevice();
@@ -38,7 +40,7 @@ export function AppleEnControlsShift() {
 
     const localeDiff = Math.max(0, enLocale.offsetWidth - zhLocale.offsetWidth);
     const authDiff = Math.max(0, zhAuthEl.offsetWidth - enAuthEl.offsetWidth);
-    setShiftPx(localeDiff + authDiff);
+    setShiftPx(Math.max(0, localeDiff + authDiff - AUTH_NUDGE_PX));
   }, [active, enAuth, zhAuth]);
 
   if (!active) return null;

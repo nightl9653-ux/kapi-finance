@@ -7,7 +7,7 @@ import { createContext, useContext, useEffect, useMemo, useState, useTransition,
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { isSupabaseConfigured } from "@/lib/env";
-import { useHuaweiLikeDevice } from "@/lib/device";
+import { useAppleMobileDevice, useHuaweiLikeDevice } from "@/lib/device";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 
@@ -128,15 +128,23 @@ export function AuthUserEmail({ placement }: { placement: "header" | "menu" }) {
 
 export function AuthStatus() {
   const t = useTranslations("auth");
+  const locale = useLocale();
   const { state, authHref, isPending, signOut } = useAuthContext();
   const huaweiLike = useHuaweiLikeDevice();
+  const appleMobile = useAppleMobileDevice();
+  // 苹果英文：登录略离铃铛、靠语言一点（中文/华为不加）
+  const appleEnNudge = appleMobile && locale === "en";
 
   if (state.status === "loading") {
     return (
       <Button
         variant="secondary"
         size="sm"
-        className={cn("shrink-0 rounded-full", huaweiLike && "px-2.5")}
+        className={cn(
+          "shrink-0 rounded-full",
+          huaweiLike && "px-2.5",
+          appleEnNudge && "ms-2",
+        )}
         disabled
       >
         {t("loading")}
@@ -152,6 +160,7 @@ export function AuthStatus() {
           buttonVariants({ variant: "secondary", size: "sm" }),
           "shrink-0 rounded-full",
           huaweiLike && "px-2.5",
+          appleEnNudge && "ms-2",
         )}
       >
         {t("signIn")}
@@ -163,7 +172,11 @@ export function AuthStatus() {
     <Button
       variant="secondary"
       size="sm"
-      className={cn("shrink-0 rounded-full", huaweiLike && "px-2.5")}
+      className={cn(
+        "shrink-0 rounded-full",
+        huaweiLike && "px-2.5",
+        appleEnNudge && "ms-2",
+      )}
       onClick={signOut}
       disabled={isPending}
     >
