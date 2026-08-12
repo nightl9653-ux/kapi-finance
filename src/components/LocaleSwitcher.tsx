@@ -27,19 +27,13 @@ export function LocaleSwitcher() {
       variant="secondary"
       size="sm"
       onClick={() => switchLocale(locale === "en" ? "zh" : "en")}
-      className={cn("rounded-full", appleMobile && "relative")}
-    >
-      {appleMobile ? (
-        <>
-          {/* 固定为较宽的 English，切语言时右缘与铃铛位置都不变 */}
-          <span className="invisible" aria-hidden>
-            English
-          </span>
-          <span className="absolute inset-0 flex items-center justify-center">{label}</span>
-        </>
-      ) : (
-        label
+      className={cn(
+        "rounded-full",
+        // 按 English 占宽，只显示当前文案（避免隐形叠字在 Safari 上花屏）
+        appleMobile && "min-w-[4.75rem] justify-center",
       )}
+    >
+      {label}
     </Button>
   );
 }

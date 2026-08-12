@@ -132,31 +132,19 @@ export function AuthStatus() {
   const huaweiLike = useHuaweiLikeDevice();
   const appleMobile = useAppleMobileDevice();
 
-  /** 苹果：槽宽取中英文较大者，切语言按钮位置不动 */
-  function appleFixedLabel(en: string, zh: string, current: string) {
-    if (!appleMobile) return current;
-    return (
-      <span className="relative grid place-items-center">
-        <span className="invisible col-start-1 row-start-1 whitespace-nowrap" aria-hidden>
-          {en}
-        </span>
-        <span className="invisible col-start-1 row-start-1 whitespace-nowrap" aria-hidden>
-          {zh}
-        </span>
-        <span className="col-start-1 row-start-1 whitespace-nowrap">{current}</span>
-      </span>
-    );
-  }
-
   if (state.status === "loading") {
     return (
       <Button
         variant="secondary"
         size="sm"
-        className={cn("shrink-0 rounded-full", huaweiLike && "px-2.5")}
+        className={cn(
+          "shrink-0 rounded-full",
+          huaweiLike && "px-2.5",
+          appleMobile && "min-w-[5.5rem] justify-center",
+        )}
         disabled
       >
-        {appleFixedLabel("Loading...", "加载中...", t("loading"))}
+        {t("loading")}
       </Button>
     );
   }
@@ -169,9 +157,11 @@ export function AuthStatus() {
           buttonVariants({ variant: "secondary", size: "sm" }),
           "shrink-0 rounded-full",
           huaweiLike && "px-2.5",
+          // Sign in 宽于「登录」：固定槽宽，避免切语言挪位 / 叠字
+          appleMobile && "min-w-[4.25rem] justify-center",
         )}
       >
-        {appleFixedLabel("Sign in", "登录", t("signIn"))}
+        {t("signIn")}
       </Link>
     );
   }
@@ -180,11 +170,16 @@ export function AuthStatus() {
     <Button
       variant="secondary"
       size="sm"
-      className={cn("shrink-0 rounded-full", huaweiLike && "px-2.5")}
+      className={cn(
+        "shrink-0 rounded-full",
+        huaweiLike && "px-2.5",
+        // 「退出登录」宽于 Sign out
+        appleMobile && "min-w-[5.25rem] justify-center",
+      )}
       onClick={signOut}
       disabled={isPending}
     >
-      {appleFixedLabel("Sign out", "退出登录", t("signOut"))}
+      {t("signOut")}
     </Button>
   );
 }
