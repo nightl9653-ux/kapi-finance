@@ -4,10 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 
-import { useAppleMobileDevice } from "@/lib/device";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { cn } from "@/lib/utils";
 
 function getLocalISODate(): string {
   const now = new Date();
@@ -20,9 +18,6 @@ function getLocalISODate(): string {
 export function NotificationsEntry() {
   const locale = useLocale();
   const t = useTranslations("notifications");
-  const appleMobile = useAppleMobileDevice();
-  // 仅苹果中文：铃铛略左移；英文/华为布局不动
-  const appleZhBellNudge = appleMobile && locale === "zh";
   const supabase = useMemo(() => (isSupabaseConfigured ? createSupabaseBrowserClient() : null), []);
   const [unread, setUnread] = useState<number>(0);
 
@@ -75,10 +70,7 @@ export function NotificationsEntry() {
       href={`/${locale}/notifications`}
       aria-label={t("label")}
       title={t("label")}
-      className={cn(
-        "relative inline-flex h-9 shrink-0 items-center justify-center rounded-full border bg-white/70 text-muted-foreground hover:text-foreground max-md:w-9 max-md:px-0 md:px-3 md:text-sm",
-        appleZhBellNudge && "-translate-x-2",
-      )}
+      className="relative inline-flex h-9 shrink-0 items-center justify-center rounded-full border bg-white/70 text-muted-foreground hover:text-foreground max-md:w-9 max-md:px-0 md:px-3 md:text-sm"
     >
       {/* 手机顶栏用图标，避免英文 Notifications 过长；桌面仍显示文字 */}
       <svg

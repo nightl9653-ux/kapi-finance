@@ -128,26 +128,35 @@ export function AuthUserEmail({ placement }: { placement: "header" | "menu" }) {
 
 export function AuthStatus() {
   const t = useTranslations("auth");
-  const locale = useLocale();
   const { state, authHref, isPending, signOut } = useAuthContext();
   const huaweiLike = useHuaweiLikeDevice();
   const appleMobile = useAppleMobileDevice();
-  // 苹果英文：登录略离铃铛、靠语言一点（中文/华为不加）
-  const appleEnNudge = appleMobile && locale === "en";
+
+  /** 苹果：槽宽取中英文较大者，切语言按钮位置不动 */
+  function appleFixedLabel(en: string, zh: string, current: string) {
+    if (!appleMobile) return current;
+    return (
+      <span className="relative grid place-items-center">
+        <span className="invisible col-start-1 row-start-1 whitespace-nowrap" aria-hidden>
+          {en}
+        </span>
+        <span className="invisible col-start-1 row-start-1 whitespace-nowrap" aria-hidden>
+          {zh}
+        </span>
+        <span className="col-start-1 row-start-1 whitespace-nowrap">{current}</span>
+      </span>
+    );
+  }
 
   if (state.status === "loading") {
     return (
       <Button
         variant="secondary"
         size="sm"
-        className={cn(
-          "shrink-0 rounded-full",
-          huaweiLike && "px-2.5",
-          appleEnNudge && "ms-[14px]",
-        )}
+        className={cn("shrink-0 rounded-full", huaweiLike && "px-2.5")}
         disabled
       >
-        {t("loading")}
+        {appleFixedLabel("Loading...", "加载中...", t("loading"))}
       </Button>
     );
   }
@@ -160,10 +169,9 @@ export function AuthStatus() {
           buttonVariants({ variant: "secondary", size: "sm" }),
           "shrink-0 rounded-full",
           huaweiLike && "px-2.5",
-          appleEnNudge && "ms-[14px]",
         )}
       >
-        {t("signIn")}
+        {appleFixedLabel("Sign in", "登录", t("signIn"))}
       </Link>
     );
   }
@@ -172,15 +180,11 @@ export function AuthStatus() {
     <Button
       variant="secondary"
       size="sm"
-      className={cn(
-        "shrink-0 rounded-full",
-        huaweiLike && "px-2.5",
-        appleEnNudge && "ms-[14px]",
-      )}
+      className={cn("shrink-0 rounded-full", huaweiLike && "px-2.5")}
       onClick={signOut}
       disabled={isPending}
     >
-      {t("signOut")}
+      {appleFixedLabel("Sign out", "退出登录", t("signOut"))}
     </Button>
   );
 }
