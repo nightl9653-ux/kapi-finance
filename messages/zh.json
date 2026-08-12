@@ -13,6 +13,7 @@
     "quickRecord": "快捷记账",
     "banquetParty": "宴会派对",
     "houseRenovation": "房屋装修",
+    "dressup": "宅宴",
     "menu": "菜单",
     "more": "更多",
     "openMenu": "打开导航",
@@ -1124,6 +1125,9 @@
     "youAreFree": "你当前为 Free 版，可随时在此查看方案。",
     "guestHint": "登录后可查看与你账号对应的会员状态。",
     "promo": "新用户月度：首月 $4.99，之后 $6.99/月；年付约合 $5.83/月。",
+    "dressupTitle": "宅宴",
+    "dressupBlurb": "影集、宴席台与宅院试玩免费；完整物件需 Plus。开通后可在宅宴内一键确认解锁。",
+    "dressupOpen": "打开宅宴",
     "plans": {
       "monthly": {
         "name": "月度",
@@ -1213,6 +1217,11 @@
         "label": "梦想剧场",
         "free": "小作文 5·旁白/翻译 5·文生图需 Plus",
         "plus": "小作文 15·旁白/翻译 15·普通画面 1·高质量 1 次/天（分开计次）"
+      },
+      "dressup": {
+        "label": "宅宴（装扮）",
+        "free": "免费物件可玩",
+        "plus": "解锁完整物件"
       },
       "support": {
         "label": "功能优先级",

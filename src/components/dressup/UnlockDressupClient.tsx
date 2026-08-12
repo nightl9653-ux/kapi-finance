@@ -27,11 +27,29 @@ function notifyOpener(dressupOrigin: string) {
   }
 }
 
+function copy(locale: string) {
+  const en = locale === "en";
+  return {
+    checking: en ? "Confirming Kash membership…" : "正在确认咔账会员…",
+    needPlus: en
+      ? "This account is not Plus yet. Subscribe to unlock full Manor."
+      : "当前账号还不是 Plus 会员，开通后即可解锁完整宅宴。",
+    returning: en ? "Plus confirmed — returning to Manor…" : "已确认 Plus，正在返回宅宴并解锁…",
+    doneStay: en
+      ? "You are Plus. Close this tab and return to Manor; unlock again if needed."
+      : "已是 Plus。请关闭本页，回到宅宴；若未解锁请再点一次确认解锁。",
+    error: en ? "Could not confirm membership. Try again later." : "确认会员失败，请稍后重试。",
+    goPlus: en ? "Get Plus" : "去开通 Plus",
+    openPricing: en ? "Open pricing" : "打开会员页",
+  };
+}
+
 export function UnlockDressupClient() {
   const locale = useLocale();
   const searchParams = useSearchParams();
+  const ui = useMemo(() => copy(locale), [locale]);
   const [status, setStatus] = useState<"checking" | "need-plus" | "done" | "error">("checking");
-  const [detail, setDetail] = useState("正在确认咔账会员…");
+  const [detail, setDetail] = useState(ui.checking);
 
   const dressupOrigin = useMemo(() => {
     const raw = searchParams.get("origin")?.trim() ?? "";
@@ -51,6 +69,10 @@ export function UnlockDressupClient() {
   }, [searchParams, dressupOrigin]);
 
   useEffect(() => {
+    setDetail(ui.checking);
+  }, [ui.checking]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function run() {
@@ -68,30 +90,28 @@ export function UnlockDressupClient() {
 
         if (!plus) {
           setStatus("need-plus");
-          setDetail("当前账号还不是 Plus 会员，开通后即可解锁完整宅宴。");
+          setDetail(ui.needPlus);
           return;
         }
 
-        // 1) 尽量通知原宅宴窗口
         notifyOpener(dressupOrigin);
 
-        // 2) 可靠回跳：在宅宴域名写 localStorage，原页靠 storage 事件同步
         if (returnUrl) {
           const u = new URL(returnUrl);
           u.searchParams.set("kapi_plus", "1");
           u.searchParams.set("at", String(Date.now()));
           setStatus("done");
-          setDetail("已确认 Plus，正在返回宅宴并解锁…");
+          setDetail(ui.returning);
           window.location.replace(u.toString());
           return;
         }
 
         setStatus("done");
-        setDetail("已是 Plus。请关闭本页，回到宅宴；若未解锁请再点一次确认解锁。");
+        setDetail(ui.doneStay);
       } catch {
         if (!cancelled) {
           setStatus("error");
-          setDetail("确认会员失败，请稍后重试。");
+          setDetail(ui.error);
         }
       }
     }
@@ -100,7 +120,7 @@ export function UnlockDressupClient() {
     return () => {
       cancelled = true;
     };
-  }, [locale, searchParams, dressupOrigin, returnUrl]);
+  }, [locale, searchParams, dressupOrigin, returnUrl, ui]);
 
   return (
     <main className="mx-auto flex min-h-[50vh] max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
@@ -110,7 +130,7 @@ export function UnlockDressupClient() {
           href={`/${locale}/pricing`}
           className="inline-flex h-9 items-center rounded-full bg-foreground px-4 text-sm font-medium text-background"
         >
-          去开通 Plus
+          {ui.goPlus}
         </Link>
       ) : null}
       {status === "error" ? (
@@ -118,7 +138,7 @@ export function UnlockDressupClient() {
           href={`/${locale}/pricing`}
           className="inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium"
         >
-          打开会员页
+          {ui.openPricing}
         </Link>
       ) : null}
     </main>

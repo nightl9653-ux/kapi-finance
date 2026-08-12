@@ -13,6 +13,7 @@
     "quickRecord": "Quick record",
     "banquetParty": "Banquet & party",
     "houseRenovation": "Home renovation",
+    "dressup": "Manor",
     "menu": "Menu",
     "more": "More",
     "openMenu": "Open navigation",
@@ -1124,6 +1125,9 @@
     "youAreFree": "You're on the Free plan. Compare options below.",
     "guestHint": "Sign in to see membership status for your account.",
     "promo": "Monthly: first month $4.99, then $6.99/mo. Yearly ~$5.83/mo.",
+    "dressupTitle": "Manor",
+    "dressupBlurb": "Gallery, banquet, and courtyard are free to try; full pieces need Plus. After upgrading, confirm unlock inside Manor.",
+    "dressupOpen": "Open Manor",
     "plans": {
       "monthly": {
         "name": "Monthly",
@@ -1213,6 +1217,11 @@
         "label": "Dream Theater",
         "free": "Story 5 · Media 5 · visuals require Plus",
         "plus": "Story 15 · Media 15 · Standard 1 · HQ 1/day (separate quota)"
+      },
+      "dressup": {
+        "label": "Manor (dress-up)",
+        "free": "Free pieces playable",
+        "plus": "Unlock full catalog"
       },
       "support": {
         "label": "Feature priority",

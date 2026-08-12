@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AuthUserEmail } from "@/components/auth/AuthStatus";
 import { cn } from "@/lib/utils";
 
-type NavItem = { href: string; label: string };
+type NavItem = { href: string; label: string; external?: boolean };
 
 const EDGE_WIDTH_PX = 20;
 const SWIPE_OPEN_PX = 56;
@@ -181,13 +181,25 @@ export function MobileNavDrawer({
             <ul>
               {primaryNav.map((item) => (
                 <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted/50"
-                    onClick={close}
-                  >
-                    {item.label}
-                  </Link>
+                  {item.external ? (
+                    <a
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted/50"
+                      onClick={close}
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted/50"
+                      onClick={close}
+                    >
+                      {item.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -198,13 +210,25 @@ export function MobileNavDrawer({
             <ul>
               {secondaryNav.map((item) => (
                 <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted/50"
-                    onClick={close}
-                  >
-                    {item.label}
-                  </Link>
+                  {item.external ? (
+                    <a
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted/50"
+                      onClick={close}
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted/50"
+                      onClick={close}
+                    >
+                      {item.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

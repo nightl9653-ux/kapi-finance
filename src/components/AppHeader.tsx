@@ -7,21 +7,41 @@ import { AuthProvider, AuthStatus, AuthUserEmail, type InitialAuth } from "@/com
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { MobileNavDrawer } from "@/components/MobileNavDrawer";
 import { NotificationsEntry } from "@/components/NotificationsEntry";
+import { getDressupPublicUrl } from "@/lib/dressup-origins";
+
+type NavItem = { href: string; label: string; external?: boolean };
+
+function NavLink({ item, className }: { item: NavItem; className: string }) {
+  if (item.external) {
+    return (
+      <a href={item.href} target="_blank" rel="noopener noreferrer" className={className}>
+        {item.label}
+      </a>
+    );
+  }
+  return (
+    <Link href={item.href} className={className}>
+      {item.label}
+    </Link>
+  );
+}
 
 export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
   const t = useTranslations("nav");
   const locale = useLocale();
+  const dressupUrl = getDressupPublicUrl();
 
-  const navPrimary = [
+  const navPrimary: NavItem[] = [
     { href: `/${locale}`, label: t("dashboard") },
     { href: `/${locale}/goals`, label: t("goals") },
     { href: `/${locale}/transactions`, label: t("transactions") },
     { href: `/${locale}/quick-record`, label: t("quickRecord") },
     { href: `/${locale}/banquet-party`, label: t("banquetParty") },
     { href: `/${locale}/house-renovation`, label: t("houseRenovation") },
+    { href: dressupUrl, label: t("dressup"), external: true },
   ];
 
-  const navSecondary = [
+  const navSecondary: NavItem[] = [
     { href: `/${locale}/meetings`, label: t("meetings") },
     { href: `/${locale}/ai-assistant`, label: t("aiAssistant") },
     { href: `/${locale}/reports`, label: t("reports") },
@@ -67,16 +87,12 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
           <nav className="hidden space-y-1.5 border-t border-border/60 pb-3 pt-2 md:block" aria-label={t("menu")}>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
               {navPrimary.map((item) => (
-                <Link key={item.href} href={item.href} className={linkClassName}>
-                  {item.label}
-                </Link>
+                <NavLink key={item.href} item={item} className={linkClassName} />
               ))}
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
               {navSecondary.map((item) => (
-                <Link key={item.href} href={item.href} className={linkClassName}>
-                  {item.label}
-                </Link>
+                <NavLink key={item.href} item={item} className={linkClassName} />
               ))}
             </div>
           </nav>

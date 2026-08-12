@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { CreditPackCards } from "@/components/pricing/CreditPackCards";
 import { PlusPlanCards } from "@/components/pricing/PlusPlanCards";
 import { PricingCheckoutFlash } from "@/components/pricing/PricingCheckoutFlash";
+import { getDressupPublicUrl } from "@/lib/dressup-origins";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
@@ -20,6 +21,7 @@ export default async function PricingPage({
   const locale = (raw === "zh" ? "zh" : "en") as LocaleSeg;
   const t = await getTranslations("pricing");
   const ta = await getTranslations("auth");
+  const dressupUrl = getDressupPublicUrl();
 
   let isPlus: boolean | null = null;
   if (isSupabaseConfigured) {
@@ -64,6 +66,21 @@ export default async function PricingPage({
         ) : null}
       </div>
 
+      <div className="flex flex-col gap-3 rounded-2xl border bg-white/70 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold">{t("dressupTitle")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t("dressupBlurb")}</p>
+        </div>
+        <a
+          href={dressupUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex shrink-0 items-center justify-center rounded-full border border-foreground/15 bg-[#FAF9F7] px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
+        >
+          {t("dressupOpen")}
+        </a>
+      </div>
+
       <PlusPlanCards locale={locale} signInHref={`/${locale}/auth`} />
 
       <CreditPackCards
@@ -100,7 +117,7 @@ export default async function PricingPage({
               </tr>
             </thead>
             <tbody className="divide-y">
-              {(["goals", "record", "scan", "voice", "ai", "dream", "support"] as const).map((row) => (
+              {(["goals", "record", "scan", "voice", "ai", "dream", "dressup", "support"] as const).map((row) => (
                 <tr key={row} className="hover:bg-muted/20">
                   <td className="px-4 py-3 text-muted-foreground">{t(`compare.${row}.label`)}</td>
                   <td className="px-4 py-3">{t(`compare.${row}.free`)}</td>
