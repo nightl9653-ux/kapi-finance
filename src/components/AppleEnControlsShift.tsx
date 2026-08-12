@@ -6,8 +6,8 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { useAuthContextOptional } from "@/components/auth/AuthStatus";
 import { useAppleMobileDevice } from "@/lib/device";
 
-/** 与 AuthStatus 苹果英文 ms-3（12px）对应：整体左移量扣回，避免登录离语言更远 */
-const AUTH_NUDGE_PX = 12;
+/** 与 AuthStatus 苹果英文 ms-[14px] 对应：整体左移量扣回，避免登录离语言更远 */
+const AUTH_NUDGE_PX = 14;
 
 /**
  * 仅苹果英文：把铃铛、登录整体往左挪到中文顶栏的位置；语言按钮不改。
