@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { grantImageCreditsPack } from "@/lib/ai-image-credits";
+import { grantArtPostPayment } from "@/lib/art-tip-grant";
 import {
   type CreemWebhookEvent,
   getCreemWebhookSecret,
@@ -57,6 +58,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: result.granted, reason: result.reason }, { status });
     }
     return NextResponse.json({ ok: true, kind: "plus", plan_id: intent.planId, user_id: intent.userId });
+  }
+
+  if (intent.kind === "art_tip") {
+    const result = await grantArtPostPayment({
+      admin,
+      postId: intent.postId,
+      userId: intent.userId,
+      units: intent.units,
+      provider,
+      externalOrderId: intent.externalOrderId,
+    });
+    if (!result.granted) {
+      const status =
+        result.reason === "duplicate_order" ||
+        result.reason === "payments_table_missing" ||
+        result.reason === "post_not_found"
+          ? 200
+          : 500;
+      return NextResponse.json({ ok: result.granted, reason: result.reason }, { status });
+    }
+    return NextResponse.json({
+      ok: true,
+      kind: "art_tip",
+      post_id: intent.postId,
+      units: intent.units,
+      user_id: intent.userId,
+    });
   }
 
   const result = await grantImageCreditsPack({

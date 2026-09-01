@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { isAiUsageColumnMissingError } from "@/lib/ai-usage-column-error";
-import { getAiUsageLimit } from "@/lib/ai-usage-limits";
-import { dreamStoryRateLimitError } from "@/lib/env";
+import { getAiUsageLimit, isPaidAiClosed } from "@/lib/ai-usage-limits";
+import { dreamStoryPlusRequiredError, dreamStoryRateLimitError } from "@/lib/env";
 
 export function dreamStoryUsageDateUtc(): string {
   return new Date().toISOString().slice(0, 10);
@@ -15,6 +15,7 @@ export async function assertDreamStoryQuotaAvailable(
   isPlus: boolean,
 ): Promise<void> {
   const limit = getAiUsageLimit(isPlus, "dreamStory");
+  if (isPaidAiClosed(limit)) throw new Error(dreamStoryPlusRequiredError);
   const { data: row, error } = await supabase
     .from("ai_usage")
     .select("dream_story_count")

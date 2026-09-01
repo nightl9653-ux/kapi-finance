@@ -1,8 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/locales";
 import { fetchExpenseTotalsByCategory } from "@/lib/budget-progress";
+import { getAiUsageLimit, isPaidAiClosed } from "@/lib/ai-usage-limits";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
 import { AIAssistantChat } from "@/components/ai-assistant/AIAssistantChat";
 import { FeatureGuestLanding } from "@/components/marketing/FeatureGuestLanding";
 import { BudgetPlanCard } from "@/components/ai-assistant/BudgetPlanCard";
@@ -65,6 +67,9 @@ export default async function AIAssistantPage({ params }: { params: Promise<{ lo
     }
   }
 
+  const isPlus = await fetchUserIsPlusMember(supabase, auth.user.id);
+  const plusOnlyAi = isPaidAiClosed(getAiUsageLimit(isPlus, "assistant"));
+
   return (
     <div className="space-y-6">
       <div>
@@ -75,6 +80,7 @@ export default async function AIAssistantPage({ params }: { params: Promise<{ lo
       <div className="rounded-2xl border bg-white/70 p-6">
         <BudgetPlanCard
           locale={locale}
+          plusOnly={plusOnlyAi}
           initialSpent={spentByCategory}
           initial={
             budgetId
@@ -97,7 +103,7 @@ export default async function AIAssistantPage({ params }: { params: Promise<{ lo
       </div>
 
       <div className="rounded-2xl border bg-white/70 p-6">
-        <AIAssistantChat locale={locale} />
+        <AIAssistantChat locale={locale} plusOnly={plusOnlyAi} />
       </div>
     </div>
   );

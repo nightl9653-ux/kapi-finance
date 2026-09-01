@@ -39,10 +39,12 @@ export function BudgetPlanCard({
   locale,
   initial,
   initialSpent,
+  plusOnly = false,
 }: {
   locale: Locale;
   initial: Budget | null;
   initialSpent: Record<string, number>;
+  plusOnly?: boolean;
 }) {
   const t = useTranslations("aiAssistantPage");
   const [budget, setBudget] = useState<Budget | null>(initial);
@@ -82,7 +84,7 @@ export function BudgetPlanCard({
   }, [budget, spentByCategory]);
 
   const generate = useCallback(async () => {
-    if (pending) return;
+    if (pending || plusOnly) return;
     setPending(true);
     setErrorKey(null);
     try {
@@ -110,7 +112,7 @@ export function BudgetPlanCard({
     } finally {
       setPending(false);
     }
-  }, [pending, locale, budget?.month]);
+  }, [pending, plusOnly, locale, budget?.month]);
 
   return (
     <div className="space-y-3">
@@ -119,10 +121,14 @@ export function BudgetPlanCard({
           <div className="text-base font-medium">{t("budget.title")}</div>
           <div className="text-sm text-muted-foreground">{t("budget.subtitle")}</div>
         </div>
-        <Button type="button" className="rounded-full" disabled={pending} onClick={() => void generate()}>
+        <Button type="button" className="rounded-full" disabled={pending || plusOnly} onClick={() => void generate()}>
           {pending ? t("budget.generating") : budget ? t("budget.regenerate") : t("budget.generate")}
         </Button>
       </div>
+
+      {plusOnly ? (
+        <p className="text-sm text-muted-foreground">{t("budget.errors.plus_required")}</p>
+      ) : null}
 
       {errorKey ? (
         <p className="text-sm text-destructive">

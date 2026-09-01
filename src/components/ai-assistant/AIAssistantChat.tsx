@@ -15,6 +15,7 @@ function errorText(t: (key: string) => string, code: string): string {
     openai_unconfigured: t("errors.openai_unconfigured"),
     supabase_not_configured: t("errors.supabase_not_configured"),
     rate_limit: t("errors.rate_limit"),
+    plus_required: t("errors.plus_required"),
     bad_messages: t("errors.bad_messages"),
     bad_json: t("errors.bad_messages"),
     openai_failed: t("errors.openai_failed"),
@@ -24,7 +25,7 @@ function errorText(t: (key: string) => string, code: string): string {
   return m[code] ?? t("errors.unknown");
 }
 
-export function AIAssistantChat({ locale }: { locale: Locale }) {
+export function AIAssistantChat({ locale, plusOnly = false }: { locale: Locale; plusOnly?: boolean }) {
   const t = useTranslations("aiAssistantPage");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -39,7 +40,7 @@ export function AIAssistantChat({ locale }: { locale: Locale }) {
 
   const send = useCallback(async () => {
     const text = input.trim();
-    if (!text || pending) return;
+    if (!text || pending || plusOnly) return;
 
     const nextUser: Msg = { role: "user", content: text };
     const history = [...messages, nextUser];
@@ -81,11 +82,13 @@ export function AIAssistantChat({ locale }: { locale: Locale }) {
     } finally {
       setPending(false);
     }
-  }, [input, pending, messages, locale]);
+  }, [input, pending, plusOnly, messages, locale]);
 
   return (
     <div className="flex flex-col gap-3">
-      {remaining !== null ? (
+      {plusOnly ? (
+        <p className="text-xs text-muted-foreground">{t("quotaHintPlusOnly")}</p>
+      ) : remaining !== null ? (
         <p className="text-xs text-muted-foreground">
           {t("quotaHint", { remaining })}
         </p>
@@ -133,7 +136,7 @@ export function AIAssistantChat({ locale }: { locale: Locale }) {
             )}
             placeholder={t("inputPlaceholder")}
             value={input}
-            disabled={pending}
+            disabled={pending || plusOnly}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -142,7 +145,7 @@ export function AIAssistantChat({ locale }: { locale: Locale }) {
               }
             }}
           />
-          <Button type="button" className="rounded-full sm:shrink-0" disabled={pending || !input.trim()} onClick={() => void send()}>
+          <Button type="button" className="rounded-full sm:shrink-0" disabled={pending || plusOnly || !input.trim()} onClick={() => void send()}>
             {pending ? t("sending") : t("send")}
           </Button>
         </div>

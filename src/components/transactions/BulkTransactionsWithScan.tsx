@@ -339,7 +339,7 @@ export function BulkTransactionsWithScan({
           type="button"
           variant="secondary"
           className="rounded-full text-base font-bold text-yellow-700"
-          disabled={scanning}
+          disabled={scanning || scanDailyLimit <= 0}
           onClick={() => inputRef.current?.click()}
         >
           {scanning
@@ -350,7 +350,7 @@ export function BulkTransactionsWithScan({
           type="button"
           variant="secondary"
           className="rounded-full text-base font-bold text-yellow-700"
-          disabled={voiceBusy || scanning}
+          disabled={voiceBusy || scanning || voiceDailyLimit <= 0}
           onClick={() => (voiceRecording ? stopVoice() : startVoice().catch(() => setVoiceError(t("voiceErrorMic"))))}
         >
           {voiceRecording ? t("voiceStop") : voiceBusy ? t("voiceUploading") : t("voiceCta")}
@@ -367,9 +367,13 @@ export function BulkTransactionsWithScan({
           {t("quick")}
         </Link>
         <p className="text-xs text-muted-foreground">
-          {t("scanHint", { remaining: scanRemaining ?? scanDailyLimit, n: scanDailyLimit })}
+          {scanDailyLimit <= 0
+            ? t("scanHintPlusOnly")
+            : t("scanHint", { remaining: scanRemaining ?? scanDailyLimit, n: scanDailyLimit })}
           {" · "}
-          {t("voiceHint", { remaining: voiceRemaining ?? voiceDailyLimit, n: voiceDailyLimit })}
+          {voiceDailyLimit <= 0
+            ? t("voiceHintPlusOnly")
+            : t("voiceHint", { remaining: voiceRemaining ?? voiceDailyLimit, n: voiceDailyLimit })}
         </p>
         <p className="ml-3 text-xs text-muted-foreground">{t("aiPrivacyHint")}</p>
       </div>

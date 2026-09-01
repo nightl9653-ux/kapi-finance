@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { isAiUsageColumnMissingError } from "@/lib/ai-usage-column-error";
-import { getAiUsageLimit } from "@/lib/ai-usage-limits";
-import { dreamLocalizedMediaRateLimitError } from "@/lib/env";
+import { getAiUsageLimit, isPaidAiClosed } from "@/lib/ai-usage-limits";
+import { dreamLocalizedMediaPlusRequiredError, dreamLocalizedMediaRateLimitError } from "@/lib/env";
 
 export function dreamLocalizedMediaUsageDateUtc(): string {
   return new Date().toISOString().slice(0, 10);
@@ -15,6 +15,7 @@ export async function assertDreamLocalizedMediaQuotaAvailable(
   isPlus: boolean,
 ): Promise<void> {
   const limit = getAiUsageLimit(isPlus, "dreamLocalizedMedia");
+  if (isPaidAiClosed(limit)) throw new Error(dreamLocalizedMediaPlusRequiredError);
   const { data: row, error } = await supabase
     .from("ai_usage")
     .select("dream_localized_media_count")

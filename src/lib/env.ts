@@ -161,10 +161,14 @@ export const dreamStoryDailyLimit = getAiUsageLimit(false, "dreamStory");
 
 export const dreamStoryRateLimitError = "dream_story_rate_limit" as const;
 
+export const dreamStoryPlusRequiredError = "dream_story_plus_required" as const;
+
 /** @deprecated 请用 `getAiUsageLimit(isPlus, "dreamLocalizedMedia")` */
 export const dreamLocalizedMediaDailyLimit = getAiUsageLimit(false, "dreamLocalizedMedia");
 
 export const dreamLocalizedMediaRateLimitError = "dream_localized_media_rate_limit" as const;
+
+export const dreamLocalizedMediaPlusRequiredError = "dream_localized_media_plus_required" as const;
 
 export { getAiUsageLimit, getAiUsageLimits };
 

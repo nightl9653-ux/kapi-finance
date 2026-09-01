@@ -297,23 +297,31 @@ export function QuickRecordClient({
         <h2 className="text-lg font-semibold">{t("title")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         <p className="mt-2 text-xs text-muted-foreground">
-          {t("hintQuota", { remaining: scanRemaining ?? scanDailyLimit, n: scanDailyLimit })}
+          {scanDailyLimit <= 0
+            ? t("hintQuotaPlusOnly")
+            : t("hintQuota", { remaining: scanRemaining ?? scanDailyLimit, n: scanDailyLimit })}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">{t("aiPrivacyHint")}</p>
 
         <div
           role="button"
-          tabIndex={0}
+          tabIndex={scanDailyLimit <= 0 ? -1 : 0}
           onKeyDown={(e) => {
+            if (scanDailyLimit <= 0) return;
             if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
           }}
           onDragOver={(e) => {
             e.preventDefault();
             e.stopPropagation();
           }}
-          onDrop={onDrop}
-          onClick={() => inputRef.current?.click()}
-          className="mt-6 flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-yellow-700/30 bg-[#FAF9F7] p-6 text-center transition hover:border-yellow-700/50"
+          onDrop={scanDailyLimit <= 0 ? undefined : onDrop}
+          onClick={() => {
+            if (scanDailyLimit <= 0) return;
+            inputRef.current?.click();
+          }}
+          className={`mt-6 flex min-h-[180px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-yellow-700/30 bg-[#FAF9F7] p-6 text-center transition ${
+            scanDailyLimit <= 0 ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:border-yellow-700/50"
+          }`}
         >
           <input
             ref={inputRef}
@@ -333,7 +341,7 @@ export function QuickRecordClient({
             type="button"
             variant="secondary"
             className="mt-4 rounded-full"
-            disabled={scanning}
+            disabled={scanning || scanDailyLimit <= 0}
             onClick={(e) => {
               e.stopPropagation();
               inputRef.current?.click();

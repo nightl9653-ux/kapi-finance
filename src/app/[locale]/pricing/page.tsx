@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { CreditPackCards } from "@/components/pricing/CreditPackCards";
 import { PlusPlanCards } from "@/components/pricing/PlusPlanCards";
 import { PricingCheckoutFlash } from "@/components/pricing/PricingCheckoutFlash";
-import { getDressupPublicUrl } from "@/lib/dressup-origins";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
@@ -21,7 +20,6 @@ export default async function PricingPage({
   const locale = (raw === "zh" ? "zh" : "en") as LocaleSeg;
   const t = await getTranslations("pricing");
   const ta = await getTranslations("auth");
-  const dressupUrl = getDressupPublicUrl();
 
   let isPlus: boolean | null = null;
   if (isSupabaseConfigured) {
@@ -66,21 +64,6 @@ export default async function PricingPage({
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-3 rounded-2xl border bg-white/70 p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold">{t("dressupTitle")}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{t("dressupBlurb")}</p>
-        </div>
-        <a
-          href={dressupUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex shrink-0 items-center justify-center rounded-full border border-foreground/15 bg-[#FAF9F7] px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
-        >
-          {t("dressupOpen")}
-        </a>
-      </div>
-
       <PlusPlanCards locale={locale} signInHref={`/${locale}/auth`} />
 
       <CreditPackCards
@@ -117,11 +100,80 @@ export default async function PricingPage({
               </tr>
             </thead>
             <tbody className="divide-y">
-              {(["goals", "record", "scan", "voice", "ai", "dream", "dressup", "support"] as const).map((row) => (
-                <tr key={row} className="hover:bg-muted/20">
-                  <td className="px-4 py-3 text-muted-foreground">{t(`compare.${row}.label`)}</td>
-                  <td className="px-4 py-3">{t(`compare.${row}.free`)}</td>
-                  <td className="px-4 py-3 font-medium">{t(`compare.${row}.plus`)}</td>
+              {(
+                [
+                  {
+                    key: "goals",
+                    label: t("compare.goals.label"),
+                    free: t("compare.goals.free"),
+                    plus: t("compare.goals.plus"),
+                  },
+                  {
+                    key: "record",
+                    label: t("compare.record.label"),
+                    free: t("compare.record.free"),
+                    plus: t("compare.record.plus"),
+                  },
+                  {
+                    key: "banquet",
+                    label: t("compare.banquet.label"),
+                    free: t("compare.banquet.free"),
+                    plus: t("compare.banquet.plus"),
+                  },
+                  {
+                    key: "renovation",
+                    label: t("compare.renovation.label"),
+                    free: t("compare.renovation.free"),
+                    plus: t("compare.renovation.plus"),
+                  },
+                  {
+                    key: "meetings",
+                    label: t("compare.meetings.label"),
+                    free: t("compare.meetings.free"),
+                    plus: t("compare.meetings.plus"),
+                  },
+                  {
+                    key: "scan",
+                    label: t("compare.scan.label"),
+                    free: t("compare.scan.free"),
+                    plus: t("compare.scan.plus"),
+                  },
+                  {
+                    key: "voice",
+                    label: t("compare.voice.label"),
+                    free: t("compare.voice.free"),
+                    plus: t("compare.voice.plus"),
+                  },
+                  {
+                    key: "ai",
+                    label: t("compare.ai.label"),
+                    free: t("compare.ai.free"),
+                    plus: t("compare.ai.plus"),
+                  },
+                  {
+                    key: "dream",
+                    label: t("compare.dream.label"),
+                    free: t("compare.dream.free"),
+                    plus: t("compare.dream.plus"),
+                  },
+                  {
+                    key: "dressup",
+                    label: t("compare.dressup.label"),
+                    free: t("compare.dressup.free"),
+                    plus: t("compare.dressup.plus"),
+                  },
+                  {
+                    key: "support",
+                    label: t("compare.support.label"),
+                    free: t("compare.support.free"),
+                    plus: t("compare.support.plus"),
+                  },
+                ] as const
+              ).map((row) => (
+                <tr key={row.key} className="hover:bg-muted/20">
+                  <td className="px-4 py-3 text-muted-foreground">{row.label}</td>
+                  <td className="px-4 py-3">{row.free}</td>
+                  <td className="px-4 py-3 font-medium">{row.plus}</td>
                 </tr>
               ))}
             </tbody>

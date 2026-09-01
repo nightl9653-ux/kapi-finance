@@ -2,7 +2,8 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
 import { buildAssistantContextBlock } from "@/lib/ai-assistant-user-context";
-import { getAiUsageLimit } from "@/lib/ai-usage-limits";
+import { getAiUsageLimit, isPaidAiClosed } from "@/lib/ai-usage-limits";
+import { plusRequiredJson } from "@/lib/plus-required";
 import { getOpenAIChatConfig, isSupabaseConfigured } from "@/lib/env";
 import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -97,6 +98,9 @@ export async function POST(req: Request) {
   const usageDate = todayUtc();
   const isPlus = await fetchUserIsPlusMember(supabase, auth.user.id);
   const assistantLimit = getAiUsageLimit(isPlus, "assistant");
+  if (isPaidAiClosed(assistantLimit)) {
+    return plusRequiredJson(assistantLimit);
+  }
 
   const { data: usageRow, error: usageErr } = await supabase
     .from("ai_usage")

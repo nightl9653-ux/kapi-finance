@@ -48,6 +48,7 @@ export function reportsAuthReturnPath(
 /** 供客户端 / 回调校验：仅允许同源相对路径，防止开放重定向 */
 export function isSafeInternalNextPath(next: string): boolean {
   if (!next.startsWith("/") || next.startsWith("//")) return false;
-  if (next.includes("://")) return false;
+  const pathOnly = next.split("?")[0] ?? next;
+  if (pathOnly.includes("://") || pathOnly.includes("\\")) return false;
   return true;
 }

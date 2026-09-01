@@ -15,6 +15,7 @@
     "banquetParty": "宴会派对",
     "houseRenovation": "房屋装修",
     "dressup": "宅宴",
+    "art": "艺术",
     "menu": "菜单",
     "more": "更多",
     "openMenu": "打开导航",
@@ -765,7 +766,8 @@
   },
   "transactions": {
     "title": "记一笔",
-    "subtitle": "手动记录日常收支，或上传小票/语音由 AI 预填（每日各限 {scanLimit}/{voiceLimit} 次）。也可快捷记账、创建周期性账单。",
+    "subtitle": "手动记录日常收支。扫单与语音预填需 Plus。也可快捷记账、创建周期性账单。",
+    "subtitlePlus": "手动记录日常收支，或上传小票/语音由 AI 预填（每日各限 {scanLimit}/{voiceLimit} 次）。也可快捷记账、创建周期性账单。",
     "banquetTip": "宴会和房屋的采购清单只在「宴会派对」和「房屋装修」里维护和计入记账；这里记一笔进不了细分项目。",
     "amount": "金额",
     "typeLabel": "类型",
@@ -845,9 +847,11 @@
     "scanCta": "上传小票截图",
     "scanScanning": "识别中…",
     "scanHint": "扫单今日剩余 {remaining} 次（每日最多 {n} 次）。",
+    "scanHintPlusOnly": "扫单识别需 Plus。",
     "scanErrorUnauthenticated": "请先登录后再使用扫单。",
     "scanErrorRateLimit": "今日扫单次数已用完，请明天再试。",
     "scanErrorRateLimitDetail": "今日扫单次数已用完（剩余 0 / 上限 {n}）。请明天再试。",
+    "scanErrorPlusRequired": "扫单识别需 Plus 会员。",
     "scanErrorTooLarge": "图片太大：请确保小票截图小于 4MB（建议裁剪或压缩后再试）。",
     "scanErrorUnsupportedType": "图片格式不支持：请上传 JPG/PNG/WebP/GIF 截图。",
     "scanErrorBadFile": "文件无效或读取失败，请换一张图再试。",
@@ -864,8 +868,10 @@
     "voiceErrorUnsupportedType": "音频格式不支持：请使用 WebM/OGG/WAV/MP3/MP4/M4A。",
     "voiceErrorBadFile": "音频文件无效或读取失败，请重试录音或换一个文件。",
     "voiceHint": "语音今日剩余 {remaining} 次（每日最多 {n} 次）。",
+    "voiceHintPlusOnly": "语音记账需 Plus。",
     "voiceErrorRateLimit": "今日语音次数已用完，请明天再试。",
     "voiceErrorRateLimitDetail": "今日语音次数已用完（剩余 0 / 上限 {n}）。请明天再试。",
+    "voiceErrorPlusRequired": "语音记账需 Plus 会员。",
     "voiceErrorUnrecognized": "没听清或无法解析出金额。建议：用“早餐 20，地铁 3，咖啡 18”这种格式报多笔，数字说清楚；必要时手动填写。",
     "voiceErrorTranscribeModel": "语音转写模型不可用：DMX 默认线路未开放 whisper-1。请在 DMX 控制台查看「语音转写」支持的模型名，把 .env.local 里的 OPENAI_TRANSCRIBE_MODEL 改成该名称后重启 npm run dev（Vercel 同步配置并 Redeploy）。",
     "aiPrivacyHint": "隐私提示：截图/音频会上传到识别服务处理（DMXAPI/OpenAI），用于生成结构化记账结果。",
@@ -974,7 +980,7 @@
     }
   },
   "aiAssistantPage": {
-    "subtitle": "用自然语言提问，获得预算、储蓄与目标相关的一般性建议。具体账户数据以应用内为准。",
+    "subtitle": "用自然语言提问，获得预算、储蓄与目标相关的一般性建议（需 Plus）。具体账户数据以应用内为准。",
     "budget": {
       "title": "AI 预算方案",
       "subtitle": "基于你近 3 个月的收入/支出结构生成月度预算上限（USD 本位币）。",
@@ -996,6 +1002,7 @@
         "openai_unconfigured": "服务端未配置对话模型，请联系管理员。",
         "supabase_not_configured": "数据库未配置。",
         "rate_limit": "今日 AI 次数已用完，请明天再试。",
+        "plus_required": "AI 预算生成需 Plus 会员。",
         "openai_failed": "模型暂时不可用，请稍后再试。",
         "db_write_failed": "保存预算失败，请稍后再试。",
         "network": "网络异常，请检查连接后重试。",
@@ -1007,11 +1014,13 @@
     "send": "发送",
     "sending": "正在回复…",
     "quotaHint": "今日还可发送约 {remaining} 条（每日额度独立计数）。",
+    "quotaHintPlusOnly": "AI 助手需 Plus 会员。",
     "errors": {
       "unauthenticated": "请先登录后再使用 AI 助手。",
       "openai_unconfigured": "服务端未配置对话模型，请联系管理员。",
       "supabase_not_configured": "数据库未配置。",
       "rate_limit": "今日 AI 对话次数已用完，请明天再试。",
+      "plus_required": "AI 助手需 Plus 会员。",
       "bad_messages": "请求内容无效，请刷新页面后重试。",
       "openai_failed": "模型暂时不可用，请稍后再试。",
       "usage_write_failed": "用量记录失败，请稍后再试。",
@@ -1060,6 +1069,7 @@
     "pageSubtitle": "上传支付截图、系统分享或（iOS）快捷指令配合剪贴板；AI 识别后在底部确认入账。",
     "subtitle": "适合付完款后立刻记一笔：选图 → 识别 → 确认。",
     "hintQuota": "与扫单共用每日额度：今日剩余 {remaining} 次（每日最多 {n} 次）。",
+    "hintQuotaPlusOnly": "快捷记账的 AI 识别需 Plus。可先手动记账。",
     "aiPrivacyHint": "隐私提示：截图会上传到识别服务处理（DMXAPI/OpenAI），用于生成结构化记账结果。",
     "dropTitle": "点按或拖入截图",
     "dropHint": "也可在手机上直接粘贴截图（部分浏览器支持）。",
@@ -1119,16 +1129,13 @@
   },
   "pricing": {
     "title": "咔账 Plus 会员",
-    "subtitle": "解锁不限数量的财务目标等能力；金额以 USD 标价，通过 Creem 安全结账，登录后即可购买。",
+    "subtitle": "解锁不限数量的财务目标，以及扫单、语音、AI 助手与梦想剧场。金额以 USD 标价，通过 Creem 安全结账，登录后即可购买。",
     "badgePlus": "Plus",
     "badgeFree": "Free",
     "youArePlus": "你当前已是 Plus 会员，感谢支持。",
     "youAreFree": "你当前为 Free 版，可随时在此查看方案。",
     "guestHint": "登录后可查看与你账号对应的会员状态。",
     "promo": "新用户月度：首月 $4.99，之后 $6.99/月；年付约合 $5.83/月。",
-    "dressupTitle": "宅宴",
-    "dressupBlurb": "影集、宴席台与宅院试玩免费；完整物件需 Plus。开通后可在宅宴内一键确认解锁。",
-    "dressupOpen": "打开宅宴",
     "plans": {
       "monthly": {
         "name": "月度",
@@ -1195,28 +1202,43 @@
         "plus": "不限"
       },
       "record": {
-        "label": "记账 / 报表 / 预算",
+        "label": "记账 / 报表",
+        "free": "可用",
+        "plus": "可用"
+      },
+      "banquet": {
+        "label": "宴会派对",
+        "free": "可用",
+        "plus": "可用"
+      },
+      "renovation": {
+        "label": "房屋装修",
+        "free": "可用",
+        "plus": "可用"
+      },
+      "meetings": {
+        "label": "往来",
         "free": "可用",
         "plus": "可用"
       },
       "scan": {
         "label": "扫单识别",
-        "free": "5 次/天",
+        "free": "需 Plus",
         "plus": "20 次/天"
       },
       "voice": {
         "label": "语音记账",
-        "free": "3 次/天",
+        "free": "需 Plus",
         "plus": "12 次/天"
       },
       "ai": {
         "label": "AI 助手 + AI 预算生成",
-        "free": "共 20 次/天（共用额度）",
+        "free": "需 Plus",
         "plus": "共 80 次/天（共用额度）"
       },
       "dream": {
         "label": "梦想剧场",
-        "free": "小作文 5·旁白/翻译 5·文生图需 Plus",
+        "free": "需 Plus",
         "plus": "小作文 15·旁白/翻译 15·普通画面 1·高质量 1 次/天（分开计次）"
       },
       "dressup": {
@@ -1251,6 +1273,20 @@
     "markAllRead": "全部标为已读",
     "markRead": "标为已读",
     "forDate": "对应日期：{date}"
+  },
+  "artPay": {
+    "invalidTitle": "无法开始出钱",
+    "invalidBody": "帖子或份数不对。请从艺术站重新点「出钱」。",
+    "unavailableTitle": "暂时不能付款",
+    "supabaseMissing": "数据库未配置，无法结账。",
+    "serviceMissing": "入账服务未配置。",
+    "postMissing": "找不到这张帖，可能已删除。",
+    "postLookupFailed": "暂时连不上艺术站，无法确认这张帖。",
+    "useArtSiteTitle": "请从艺术站出钱",
+    "useArtSiteBody": "出钱已改在艺术站完成，不用登录咔账。请回到艺术站重新点「出钱」。",
+    "checkoutMissing": "出钱结账还没接好（需要 Creem 商品 ID 和 API Key）。",
+    "checkoutFailed": "创建付款失败，请稍后重试。",
+    "back": "返回艺术站"
   },
   "auth": {
     "title": "登录/注册",
@@ -1290,21 +1326,21 @@
   "guestLanding": {
     "badge": "登录后使用完整功能",
     "viewPricing": "查看会员方案",
-    "signInNote": "免费版包含核心记账；Plus 提供更高 AI 额度与无限目标等权益。",
+    "signInNote": "免费版包含核心记账与目标（最多 2 个）；扫单、语音、AI 助手与梦想剧场需 Plus。",
     "goals": {
       "lead": "设定储蓄目标、排优先级、按每月净结余分配资金池，并用梦想剧场可视化进度。",
       "bullets": [
         "住房、旅行、应急金等类型或自定义目标",
         "资金池与硬储蓄比例分配",
         "按月/季/年查看净结余统计",
-        "梦想剧场小作文与画面（高级媒体需 Plus）"
+        "梦想剧场（需 Plus）"
       ]
     },
     "transactions": {
       "lead": "多币种收支记录、CSV 导入与周期性账单，统一折算为 USD 本位。",
       "bullets": [
         "手动记账与分类、汇率折算",
-        "小票截图/语音批量预填（有每日 AI 限额）",
+        "小票截图/语音批量预填（需 Plus）",
         "周期性账单访问时自动入账",
         "单次最多导入 200 行 CSV"
       ]
@@ -1315,7 +1351,7 @@
         "Android PWA 系统分享",
         "iOS 快捷指令 + 剪贴板流程",
         "识别金额与分类，保存前可修改",
-        "与记账页扫单共用每日额度"
+        "与记账页扫单相同，AI 识别需 Plus"
       ]
     },
     "banquetParty": {
@@ -1354,7 +1390,7 @@
         "对话式理财与分配建议",
         "按近约 3 个月数据生成分类预算上限",
         "对照本月实际支出进度",
-        "每日消息限额；Plus 额度更高"
+        "每日消息限额；需 Plus"
       ]
     },
     "reports": {
@@ -1378,7 +1414,7 @@
   },
   "homeLanding": {
     "heroTitle": "简单好用的家庭财务规划",
-    "heroSubtitle": "目标、月历仪表盘、多币种记账、AI 扫单与语音、报表与梦想剧场——为家庭设计，而不是复杂表格。",
+    "heroSubtitle": "目标、月历仪表盘、多币种记账、报表与梦想剧场——为家庭设计，而不是复杂表格。AI 扫单、语音与助手为 Plus。",
     "viewPricing": "查看 Plus 方案",
     "learnMore": "了解更多",
     "features": [
@@ -1394,12 +1430,12 @@
       },
       {
         "title": "快捷记账",
-        "body": "截图或语音 → AI 预填 → 确认保存。",
+        "body": "截图或语音 → AI 预填 → 确认保存（Plus）。",
         "href": "/quick-record"
       },
       {
         "title": "AI 助手",
-        "body": "对话咨询与生成月度预算方案。",
+        "body": "对话咨询与生成月度预算方案（Plus）。",
         "href": "/ai-assistant"
       }
     ]

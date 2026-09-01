@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { parseArtPostId } from "@/lib/art-board";
+import { resolveArtReturnUrl } from "@/lib/art-tip-checkout";
 import { billingLocaleFromRequest, billingRequestOrigin } from "@/lib/billing-request";
 import { parseBillingLocale, pricingCheckoutSuccessPath } from "@/lib/billing-success-url";
 
@@ -17,10 +19,16 @@ const CREEM_REDIRECT_PARAMS = [
 
 /**
  * Creem 商品「返回网址」兜底：付完款先到这里，再按 locale 跳到 /{locale}/pricing。
- * 从咔账定价页发起的结账会在链接里带 success_url，一般不经此路由。
+ * 艺术站出钱会带 art=1，校验来源后跳回艺术站。
  */
 export async function GET(req: Request) {
   const incoming = new URL(req.url);
+  if (incoming.searchParams.get("art") === "1") {
+    const postId = parseArtPostId(incoming.searchParams.get("post"));
+    const dest = resolveArtReturnUrl(incoming.searchParams.get("return_origin"), postId);
+    return NextResponse.redirect(dest);
+  }
+
   const localeParam = incoming.searchParams.get("locale");
   const locale = localeParam ? parseBillingLocale(localeParam) : billingLocaleFromRequest(req);
   const dest = new URL(pricingCheckoutSuccessPath(locale), billingRequestOrigin(req));

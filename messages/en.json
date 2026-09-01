@@ -15,6 +15,7 @@
     "banquetParty": "Banquet & party",
     "houseRenovation": "Home renovation",
     "dressup": "Manor",
+    "art": "Art",
     "menu": "Menu",
     "more": "More",
     "openMenu": "Open navigation",
@@ -765,7 +766,8 @@
   },
   "transactions": {
     "title": "Record Transaction",
-    "subtitle": "Log daily income/expenses, or use receipt/voice AI prefill (daily limits {scanLimit}/{voiceLimit}). Quick record and recurring bills are also available.",
+    "subtitle": "Log daily income and expenses. Receipt and voice AI prefill need Plus. Quick record and recurring bills are also available.",
+    "subtitlePlus": "Log daily income/expenses, or use receipt/voice AI prefill (daily limits {scanLimit}/{voiceLimit}). Quick record and recurring bills are also available.",
     "banquetTip": "Banquet and renovation shopping lists are only maintained—and logged to the ledger—in Banquet Studio and Home Renovation. An entry here won’t become a fine-grained list item.",
     "amount": "Amount",
     "typeLabel": "Type",
@@ -845,9 +847,11 @@
     "scanCta": "Upload receipt screenshot",
     "scanScanning": "Scanning…",
     "scanHint": "Scan remaining today: {remaining} (daily limit: {n}).",
+    "scanHintPlusOnly": "Receipt scan requires Plus.",
     "scanErrorUnauthenticated": "Sign in to use receipt scanning.",
     "scanErrorRateLimit": "Daily scan limit reached. Try again tomorrow.",
     "scanErrorRateLimitDetail": "Daily scan limit reached (0 remaining / {n} limit). Try again tomorrow.",
+    "scanErrorPlusRequired": "Receipt scan requires Plus.",
     "scanErrorTooLarge": "Image is too large. Please keep it under 4MB (crop or compress and try again).",
     "scanErrorUnsupportedType": "Unsupported image type. Please use JPG/PNG/WebP/GIF.",
     "scanErrorBadFile": "Invalid file or failed to read. Please try another image.",
@@ -864,8 +868,10 @@
     "voiceErrorUnsupportedType": "Unsupported audio type. Please use WebM/OGG/WAV/MP3/MP4/M4A.",
     "voiceErrorBadFile": "Invalid audio file or failed to read. Please try recording again.",
     "voiceHint": "Voice remaining today: {remaining} (daily limit: {n}).",
+    "voiceHintPlusOnly": "Voice entry requires Plus.",
     "voiceErrorRateLimit": "Daily voice limit reached. Try again tomorrow.",
     "voiceErrorRateLimitDetail": "Daily voice limit reached (0 remaining / {n} limit). Try again tomorrow.",
+    "voiceErrorPlusRequired": "Voice entry requires Plus.",
     "voiceErrorUnrecognized": "Could not parse any amount. Tip: say amounts clearly, e.g. “breakfast 20, metro 3, coffee 18”, or enter manually.",
     "voiceErrorTranscribeModel": "Speech-to-text model unavailable: your gateway does not expose whisper-1 on the default route. In the DMX console, find a supported transcription model ID, set OPENAI_TRANSCRIBE_MODEL in .env.local, restart dev, and mirror the same on Vercel with Redeploy.",
     "aiPrivacyHint": "Privacy: images/audio are uploaded to the recognition service (DMXAPI/OpenAI) to generate structured results.",
@@ -974,7 +980,7 @@
     }
   },
   "aiAssistantPage": {
-    "subtitle": "Ask in plain language for general budgeting, saving, and goal planning guidance. Your real balances live in the app.",
+    "subtitle": "Ask in plain language for general budgeting, saving, and goal planning guidance (Plus). Your real balances live in the app.",
     "budget": {
       "title": "AI Budget Plan",
       "subtitle": "Generate a monthly budget cap (USD base) from your last ~3 months of income/spending.",
@@ -996,6 +1002,7 @@
         "openai_unconfigured": "Chat is not configured on the server.",
         "supabase_not_configured": "Database is not configured.",
         "rate_limit": "Daily AI limit reached. Try again tomorrow.",
+        "plus_required": "AI budget generation requires Plus.",
         "openai_failed": "The model is temporarily unavailable. Try again later.",
         "db_write_failed": "Could not save the budget. Please try again.",
         "network": "Network error. Check your connection and retry.",
@@ -1007,11 +1014,13 @@
     "send": "Send",
     "sending": "Thinking…",
     "quotaHint": "About {remaining} user messages left today (resets daily).",
+    "quotaHintPlusOnly": "The AI assistant requires Plus.",
     "errors": {
       "unauthenticated": "Please sign in to use the AI assistant.",
       "openai_unconfigured": "Chat is not configured on the server.",
       "supabase_not_configured": "Database is not configured.",
       "rate_limit": "Daily AI message limit reached. Try again tomorrow.",
+      "plus_required": "The AI assistant requires Plus.",
       "bad_messages": "Invalid request. Refresh the page and try again.",
       "openai_failed": "The model is temporarily unavailable. Try again later.",
       "usage_write_failed": "Could not record usage. Please try again.",
@@ -1060,6 +1069,7 @@
     "pageSubtitle": "Share, pick, or use iOS Shortcuts + clipboard; AI fills the form—confirm to save.",
     "subtitle": "Pay → capture → confirm. Fast path for small purchases.",
     "hintQuota": "Uses the same daily limit as receipt scan: {remaining} left today (max {n} per day).",
+    "hintQuotaPlusOnly": "AI receipt scan on this page requires Plus. You can still enter transactions by hand.",
     "aiPrivacyHint": "Privacy: images are uploaded to the recognition service (DMXAPI/OpenAI) to generate structured results.",
     "dropTitle": "Tap or drop a screenshot",
     "dropHint": "You can also paste an image (supported in some browsers).",
@@ -1119,16 +1129,13 @@
   },
   "pricing": {
     "title": "Kash Plus",
-    "subtitle": "Unlimited financial goals and more. Prices are in USD; sign in to purchase securely via Creem checkout.",
+    "subtitle": "Unlimited financial goals, plus receipt scan, voice, AI assistant, and Dream Theater. Prices are in USD; sign in to purchase securely via Creem checkout.",
     "badgePlus": "Plus",
     "badgeFree": "Free",
     "youArePlus": "You're on Plus—thank you for your support.",
     "youAreFree": "You're on the Free plan. Compare options below.",
     "guestHint": "Sign in to see membership status for your account.",
     "promo": "Monthly: first month $4.99, then $6.99/mo. Yearly ~$5.83/mo.",
-    "dressupTitle": "Manor",
-    "dressupBlurb": "Gallery, banquet, and courtyard are free to try; full pieces need Plus. After upgrading, confirm unlock inside Manor.",
-    "dressupOpen": "Open Manor",
     "plans": {
       "monthly": {
         "name": "Monthly",
@@ -1195,28 +1202,43 @@
         "plus": "Unlimited"
       },
       "record": {
-        "label": "Transactions, reports, budgets",
+        "label": "Transactions / reports",
+        "free": "Included",
+        "plus": "Included"
+      },
+      "banquet": {
+        "label": "Banquet & party",
+        "free": "Included",
+        "plus": "Included"
+      },
+      "renovation": {
+        "label": "Home renovation",
+        "free": "Included",
+        "plus": "Included"
+      },
+      "meetings": {
+        "label": "Connections",
         "free": "Included",
         "plus": "Included"
       },
       "scan": {
         "label": "Receipt scan",
-        "free": "5/day",
+        "free": "Plus only",
         "plus": "20/day"
       },
       "voice": {
         "label": "Voice entry",
-        "free": "3/day",
+        "free": "Plus only",
         "plus": "12/day"
       },
       "ai": {
         "label": "AI assistant + AI budget",
-        "free": "20/day shared",
+        "free": "Plus only",
         "plus": "80/day shared"
       },
       "dream": {
         "label": "Dream Theater",
-        "free": "Story 5 · Media 5 · visuals require Plus",
+        "free": "Plus only",
         "plus": "Story 15 · Media 15 · Standard 1 · HQ 1/day (separate quota)"
       },
       "dressup": {
@@ -1251,6 +1273,20 @@
     "markAllRead": "Mark all read",
     "markRead": "Mark read",
     "forDate": "For: {date}"
+  },
+  "artPay": {
+    "invalidTitle": "Invalid tip",
+    "invalidBody": "This post or quantity is invalid. Please start again from Art.",
+    "unavailableTitle": "Tipping unavailable",
+    "supabaseMissing": "Database is not configured, so checkout cannot start.",
+    "serviceMissing": "Server billing key is missing, so checkout cannot start.",
+    "postMissing": "This post was not found. It may have been removed.",
+    "postLookupFailed": "Could not reach Art to confirm this post.",
+    "useArtSiteTitle": "Pay from Art",
+    "useArtSiteBody": "Tipping now starts on Art. You do not need a Kash account. Go back and tap Pay again.",
+    "checkoutMissing": "The Art tip product is not configured yet (CREEM_API_KEY and CREEM_PRODUCT_ID_ART_TIP).",
+    "checkoutFailed": "Could not create a payment page. Please try again.",
+    "back": "Back to Art"
   },
   "auth": {
     "title": "Sign in",
@@ -1290,21 +1326,21 @@
   "guestLanding": {
     "badge": "Sign in to use this feature",
     "viewPricing": "View pricing",
-    "signInNote": "Free accounts include core tracking; Plus unlocks higher AI limits and unlimited goals.",
+    "signInNote": "Free includes core tracking and up to 2 goals. Receipt scan, voice, AI assistant, and Dream Theater need Plus.",
     "goals": {
       "lead": "Set savings targets, prioritize goals, allocate monthly net income, and visualize progress with Dream Theater.",
       "bullets": [
         "Track housing, travel, emergency fund, and custom goals",
         "Fund pool planner with hard savings ratio",
         "Net income stats by month, quarter, and year",
-        "Dream Theater stories and visuals (Plus for advanced media)"
+        "Dream Theater (Plus)"
       ]
     },
     "transactions": {
       "lead": "Record income and expenses in multiple currencies, import CSV, and create recurring bills.",
       "bullets": [
         "Manual entry with categories and FX to USD base",
-        "Bulk entry with receipt scan and voice (daily AI limits apply)",
+        "Bulk entry with receipt scan and voice (Plus)",
         "Recurring bills auto-materialize on visit",
         "CSV import for up to 200 rows"
       ]
@@ -1315,7 +1351,7 @@
         "PWA share target on Android",
         "iOS Shortcuts + clipboard workflow",
         "AI pre-fills amounts and categories—you confirm before saving",
-        "Same daily scan quota as receipt scan on the transactions page"
+        "Same as receipt scan on the transactions page: AI needs Plus"
       ]
     },
     "banquetParty": {
@@ -1354,7 +1390,7 @@
         "Chat assistant for saving and allocation guidance",
         "AI budget caps by category from ~3 months of data",
         "Progress tracking against budget lines",
-        "Daily message limits; higher on Plus"
+        "Daily message limits; Plus required"
       ]
     },
     "reports": {
@@ -1378,7 +1414,7 @@
   },
   "homeLanding": {
     "heroTitle": "Family finance planning that stays simple",
-    "heroSubtitle": "Goals, calendar dashboard, multi-currency transactions, AI receipt scan, voice entry, reports, and Dream Theater—built for households, not spreadsheets.",
+    "heroSubtitle": "Goals, calendar dashboard, multi-currency transactions, reports, and Dream Theater—built for households, not spreadsheets. AI scan, voice, and assistant are Plus.",
     "viewPricing": "See Plus plans",
     "learnMore": "Learn more",
     "features": [
@@ -1394,12 +1430,12 @@
       },
       {
         "title": "Quick record",
-        "body": "Screenshot or voice → AI pre-fill → confirm and save.",
+        "body": "Screenshot or voice → AI pre-fill → confirm and save (Plus).",
         "href": "/quick-record"
       },
       {
         "title": "AI assistant",
-        "body": "Chat for guidance and generate monthly budget plans.",
+        "body": "Chat for guidance and generate monthly budget plans (Plus).",
         "href": "/ai-assistant"
       }
     ]

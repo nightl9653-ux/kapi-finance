@@ -35,6 +35,8 @@ export function mapAiErrorCode({
         return t("voiceErrorUnrecognized");
       case "rate_limit":
         return t("voiceErrorRateLimitDetail", { n: nSafe });
+      case "plus_required":
+        return t("voiceErrorPlusRequired");
       case "transcribe_model_unavailable":
         return t("voiceErrorTranscribeModel");
       default:
@@ -48,6 +50,8 @@ export function mapAiErrorCode({
       return t("scanErrorUnauthenticated");
     case "rate_limit":
       return t("scanErrorRateLimitDetail", { n: nSafe });
+    case "plus_required":
+      return t("scanErrorPlusRequired");
     case "file_too_large":
       return t("scanErrorTooLarge");
     case "unsupported_type":

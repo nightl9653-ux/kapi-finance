@@ -416,7 +416,9 @@ export default async function TransactionsPage({
 
           <div className="mt-2 space-y-2">
             <p className="text-sm text-muted-foreground">
-              {t("subtitle", { scanLimit: aiLimits.scan, voiceLimit: aiLimits.voice })}
+              {isPlus
+                ? t("subtitlePlus", { scanLimit: aiLimits.scan, voiceLimit: aiLimits.voice })
+                : t("subtitle")}
             </p>
             <p className="rounded-xl border border-amber-200/80 bg-amber-50/70 px-3 py-2 text-sm leading-relaxed text-amber-950/90">
               {t("banquetTip")}

@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
+import { parseArtPostId, parseArtTipUnits } from "@/lib/art-board";
 import { type CreditPackId, getCreditPack } from "@/lib/credit-packs";
 import { type PlusPlanId, getPlusPlan } from "@/lib/plus-plans";
 
@@ -84,7 +85,12 @@ function packIdFromCreemProduct(productId: string): CreditPackId | null {
 export type CreemGrantIntent =
   | { kind: "plus"; userId: string; planId: PlusPlanId; externalOrderId: string }
   | { kind: "pack"; userId: string; packId: CreditPackId; externalOrderId: string }
+  | { kind: "art_tip"; userId: string; postId: string; units: number; externalOrderId: string }
   | null;
+
+function unitsFromCheckout(obj: Record<string, unknown>, meta: Record<string, string>): number {
+  return parseArtTipUnits(obj.units) ?? parseArtTipUnits(meta.units) ?? 1;
+}
 
 /** 从 checkout.completed / subscription.paid 等事件解析入账意图 */
 export function parseCreemGrantIntent(payload: CreemWebhookEvent): CreemGrantIntent {
@@ -98,7 +104,6 @@ export function parseCreemGrantIntent(payload: CreemWebhookEvent): CreemGrantInt
   const meta = readMetadata(obj);
   const userId =
     meta.user_id || meta.userId || meta.referenceId || readString(obj.request_id);
-  if (!userId) return null;
 
   const order = obj.order;
   const orderId =
@@ -107,6 +112,20 @@ export function parseCreemGrantIntent(payload: CreemWebhookEvent): CreemGrantInt
       : "";
   const externalOrderId = orderId || readString(obj.id) || readString(payload.eventType);
   if (!externalOrderId) return null;
+
+  const postId = parseArtPostId(meta.post_id || meta.postId);
+  const productId = readProductId(obj);
+  if (postId) {
+    return {
+      kind: "art_tip",
+      userId,
+      postId,
+      units: unitsFromCheckout(obj, meta),
+      externalOrderId,
+    };
+  }
+
+  if (!userId) return null;
 
   const planIdRaw = (meta.plan_id || meta.planId) as PlusPlanId | "";
   if (planIdRaw && getPlusPlan(planIdRaw)) {
@@ -118,7 +137,6 @@ export function parseCreemGrantIntent(payload: CreemWebhookEvent): CreemGrantInt
     return { kind: "pack", userId, packId: packIdRaw, externalOrderId };
   }
 
-  const productId = readProductId(obj);
   if (productId) {
     const planId = planIdFromCreemProduct(productId);
     if (planId) return { kind: "plus", userId, planId, externalOrderId };

@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  dreamLocalizedMediaPlusRequiredError,
   dreamLocalizedMediaRateLimitError,
+  dreamStoryPlusRequiredError,
   dreamStoryRateLimitError,
   dreamVisualHqPlusRequiredError,
   dreamVisualHqRateLimitError,
@@ -269,6 +271,8 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
       visualHQ: zh ? "高质量（Plus 专属 · 单独计次）" : "High quality (Plus only · separate quota)",
       visualHqPlusOnly: zh ? "高质量画面仅 Plus 会员可用，请升级后使用。" : "High-quality visuals are available on Plus only.",
       visualPlusOnly: zh ? "文生图画面需 Plus 会员，请升级后使用。" : "Dream visuals require Plus. Upgrade to generate images.",
+      storyPlusOnly: zh ? "梦想小作文需 Plus 会员。" : "Dream stories require Plus.",
+      mediaPlusOnly: zh ? "旁白、字幕与翻译需 Plus 会员。" : "Narration, subtitles, and translation require Plus.",
       visualProcessing: zh ? "图片生成中…" : "Generating image…",
       visualProcessingPartial: zh ? "预览已就绪，其余镜头生成中…" : "Preview ready; finishing remaining shots…",
       visualReady: zh ? "已生成" : "Ready",
@@ -371,7 +375,9 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
       }
       if (!res.ok) {
         const msg = res.error;
-        if (msg === dreamStoryRateLimitError) {
+        if (msg === dreamStoryPlusRequiredError) {
+          setErr(uiText.storyPlusOnly);
+        } else if (msg === dreamStoryRateLimitError) {
           setErr(
             moduleLocale === "zh"
               ? `今日梦想小作文次数已达上限（每天 ${dreamStoryLimit} 次），请明日再试或微调关键词后重试。`
@@ -426,7 +432,9 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
         if (!res.cached) void refreshDreamTheaterUsageQuotas();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "unknown";
-        if (msg === dreamLocalizedMediaRateLimitError) {
+        if (msg === dreamLocalizedMediaPlusRequiredError) {
+          setErr(uiText.mediaPlusOnly);
+        } else if (msg === dreamLocalizedMediaRateLimitError) {
           setErr(localizedMediaRateLimitMessage());
         } else if (msg === "usage_query_failed" || msg === "usage_write_failed") {
           setErr(uiText.usageMigrationHint);
@@ -439,6 +447,10 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
 
   const onGenerateMedia = () => {
     if (!storyId) return;
+    if (!isPlusMember) {
+      setErr(uiText.mediaPlusOnly);
+      return;
+    }
     setErr("");
     startTransition(async () => {
       try {
@@ -450,7 +462,9 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
         if (!res.cached) void refreshDreamTheaterUsageQuotas();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "unknown";
-        if (msg === dreamLocalizedMediaRateLimitError) {
+        if (msg === dreamLocalizedMediaPlusRequiredError) {
+          setErr(uiText.mediaPlusOnly);
+        } else if (msg === dreamLocalizedMediaRateLimitError) {
           setErr(localizedMediaRateLimitMessage());
         } else if (msg === "usage_query_failed" || msg === "usage_write_failed") {
           setErr(uiText.usageMigrationHint);
@@ -757,15 +771,17 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
               <div className="flex items-center justify-between gap-3">
                 <div className="space-y-1 text-xs text-muted-foreground">
                   <div>{pending ? (moduleLocale === "zh" ? "生成中…" : "Generating…") : ""}</div>
-                  {dreamStoryRemaining !== null ? (
+                  {isPlusMember && dreamStoryRemaining !== null ? (
                     <p className="text-foreground/90">{uiText.storyQuotaLine(dreamStoryRemaining, dreamStoryLimit)}</p>
+                  ) : !isPlusMember ? (
+                    <p className="text-foreground/90">{uiText.storyPlusOnly}</p>
                   ) : null}
                 </div>
                 <Button
                   type="button"
                   className="rounded-full"
                   onClick={onGenerate}
-                  disabled={pending || (dreamStoryRemaining !== null && dreamStoryRemaining <= 0)}
+                  disabled={pending || !isPlusMember || (dreamStoryRemaining !== null && dreamStoryRemaining <= 0)}
                 >
                   {uiText.generate}
                 </Button>
@@ -786,8 +802,10 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
                       {uiText.narration}: {currentAudio ? (moduleLocale === "zh" ? "已生成" : "ready") : moduleLocale === "zh" ? "未生成" : "missing"} ·{" "}
                       {uiText.subtitles}: {currentSubtitle ? (moduleLocale === "zh" ? "已生成" : "ready") : moduleLocale === "zh" ? "未生成" : "missing"}
                     </div>
-                    {dreamLocalizedMediaRemaining !== null ? (
+                    {isPlusMember && dreamLocalizedMediaRemaining !== null ? (
                       <p className="text-foreground/90">{uiText.mediaQuotaLine(dreamLocalizedMediaRemaining, dreamLocalizedMediaLimit)}</p>
+                    ) : !isPlusMember ? (
+                      <p className="text-foreground/90">{uiText.mediaPlusOnly}</p>
                     ) : null}
                   </div>
                   <Button
@@ -795,7 +813,7 @@ export function DreamTheater(props: { goal: GoalContext; pageLocale: Locale; isP
                     variant="secondary"
                     className="rounded-full"
                     onClick={onGenerateMedia}
-                    disabled={pending || (dreamLocalizedMediaRemaining !== null && dreamLocalizedMediaRemaining <= 0)}
+                    disabled={pending || !isPlusMember || (dreamLocalizedMediaRemaining !== null && dreamLocalizedMediaRemaining <= 0)}
                   >
                     {uiText.genMedia}
                   </Button>

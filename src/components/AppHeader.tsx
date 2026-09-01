@@ -8,6 +8,7 @@ import { AppleEnControlsShift } from "@/components/AppleEnControlsShift";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { MobileNavDrawer } from "@/components/MobileNavDrawer";
 import { NotificationsEntry } from "@/components/NotificationsEntry";
+import { getArtPublicUrl } from "@/lib/art-public-url";
 import { getDressupPublicUrl } from "@/lib/dressup-origins";
 
 type NavItem = { href: string; label: string; external?: boolean };
@@ -31,6 +32,7 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
   const t = useTranslations("nav");
   const locale = useLocale();
   const dressupUrl = getDressupPublicUrl();
+  const artUrl = getArtPublicUrl();
 
   const navPrimary: NavItem[] = [
     { href: `/${locale}`, label: t("dashboard") },
@@ -40,6 +42,7 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
     { href: `/${locale}/banquet-party`, label: t("banquetParty") },
     { href: `/${locale}/house-renovation`, label: t("houseRenovation") },
     { href: dressupUrl, label: t("dressup"), external: true },
+    { href: artUrl, label: t("art"), external: true },
   ];
 
   const navSecondary: NavItem[] = [

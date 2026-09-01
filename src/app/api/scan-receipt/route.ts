@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { getAiUsageLimit } from "@/lib/ai-usage-limits";
+import { getAiUsageLimit, isPaidAiClosed } from "@/lib/ai-usage-limits";
+import { plusRequiredJson } from "@/lib/plus-required";
 import { getOpenAIScanConfig, isSupabaseConfigured, scanOcrProvider } from "@/lib/env";
 import { extractTransactionsFromImage } from "@/lib/scan-receipt-ai";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -67,6 +68,9 @@ export async function POST(req: Request) {
   const locale = parseLocale(formData);
   const isPlus = await fetchUserIsPlusMember(supabase, auth.user.id);
   const scanLimit = getAiUsageLimit(isPlus, "scan");
+  if (isPaidAiClosed(scanLimit)) {
+    return plusRequiredJson(scanLimit);
+  }
 
   const { data: usageRow, error: usageErr } = await supabase
     .from("ai_usage")

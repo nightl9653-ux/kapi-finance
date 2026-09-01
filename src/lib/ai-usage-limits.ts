@@ -32,14 +32,15 @@ export type AiUsageLimitKey =
 
 export type AiUsageLimits = Record<AiUsageLimitKey, number>;
 
+/** Free 不提供会产生模型/OCR/转写费用的能力；0 = 需 Plus */
 const FREE_DEFAULTS: AiUsageLimits = {
-  scan: 5,
-  voice: 3,
-  assistant: 20,
+  scan: 0,
+  voice: 0,
+  assistant: 0,
   dreamVisual: 0,
   dreamVisualHq: 0,
-  dreamStory: 5,
-  dreamLocalizedMedia: 5,
+  dreamStory: 0,
+  dreamLocalizedMedia: 0,
 };
 
 const PLUS_DEFAULTS: AiUsageLimits = {
@@ -67,7 +68,7 @@ const ENV_KEYS: Record<AiUsageLimitKey, { free: string; plus: string }> = {
 
 function parseTierLimit(envName: string, fallback: number): number {
   const n = Number(process.env[envName]);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback;
 }
 
 function buildTierLimits(defaults: AiUsageLimits, tier: "free" | "plus"): AiUsageLimits {
@@ -89,4 +90,9 @@ export function getAiUsageLimits(isPlus: boolean): AiUsageLimits {
 
 export function getAiUsageLimit(isPlus: boolean, key: AiUsageLimitKey): number {
   return getAiUsageLimits(isPlus)[key];
+}
+
+/** 日限额为 0 表示该档不提供（Free 的付费 AI） */
+export function isPaidAiClosed(limit: number): boolean {
+  return limit <= 0;
 }

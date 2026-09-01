@@ -1,7 +1,8 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
-import { getAiUsageLimit } from "@/lib/ai-usage-limits";
+import { getAiUsageLimit, isPaidAiClosed } from "@/lib/ai-usage-limits";
+import { plusRequiredJson } from "@/lib/plus-required";
 import { getOpenAIScanConfig, isSupabaseConfigured } from "@/lib/env";
 import { extractTransactionsFromText } from "@/lib/scan-receipt-ai";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -85,6 +86,9 @@ export async function POST(req: Request) {
   const locale = parseLocale(formData);
   const isPlus = await fetchUserIsPlusMember(supabase, auth.user.id);
   const voiceLimit = getAiUsageLimit(isPlus, "voice");
+  if (isPaidAiClosed(voiceLimit)) {
+    return plusRequiredJson(voiceLimit);
+  }
 
   const { data: usageRow, error: usageErr } = await supabase
     .from("ai_usage")
