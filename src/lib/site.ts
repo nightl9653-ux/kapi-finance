@@ -12,6 +12,18 @@ export const SITE_DESCRIPTION_ZH =
 export const SUPPORT_EMAIL =
   process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "support@919145.xyz";
 
+const FORMAT_DETECTION_OFF = { "x-ms-format-detection": "none" } as const;
+
+/** Stops Edge/Windows from turning an address into a mailto link. */
+export function formatDetectionOff() {
+  return FORMAT_DETECTION_OFF;
+}
+
+/** Same address, but Edge will not treat the text as a mail link. */
+export function maskedEmail(email: string): string {
+  return email.replace("@", "@\u200b");
+}
+
 /** Canonical production URL (custom domain). Used in metadata when set. */
 export function getSiteUrl(): string | undefined {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();

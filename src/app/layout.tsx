@@ -24,6 +24,9 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION_EN,
   applicationName: SITE_NAME_EN,
+  other: {
+    "format-detection": "telephone=no, date=no, email=no, address=no",
+  },
 };
 
 export default function RootLayout({
@@ -36,8 +39,11 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      {...{ "x-ms-format-detection": "none" }}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col" {...{ "x-ms-format-detection": "none" }}>
+        {children}
+      </body>
     </html>
   );
 }

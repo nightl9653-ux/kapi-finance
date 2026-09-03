@@ -8,6 +8,7 @@ import { createContext, useContext, useEffect, useMemo, useState, useTransition,
 import { Button, buttonVariants } from "@/components/ui/button";
 import { isSupabaseConfigured } from "@/lib/env";
 import { useAppleMobileDevice, useHuaweiLikeDevice } from "@/lib/device";
+import { formatDetectionOff, maskedEmail } from "@/lib/site";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 
@@ -109,8 +110,8 @@ export function AuthUserEmail({ placement }: { placement: "header" | "menu" }) {
   if (placement === "menu") {
     return (
       <div className="border-b border-border/60 px-4 py-2.5">
-        <p className="truncate text-xs text-muted-foreground" title={state.email}>
-          {state.email}
+        <p className="truncate text-xs text-muted-foreground" title={state.email} {...formatDetectionOff()}>
+          {maskedEmail(state.email)}
         </p>
       </div>
     );
@@ -120,8 +121,9 @@ export function AuthUserEmail({ placement }: { placement: "header" | "menu" }) {
     <span
       className="hidden max-w-[220px] shrink-0 truncate text-xs text-muted-foreground md:inline"
       title={state.email}
+      {...formatDetectionOff()}
     >
-      {state.email}
+      {maskedEmail(state.email)}
     </span>
   );
 }

@@ -1321,6 +1321,8 @@
     "privacy": "隐私政策",
     "terms": "服务条款",
     "pricing": "会员价格",
+    "copied": "已复制 {email}，请用你的邮箱发信。",
+    "copyFail": "复制失败，请手动写给 {email}",
     "copyright": "© {year} 咔账·家庭财务规划"
   },
   "guestLanding": {

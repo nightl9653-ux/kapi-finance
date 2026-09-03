@@ -1321,6 +1321,8 @@
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
     "pricing": "Pricing",
+    "copied": "Copied {email}. Send mail from your own inbox.",
+    "copyFail": "Could not copy. Email {email} manually.",
     "copyright": "© {year} Kash · Family Finance"
   },
   "guestLanding": {

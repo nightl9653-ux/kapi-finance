@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
-import { SUPPORT_EMAIL } from "@/lib/site";
+import { CopySupportEmail } from "@/components/CopySupportEmail";
 
 export async function AppFooter({ locale }: { locale: "zh" | "en" }) {
   const t = await getTranslations("footer");
@@ -20,9 +20,7 @@ export async function AppFooter({ locale }: { locale: "zh" | "en" }) {
           <Link href={`/${locale}/pricing`} className="hover:text-foreground">
             {t("pricing")}
           </Link>
-          <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-foreground hover:underline">
-            {SUPPORT_EMAIL}
-          </a>
+          <CopySupportEmail />
         </nav>
         <p className="w-full text-xs sm:w-auto">{t("copyright", { year: new Date().getFullYear() })}</p>
       </div>

@@ -43,6 +43,9 @@ export async function generateMetadata({
       capable: true,
       title: name,
     },
+    other: {
+      "format-detection": "telephone=no, date=no, email=no, address=no",
+    },
   };
 }
 
