@@ -81,7 +81,11 @@ export async function createArtTipCheckout(params: {
   }
 
   const returnOrigin = parseAllowedArtOrigin(params.returnOrigin) ?? getArtPublicUrl();
-  const exists = await artSitePostExists(returnOrigin, postId);
+  const lookupOrigin = getArtPublicUrl();
+  let exists = await artSitePostExists(lookupOrigin, postId);
+  if (exists !== "ok" && returnOrigin !== lookupOrigin) {
+    exists = await artSitePostExists(returnOrigin, postId);
+  }
   if (exists === "error") return { ok: false, error: "post_lookup_failed" };
   if (exists === "missing") return { ok: false, error: "post_not_found" };
 

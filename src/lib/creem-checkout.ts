@@ -39,7 +39,7 @@ function readCheckoutUrl(body: Record<string, unknown>): { id: string; url: stri
   return { id: id || url, url };
 }
 
-/** Creem Checkout API：按份数 N 创建会话（总额 = 单价 × units） */
+/** Creem Checkout API???? N ??????? = ?? ? units? */
 export async function createCreemCheckout(params: CreateCreemCheckoutParams): Promise<CreemCheckoutSession> {
   const apiKey = getCreemApiKey();
   if (!apiKey) return { ok: false, error: "creem_api_not_configured" };
@@ -50,10 +50,10 @@ export async function createCreemCheckout(params: CreateCreemCheckoutParams): Pr
 
   const payload: Record<string, unknown> = {
     product_id: productId,
-    units: params.units,
     success_url: params.successUrl,
     metadata: params.metadata,
   };
+  if (params.units > 1) payload.units = params.units;
   if (params.requestId) payload.request_id = params.requestId;
   if (params.customerEmail) payload.customer = { email: params.customerEmail };
 
@@ -81,7 +81,12 @@ export async function createCreemCheckout(params: CreateCreemCheckoutParams): Pr
   }
 
   if (!res.ok) {
-    return { ok: false, error: "creem_checkout_failed" };
+    const detail =
+      (typeof body.message === "string" && body.message.trim()) ||
+      (typeof body.error === "string" && body.error.trim()) ||
+      "";
+    const safe = detail.replace(/\s+/g, " ").slice(0, 160);
+    return { ok: false, error: safe ? `creem_checkout_failed:${safe}` : "creem_checkout_failed" };
   }
 
   const parsed = readCheckoutUrl(body);

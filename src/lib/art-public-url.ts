@@ -1,6 +1,6 @@
 /**
- * 艺术站公开地址（导航 / 回跳）。不含 Node crypto，可供客户端引用。
- * NEXT_PUBLIC_ART_URL，或 NEXT_PUBLIC_ART_ORIGINS 第一项，否则正式子域名。
+ * ?????????? / ?????? Node crypto?????????
+ * NEXT_PUBLIC_ART_URL?? NEXT_PUBLIC_ART_ORIGINS ????????????
  */
 
 const DEFAULT_ART_PUBLIC_URL = "https://beauty.919145.xyz";
@@ -35,5 +35,5 @@ export function getArtPublicUrl(): string {
 }
 
 export function listAllowedArtOrigins(): string[] {
-  return parseAllowedOrigins();
+  return [...new Set([...parseAllowedOrigins(), DEFAULT_ART_PUBLIC_URL])];
 }
