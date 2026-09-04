@@ -57,6 +57,15 @@ export function authResetPath(locale: string): string {
   return `/${locale}/auth/reset`;
 }
 
+export function authRecoverPath(locale: string): string {
+  return `/${locale}/auth/recover`;
+}
+
+export function isAuthResetPath(next: string, locale: string): boolean {
+  const pathOnly = next.split("?")[0] ?? next;
+  return pathOnly === authResetPath(locale);
+}
+
 export function isAuthResetPath(next: string, locale: string): boolean {
   const pathOnly = next.split("?")[0] ?? next;
   return pathOnly === authResetPath(locale);

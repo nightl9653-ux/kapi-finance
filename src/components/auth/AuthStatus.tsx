@@ -67,14 +67,16 @@ export function AuthProvider({ initialAuth, children }: { initialAuth?: InitialA
     function goToResetIfNeeded() {
       if (typeof window === "undefined") return;
       if (window.location.pathname.includes("/auth/reset")) return;
+      if (window.location.pathname.includes("/auth/recover")) return;
       router.replace(authResetPath(locale));
     }
 
     async function syncAuth() {
+      const onResetPage = window.location.pathname.includes("/auth/reset");
       const href = window.location.href;
       const hasAuthLink =
         /[?&#](code|token_hash|type|access_token)=/.test(href) || href.includes("type=recovery");
-      if (hasAuthLink) {
+      if (hasAuthLink && !onResetPage) {
         const consumed = await consumeAuthLink(supabase);
         if (cancelled) return;
         if (consumed.recovery || (consumed.ok && peekPasswordResetIntent())) {

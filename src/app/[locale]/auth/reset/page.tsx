@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -12,7 +14,9 @@ export default async function ResetPasswordPage() {
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center">
-      <ResetPasswordForm hasSession={hasSession} />
+      <Suspense>
+        <ResetPasswordForm hasSession={hasSession} />
+      </Suspense>
     </div>
   );
 }

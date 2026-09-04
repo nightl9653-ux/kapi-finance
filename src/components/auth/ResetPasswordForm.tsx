@@ -1,14 +1,15 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { consumeAuthLink } from "@/lib/auth-link";
+import { consumeAuthLink, isPkceStorageError } from "@/lib/auth-link";
+import { authRecoverPath } from "@/lib/auth-return-path";
 import { clearPasswordResetIntent } from "@/lib/password-reset";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -16,6 +17,7 @@ export function ResetPasswordForm({ hasSession: initialHasSession }: { hasSessio
   const t = useTranslations("auth");
   const locale = useLocale();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [ready, setReady] = useState(false);
   const [hasSession, setHasSession] = useState(initialHasSession);
   const [password, setPassword] = useState("");
@@ -24,10 +26,31 @@ export function ResetPasswordForm({ hasSession: initialHasSession }: { hasSessio
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
+    const tokenHash = searchParams.get("token_hash");
+    const code = searchParams.get("code");
+    if (tokenHash || code) {
+      const recover = new URL(authRecoverPath(locale), window.location.origin);
+      recover.searchParams.set("token_hash", tokenHash ?? "");
+      recover.searchParams.set("type", searchParams.get("type") || "recovery");
+      if (code) recover.searchParams.set("code", code);
+      if (!tokenHash) recover.searchParams.delete("token_hash");
+      window.location.replace(recover.toString());
+      return;
+    }
+
+    if (searchParams.get("invalid") === "1") {
+      setError(t("resetNeedSession"));
+      setHasSession(false);
+      setReady(true);
+      return;
+    }
+
     const supabase = createSupabaseBrowserClient();
     void consumeAuthLink(supabase)
       .then(async (result) => {
-        if (result.error) setError(result.error);
+        if (result.error) {
+          setError(isPkceStorageError(result.error) ? t("resetNeedSession") : result.error);
+        }
         const { data } = await supabase.auth.getSession();
         setHasSession(Boolean(data.session) || result.ok);
       })
@@ -35,7 +58,7 @@ export function ResetPasswordForm({ hasSession: initialHasSession }: { hasSessio
         setHasSession(false);
       })
       .finally(() => setReady(true));
-  }, []);
+  }, [locale, searchParams, t]);
 
   const onSave = () => {
     setError(null);
@@ -47,7 +70,7 @@ export function ResetPasswordForm({ hasSession: initialHasSession }: { hasSessio
       const supabase = createSupabaseBrowserClient();
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) {
-        setError(updateError.message);
+        setError(isPkceStorageError(updateError.message) ? t("resetNeedSession") : updateError.message);
         return;
       }
       clearPasswordResetIntent();

@@ -11,6 +11,12 @@ const OTP_TYPES = new Set<string>([
   "email",
 ]);
 
+export function isPkceStorageError(message: string | undefined): boolean {
+  if (!message) return false;
+  const msg = message.toLowerCase();
+  return msg.includes("code verifier") || msg.includes("pkce");
+}
+
 function stripAuthParams() {
   const url = new URL(window.location.href);
   for (const key of ["code", "token_hash", "type", "next", "error", "error_description", "error_code"]) {
@@ -38,6 +44,9 @@ export async function consumeAuthLink(
   const code = url.searchParams.get("code");
   if (code) {
     const { error } = await client.auth.exchangeCodeForSession(code);
+    if (error && isPkceStorageError(error.message)) {
+      return { ok: false, recovery, error: error.message };
+    }
     stripAuthParams();
     if (error && !/already|exchange/i.test(error.message)) {
       return { ok: false, recovery, error: error.message };
@@ -46,14 +55,14 @@ export async function consumeAuthLink(
   }
 
   const tokenHash = url.searchParams.get("token_hash");
-  if (tokenHash && OTP_TYPES.has(typeRaw)) {
+  if (tokenHash && (OTP_TYPES.has(typeRaw) || !typeRaw)) {
     const { error } = await client.auth.verifyOtp({
       token_hash: tokenHash,
-      type: typeRaw as EmailOtpType,
+      type: (OTP_TYPES.has(typeRaw) ? typeRaw : "recovery") as EmailOtpType,
     });
     stripAuthParams();
-    if (error) return { ok: false, recovery: typeRaw === "recovery", error: error.message };
-    return { ok: true, recovery: typeRaw === "recovery" || recovery };
+    if (error) return { ok: false, recovery: true, error: error.message };
+    return { ok: true, recovery: true };
   }
 
   const accessToken = hash.get("access_token");
