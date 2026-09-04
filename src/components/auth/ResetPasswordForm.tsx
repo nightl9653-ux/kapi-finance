@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { consumeAuthLink, isPkceStorageError } from "@/lib/auth-link";
+import { consumeAuthLink } from "@/lib/auth-link";
 import { authRecoverPath } from "@/lib/auth-return-path";
 import { clearPasswordResetIntent } from "@/lib/password-reset";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -49,7 +49,7 @@ export function ResetPasswordForm({ hasSession: initialHasSession }: { hasSessio
     void consumeAuthLink(supabase)
       .then(async (result) => {
         if (result.error) {
-          setError(isPkceStorageError(result.error) ? t("resetNeedSession") : result.error);
+          setError(t("resetNeedSession"));
         }
         const { data } = await supabase.auth.getSession();
         setHasSession(Boolean(data.session) || result.ok);
@@ -70,7 +70,8 @@ export function ResetPasswordForm({ hasSession: initialHasSession }: { hasSessio
       const supabase = createSupabaseBrowserClient();
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) {
-        setError(isPkceStorageError(updateError.message) ? t("resetNeedSession") : updateError.message);
+        const msg = updateError.message.toLowerCase();
+        setError(msg.includes("password") || msg.includes("6") ? t("weakPassword") : t("resetNeedSession"));
         return;
       }
       clearPasswordResetIntent();
