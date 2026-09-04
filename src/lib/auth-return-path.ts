@@ -52,3 +52,12 @@ export function isSafeInternalNextPath(next: string): boolean {
   if (pathOnly.includes("://") || pathOnly.includes("\\")) return false;
   return true;
 }
+
+export function authResetPath(locale: string): string {
+  return `/${locale}/auth/reset`;
+}
+
+export function isAuthResetPath(next: string, locale: string): boolean {
+  const pathOnly = next.split("?")[0] ?? next;
+  return pathOnly === authResetPath(locale);
+}

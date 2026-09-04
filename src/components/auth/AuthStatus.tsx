@@ -8,6 +8,9 @@ import { createContext, useContext, useEffect, useMemo, useState, useTransition,
 import { Button, buttonVariants } from "@/components/ui/button";
 import { isSupabaseConfigured } from "@/lib/env";
 import { useAppleMobileDevice, useHuaweiLikeDevice } from "@/lib/device";
+import { consumeAuthLink } from "@/lib/auth-link";
+import { authResetPath } from "@/lib/auth-return-path";
+import { peekPasswordResetIntent } from "@/lib/password-reset";
 import { formatDetectionOff, maskedEmail } from "@/lib/site";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
@@ -61,7 +64,24 @@ export function AuthProvider({ initialAuth, children }: { initialAuth?: InitialA
     const supabase = createSupabaseBrowserClient();
     let cancelled = false;
 
+    function goToResetIfNeeded() {
+      if (typeof window === "undefined") return;
+      if (window.location.pathname.includes("/auth/reset")) return;
+      router.replace(authResetPath(locale));
+    }
+
     async function syncAuth() {
+      const href = window.location.href;
+      const hasAuthLink =
+        /[?&#](code|token_hash|type|access_token)=/.test(href) || href.includes("type=recovery");
+      if (hasAuthLink) {
+        const consumed = await consumeAuthLink(supabase);
+        if (cancelled) return;
+        if (consumed.recovery || (consumed.ok && peekPasswordResetIntent())) {
+          goToResetIfNeeded();
+        }
+      }
+
       const { data: sessionData } = await supabase.auth.getSession();
       if (cancelled) return;
 
@@ -78,15 +98,16 @@ export function AuthProvider({ initialAuth, children }: { initialAuth?: InitialA
 
     void syncAuth();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       setState(session?.user ? { status: "signedIn", email: session.user.email ?? null } : { status: "signedOut" });
+      if (event === "PASSWORD_RECOVERY") goToResetIfNeeded();
     });
 
     return () => {
       cancelled = true;
       sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [locale, router]);
 
   const signOut = () => {
     startTransition(async () => {

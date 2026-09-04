@@ -1,19 +1,13 @@
-import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
 import { AuthForm } from "@/components/auth/AuthForm";
 
-export default async function AuthPage() {
-  const t = await getTranslations("auth");
-
+export default function AuthPage() {
   return (
     <div className="flex min-h-[70vh] items-center justify-center">
-      <div className="w-full max-w-md space-y-4">
-        <p className="text-center text-sm text-muted-foreground">
-          {t("title")}
-        </p>
+      <Suspense>
         <AuthForm />
-      </div>
+      </Suspense>
     </div>
   );
 }
-

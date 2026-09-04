@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { isSafeInternalNextPath } from "@/lib/auth-return-path";
+import { authResetPath, isAuthResetPath, isSafeInternalNextPath } from "@/lib/auth-return-path";
 import {
   PENDING_LEGAL_CONSENT_COOKIE,
   parsePendingLegalConsentCookie,
 } from "@/lib/legal-consent";
+import { hasPasswordResetIntentCookie, PASSWORD_RESET_COOKIE } from "@/lib/password-reset";
 import { recordTermsConsentOnProfile } from "@/lib/record-terms-consent-server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -27,21 +28,31 @@ export async function GET(
     next = `/${locale}`;
   }
 
+  const wantsReset =
+    hasPasswordResetIntentCookie(request.cookies.get(PASSWORD_RESET_COOKIE)?.value) ||
+    isAuthResetPath(next, locale) ||
+    url.searchParams.get("type") === "recovery";
+  const resetPath = authResetPath(locale);
+  if (wantsReset) next = resetPath;
+
   if (!code) {
-    redirect(`/${locale}/auth`);
+    redirect(wantsReset ? resetPath : `/${locale}/auth`);
   }
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
-    redirect(`/${locale}/auth`);
+    redirect(wantsReset ? resetPath : `/${locale}/auth`);
   }
 
   const response = NextResponse.redirect(new URL(next, url.origin));
+  if (wantsReset) {
+    response.cookies.set(PASSWORD_RESET_COOKIE, "", { path: "/", maxAge: 0 });
+  }
 
   const pending = parsePendingLegalConsentCookie(request.cookies.get(PENDING_LEGAL_CONSENT_COOKIE)?.value);
-  if (pending) {
+  if (pending && !wantsReset) {
     const { data: auth } = await supabase.auth.getUser();
     if (auth.user) {
       await recordTermsConsentOnProfile(supabase, auth.user.id, pending, {
@@ -53,4 +64,3 @@ export async function GET(
 
   return response;
 }
-
