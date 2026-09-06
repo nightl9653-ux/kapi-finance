@@ -102,9 +102,13 @@ export function mapDressupHouseDraft(data: Record<string, unknown>): RenovationP
       ? `宅宴评分 风水${score.fengshui ?? "—"} / 审美${score.aesthetic ?? "—"}${score.note ? ` · ${score.note}` : ""}`
       : undefined;
 
+  const when = new Date(now);
+  const stamp = `${when.getMonth() + 1}月${when.getDate()}日 ${String(when.getHours()).padStart(2, "0")}:${String(when.getMinutes()).padStart(2, "0")}`;
+  const baseName = artSetLabel ? `宅宴 · ${formLabel} · ${artSetLabel}` : `宅宴 · ${formLabel}`;
+
   return {
     id: newProjectId(),
-    name: artSetLabel ? `宅宴 · ${formLabel} · ${artSetLabel}` : `宅宴 · ${formLabel}`,
+    name: `${baseName} · ${stamp}`,
     projectType: "construction",
     currency: BASE_CURRENCY,
     currentPhase: interiorItems.length > 0 && yardItems.length === 0 ? "interiorFinish" : "landscaping",

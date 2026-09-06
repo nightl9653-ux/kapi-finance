@@ -51,17 +51,7 @@ export function RenovationApp({ userId }: { userId: string }) {
         let list = await loadProjects(userId);
         if (importing && envelope) {
           const mapped = mapDressupHouseDraft(envelope.data);
-          const existing = list.find((p) => p.name === mapped.name);
-          const toSave = existing
-            ? {
-                ...existing,
-                materials: mapped.materials,
-                address: mapped.address ?? existing.address,
-                currentPhase: mapped.currentPhase,
-                updatedAt: new Date().toISOString(),
-              }
-            : mapped;
-          list = await upsertProject(userId, toSave);
+          list = await upsertProject(userId, mapped);
           clearDressupImport();
           if (cancelled) return;
           setProjects(list);
