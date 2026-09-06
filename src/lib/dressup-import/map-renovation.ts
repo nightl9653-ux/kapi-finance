@@ -70,8 +70,17 @@ export function mapDressupHouseDraft(data: Record<string, unknown>): RenovationP
     typeof data.interiorLabel === "string" && data.interiorLabel.trim() ? data.interiorLabel.trim() : "室内";
   const artSetLabel =
     typeof data.artSetLabel === "string" && data.artSetLabel.trim() ? data.artSetLabel.trim() : "";
-  const yardItems = rowsFrom(data, "yardItems", "placements");
-  const interiorItems = rowsFrom(data, "interiorItems", "interiorPlacements");
+  const layout = data.layout === "interior" || data.layout === "yard" ? data.layout : undefined;
+  const layoutLabel =
+    typeof data.layoutLabel === "string" && data.layoutLabel.trim()
+      ? data.layoutLabel.trim()
+      : layout === "interior"
+        ? "室内"
+        : layout === "yard"
+          ? "庭院"
+          : "";
+  const yardItems = layout === "interior" ? [] : rowsFrom(data, "yardItems", "placements");
+  const interiorItems = layout === "yard" ? [] : rowsFrom(data, "interiorItems", "interiorPlacements");
   const score = data.score as { fengshui?: number; aesthetic?: number; note?: string } | undefined;
   const now = new Date().toISOString();
 
@@ -89,11 +98,11 @@ export function mapDressupHouseDraft(data: Record<string, unknown>): RenovationP
       quantity: 1,
       price: 0,
       category: "misc",
-      phase: "landscaping",
-      room: "courtyard",
       supplyType: "selfPurchase",
       isPurchased: false,
       note: "宅宴草稿暂无物件",
+      phase: layout === "interior" ? "interiorFinish" : "landscaping",
+      room: layout === "interior" ? "interior" : "courtyard",
     });
   }
 
@@ -104,7 +113,9 @@ export function mapDressupHouseDraft(data: Record<string, unknown>): RenovationP
 
   const when = new Date(now);
   const stamp = `${when.getMonth() + 1}月${when.getDate()}日 ${String(when.getHours()).padStart(2, "0")}:${String(when.getMinutes()).padStart(2, "0")}`;
-  const baseName = artSetLabel ? `宅宴 · ${formLabel} · ${artSetLabel}` : `宅宴 · ${formLabel}`;
+  const baseName = ["宅宴", formLabel, layoutLabel || undefined, artSetLabel || undefined]
+    .filter(Boolean)
+    .join(" · ");
 
   return {
     id: newProjectId(),
