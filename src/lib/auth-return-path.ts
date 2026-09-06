@@ -65,8 +65,3 @@ export function isAuthResetPath(next: string, locale: string): boolean {
   const pathOnly = next.split("?")[0] ?? next;
   return pathOnly === authResetPath(locale);
 }
-
-export function isAuthResetPath(next: string, locale: string): boolean {
-  const pathOnly = next.split("?")[0] ?? next;
-  return pathOnly === authResetPath(locale);
-}
