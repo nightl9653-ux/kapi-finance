@@ -68,8 +68,6 @@ export function mapDressupHouseDraft(data: Record<string, unknown>): RenovationP
   const formLabel = typeof data.formLabel === "string" && data.formLabel.trim() ? data.formLabel.trim() : "四合院";
   const interiorLabel =
     typeof data.interiorLabel === "string" && data.interiorLabel.trim() ? data.interiorLabel.trim() : "室内";
-  const artSetLabel =
-    typeof data.artSetLabel === "string" && data.artSetLabel.trim() ? data.artSetLabel.trim() : "";
   const layout = data.layout === "interior" || data.layout === "yard" ? data.layout : undefined;
   const layoutLabel =
     typeof data.layoutLabel === "string" && data.layoutLabel.trim()
@@ -113,7 +111,7 @@ export function mapDressupHouseDraft(data: Record<string, unknown>): RenovationP
 
   const when = new Date(now);
   const stamp = `${when.getMonth() + 1}月${when.getDate()}日 ${String(when.getHours()).padStart(2, "0")}:${String(when.getMinutes()).padStart(2, "0")}`;
-  const baseName = ["宅宴", formLabel, layoutLabel || undefined, artSetLabel || undefined]
+  const baseName = ["宅宴", formLabel, layoutLabel || undefined]
     .filter(Boolean)
     .join(" · ");
 
