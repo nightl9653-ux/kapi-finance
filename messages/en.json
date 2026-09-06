@@ -658,11 +658,13 @@
     },
     "room": {
       "whole": "Whole home",
+      "interior": "Interior",
       "living": "Living room",
       "kitchen": "Kitchen",
       "bathroom": "Bathroom",
       "bedroom": "Bedroom",
       "balcony": "Balcony",
+      "courtyard": "Courtyard",
       "exterior": "Exterior"
     },
     "supplyType": {

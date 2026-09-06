@@ -18,7 +18,17 @@ import type {
 } from "@/lib/house-renovation/types";
 import { cn } from "@/lib/utils";
 
-const ROOMS: RenovationRoom[] = ["whole", "living", "kitchen", "bathroom", "bedroom", "balcony", "exterior"];
+const ROOMS: RenovationRoom[] = [
+  "whole",
+  "interior",
+  "living",
+  "kitchen",
+  "bathroom",
+  "bedroom",
+  "balcony",
+  "courtyard",
+  "exterior",
+];
 const SUPPLY_TYPES: SupplyType[] = ["selfPurchase", "turnkey", "laborOnly"];
 
 export function MaterialFormDialog({

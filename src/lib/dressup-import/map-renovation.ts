@@ -21,6 +21,25 @@ function categoryForKind(kind: string | undefined): MaterialCategory {
   }
 }
 
+function rowsFrom(data: Record<string, unknown>, itemsKey: string, placementsKey: string): ItemRow[] {
+  const items = data[itemsKey];
+  if (Array.isArray(items) && items.length > 0) return items as ItemRow[];
+  const placements = data[placementsKey];
+  if (!Array.isArray(placements)) return [];
+  const counts = new Map<string, ItemRow>();
+  for (const raw of placements) {
+    if (!raw || typeof raw !== "object") continue;
+    const p = raw as { name?: unknown; itemId?: unknown; kind?: unknown };
+    const name = String(p.name ?? p.itemId ?? "").trim();
+    if (!name) continue;
+    const kind = typeof p.kind === "string" ? p.kind : undefined;
+    const cur = counts.get(name);
+    if (cur) cur.qty = (cur.qty ?? 1) + 1;
+    else counts.set(name, { name, kind, qty: 1 });
+  }
+  return [...counts.values()];
+}
+
 function materialFromRow(
   it: ItemRow,
   fallbackName: string,
@@ -49,15 +68,15 @@ export function mapDressupHouseDraft(data: Record<string, unknown>): RenovationP
   const formLabel = typeof data.formLabel === "string" && data.formLabel.trim() ? data.formLabel.trim() : "四合院";
   const interiorLabel =
     typeof data.interiorLabel === "string" && data.interiorLabel.trim() ? data.interiorLabel.trim() : "室内";
-  const yardItems = Array.isArray(data.yardItems) ? (data.yardItems as ItemRow[]) : [];
-  const interiorItems = Array.isArray(data.interiorItems) ? (data.interiorItems as ItemRow[]) : [];
+  const yardItems = rowsFrom(data, "yardItems", "placements");
+  const interiorItems = rowsFrom(data, "interiorItems", "interiorPlacements");
   const score = data.score as { fengshui?: number; aesthetic?: number; note?: string } | undefined;
   const now = new Date().toISOString();
 
   const materials: RenovationMaterial[] = [
-    ...yardItems.map((it) => materialFromRow(it, "庭院物件", "landscaping", "exterior", "来自宅宴庭院摆放")),
+    ...yardItems.map((it) => materialFromRow(it, "庭院物件", "landscaping", "courtyard", "来自宅宴庭院摆放")),
     ...interiorItems.map((it) =>
-      materialFromRow(it, "室内物件", "interiorFinish", "living", `来自宅宴室内摆放 · ${interiorLabel}`),
+      materialFromRow(it, "室内物件", "interiorFinish", "interior", `来自宅宴室内摆放 · ${interiorLabel}`),
     ),
   ];
 
@@ -69,7 +88,7 @@ export function mapDressupHouseDraft(data: Record<string, unknown>): RenovationP
       price: 0,
       category: "misc",
       phase: "landscaping",
-      room: "exterior",
+      room: "courtyard",
       supplyType: "selfPurchase",
       isPurchased: false,
       note: "宅宴草稿暂无物件",

@@ -46,22 +46,32 @@ export function stashDressupImport(envelope: DressupImportEnvelope) {
   sessionStorage.setItem(DRESSUP_IMPORT_STORAGE_KEY, JSON.stringify(envelope));
 }
 
-/** 取出并清除；可按 kind 过滤 */
-export function takeDressupImport(expectedKind?: DressupImportKind): DressupImportEnvelope | null {
+/** 读取但不清除；可按 kind 过滤 */
+export function peekDressupImport(expectedKind?: DressupImportKind): DressupImportEnvelope | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = sessionStorage.getItem(DRESSUP_IMPORT_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as DressupImportEnvelope;
     if (expectedKind && parsed.kind !== expectedKind) return null;
-    sessionStorage.removeItem(DRESSUP_IMPORT_STORAGE_KEY);
     if (parsed.kind !== "house" && parsed.kind !== "banquet") return null;
     if (!parsed.data || typeof parsed.data !== "object") return null;
     return parsed;
   } catch {
-    sessionStorage.removeItem(DRESSUP_IMPORT_STORAGE_KEY);
     return null;
   }
+}
+
+export function clearDressupImport() {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(DRESSUP_IMPORT_STORAGE_KEY);
+}
+
+/** 取出并清除；可按 kind 过滤 */
+export function takeDressupImport(expectedKind?: DressupImportKind): DressupImportEnvelope | null {
+  const parsed = peekDressupImport(expectedKind);
+  if (parsed) clearDressupImport();
+  return parsed;
 }
 
 /** 从当前 URL hash 解析（hash 不含 #） */

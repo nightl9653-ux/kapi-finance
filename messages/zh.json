@@ -658,11 +658,13 @@
     },
     "room": {
       "whole": "全屋",
+      "interior": "室内",
       "living": "客厅",
       "kitchen": "厨房",
       "bathroom": "卫生间",
       "bedroom": "卧室",
       "balcony": "阳台",
+      "courtyard": "庭院",
       "exterior": "外立面"
     },
     "supplyType": {

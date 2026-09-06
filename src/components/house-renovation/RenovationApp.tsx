@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 
 import { ProjectDetailClient } from "@/components/house-renovation/ProjectDetailClient";
 import { ProjectForm } from "@/components/house-renovation/ProjectForm";
 import { Button } from "@/components/ui/button";
-import { takeDressupImport } from "@/lib/dressup-import/codec";
+import { clearDressupImport, peekDressupImport } from "@/lib/dressup-import/codec";
 import { mapDressupHouseDraft } from "@/lib/dressup-import/map-renovation";
 import { getProjectBudgetSummary } from "@/lib/house-renovation/budget";
 import { projectTypeLabel } from "@/lib/house-renovation/labels";
@@ -27,7 +27,6 @@ export function RenovationApp({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [importNote, setImportNote] = useState<string | null>(null);
-  const importTried = useRef(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -42,34 +41,50 @@ export function RenovationApp({ userId }: { userId: string }) {
   }, [userId, t]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    if (importTried.current) return;
-    importTried.current = true;
-
-    const envelope = takeDressupImport("house");
-    if (!envelope) return;
-    if (Date.now() - envelope.at > IMPORT_MAX_AGE_MS) return;
-
-    const project = mapDressupHouseDraft(envelope.data);
+    let cancelled = false;
     void (async () => {
+      setLoading(true);
+      setError(null);
+      const envelope = peekDressupImport("house");
+      const importing = Boolean(envelope && Date.now() - envelope.at <= IMPORT_MAX_AGE_MS);
       try {
-        const updated = await upsertProject(userId, project);
-        setProjects(updated);
-        const opened = updated.find((p) => p.name === project.name) ?? updated[0];
-        setActiveId(opened?.id ?? null);
-        setImportNote(t("dressupImportOk"));
-        const url = new URL(window.location.href);
-        if (url.searchParams.has("from")) {
-          url.searchParams.delete("from");
-          window.history.replaceState(null, "", url.pathname + url.search);
+        let list = await loadProjects(userId);
+        if (importing && envelope) {
+          const mapped = mapDressupHouseDraft(envelope.data);
+          const existing = list.find((p) => p.name === mapped.name);
+          const toSave = existing
+            ? {
+                ...existing,
+                materials: mapped.materials,
+                address: mapped.address ?? existing.address,
+                currentPhase: mapped.currentPhase,
+                updatedAt: new Date().toISOString(),
+              }
+            : mapped;
+          list = await upsertProject(userId, toSave);
+          clearDressupImport();
+          if (cancelled) return;
+          setProjects(list);
+          const opened = list.find((p) => p.name === mapped.name) ?? list[0];
+          setActiveId(opened?.id ?? null);
+          setImportNote(t("dressupImportOk"));
+          const url = new URL(window.location.href);
+          if (url.searchParams.has("from")) {
+            url.searchParams.delete("from");
+            window.history.replaceState(null, "", url.pathname + url.search);
+          }
+        } else if (!cancelled) {
+          setProjects(list);
         }
       } catch {
-        setError(t("dressupImportError"));
+        if (!cancelled) setError(t(importing ? "dressupImportError" : "loadError"));
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [userId, t]);
 
   const active = projects.find((p) => p.id === activeId);

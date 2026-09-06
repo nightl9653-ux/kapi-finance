@@ -25,7 +25,16 @@ export type ProjectPhase = RenovationPhase | ConstructionPhase;
 
 export type MaterialCategory = "structure" | "finishes" | "appliances" | "furnishing" | "labor" | "misc";
 
-export type RenovationRoom = "whole" | "living" | "kitchen" | "bathroom" | "bedroom" | "balcony" | "exterior";
+export type RenovationRoom =
+  | "whole"
+  | "interior"
+  | "living"
+  | "kitchen"
+  | "bathroom"
+  | "bedroom"
+  | "balcony"
+  | "courtyard"
+  | "exterior";
 
 export type SupplyType = "selfPurchase" | "turnkey" | "laborOnly";
 
