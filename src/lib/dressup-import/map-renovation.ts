@@ -68,6 +68,8 @@ export function mapDressupHouseDraft(data: Record<string, unknown>): RenovationP
   const formLabel = typeof data.formLabel === "string" && data.formLabel.trim() ? data.formLabel.trim() : "四合院";
   const interiorLabel =
     typeof data.interiorLabel === "string" && data.interiorLabel.trim() ? data.interiorLabel.trim() : "室内";
+  const artSetLabel =
+    typeof data.artSetLabel === "string" && data.artSetLabel.trim() ? data.artSetLabel.trim() : "";
   const yardItems = rowsFrom(data, "yardItems", "placements");
   const interiorItems = rowsFrom(data, "interiorItems", "interiorPlacements");
   const score = data.score as { fengshui?: number; aesthetic?: number; note?: string } | undefined;
@@ -102,7 +104,7 @@ export function mapDressupHouseDraft(data: Record<string, unknown>): RenovationP
 
   return {
     id: newProjectId(),
-    name: `宅宴 · ${formLabel}`,
+    name: artSetLabel ? `宅宴 · ${formLabel} · ${artSetLabel}` : `宅宴 · ${formLabel}`,
     projectType: "construction",
     currency: BASE_CURRENCY,
     currentPhase: interiorItems.length > 0 && yardItems.length === 0 ? "interiorFinish" : "landscaping",
