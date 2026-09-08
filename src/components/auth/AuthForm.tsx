@@ -9,14 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authResetPath, isSafeInternalNextPath } from "@/lib/auth-return-path";
+import { authRecoverPath, isSafeInternalNextPath } from "@/lib/auth-return-path";
 import {
   clearPendingLegalConsent,
   readPendingLegalConsent,
   stashPendingLegalConsent,
 } from "@/lib/legal-consent";
 import { markPasswordResetIntent } from "@/lib/password-reset";
-import { sendPasswordResetEmail } from "@/lib/send-password-reset-email";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type AuthMode = "login" | "signup" | "forgot";
@@ -178,8 +177,9 @@ export function AuthForm() {
     }
     markPasswordResetIntent();
     startTransition(async () => {
-      const redirectTo = `${window.location.origin}${authResetPath(locale)}`;
-      const { error } = await sendPasswordResetEmail(email.trim(), redirectTo);
+      const supabase = createSupabaseBrowserClient();
+      const redirectTo = `${window.location.origin}${authRecoverPath(locale)}`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
       if (error) {
         setError(mapAuthError(error.message));
         return;
