@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { foldPassword } from "@/lib/auth-fold";
 import { consumeAuthLink } from "@/lib/auth-link";
 import { authRecoverPath } from "@/lib/auth-return-path";
 import { clearPasswordResetIntent } from "@/lib/password-reset";
@@ -68,7 +69,7 @@ export function ResetPasswordForm({ hasSession: initialHasSession }: { hasSessio
     }
     startTransition(async () => {
       const supabase = createSupabaseBrowserClient();
-      const { error: updateError } = await supabase.auth.updateUser({ password });
+      const { error: updateError } = await supabase.auth.updateUser({ password: foldPassword(password) });
       if (updateError) {
         const msg = updateError.message.toLowerCase();
         setError(msg.includes("password") || msg.includes("6") ? t("weakPassword") : t("resetNeedSession"));

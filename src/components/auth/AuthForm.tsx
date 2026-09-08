@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { foldPassword } from "@/lib/auth-fold";
 import { authRecoverPath, isSafeInternalNextPath } from "@/lib/auth-return-path";
 import {
   clearPendingLegalConsent,
@@ -120,7 +121,10 @@ export function AuthForm() {
     }
     startTransition(async () => {
       const supabase = createSupabaseBrowserClient();
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: foldPassword(password),
+      });
       if (error) {
         setError(mapAuthError(error.message));
         return;
@@ -149,7 +153,10 @@ export function AuthForm() {
     stashPendingLegalConsent({ sanctionsAttested: true });
     startTransition(async () => {
       const supabase = createSupabaseBrowserClient();
-      const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: foldPassword(password),
+      });
       if (error) {
         setError(mapAuthError(error.message));
         return;
