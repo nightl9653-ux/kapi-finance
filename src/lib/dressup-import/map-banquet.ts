@@ -12,6 +12,7 @@ type SpreadItem = { name?: string; kind?: string; qty?: number };
 const SLOT_TO_DECOR: Record<string, DecorZone> = {
   桌花: "table",
   桌布: "table",
+  餐具: "table",
   灯光: "avLighting",
   背景: "photo",
   顶饰: "overhead",
@@ -19,11 +20,51 @@ const SLOT_TO_DECOR: Record<string, DecorZone> = {
   迎宾: "entrance",
   主宾装: "wearable",
   宾客装: "wearable",
+  Centerpiece: "table",
+  Cloth: "table",
+  Tableware: "table",
+  Lighting: "avLighting",
+  Backdrop: "photo",
+  Overhead: "overhead",
+  Floor: "floor",
+  Entrance: "entrance",
+  "Host attire": "wearable",
+  "Guest attire": "wearable",
+};
+
+const SLOT_CATEGORY: Record<string, MaterialCategory> = {
+  甜品台: "food",
+  Dessert: "food",
+  餐具: "decor",
+  Tableware: "decor",
+  桌花: "decor",
+  桌布: "decor",
+  Centerpiece: "decor",
+  Cloth: "decor",
+  灯光: "decor",
+  背景: "decor",
+  顶饰: "decor",
+  地面: "decor",
+  迎宾: "decor",
+  主宾装: "decor",
+  宾客装: "decor",
+  Lighting: "decor",
+  Backdrop: "decor",
+  Overhead: "decor",
+  Floor: "decor",
+  Entrance: "decor",
+  "Host attire": "decor",
+  "Guest attire": "decor",
+  伴手礼: "misc",
+  Favor: "misc",
+  座位卡: "misc",
+  "Place card": "misc",
 };
 
 function categoryForSlot(slot: string): MaterialCategory {
-  if (slot.includes("甜品") || slot.includes("餐")) return "food";
-  if (slot.includes("装") || slot.includes("灯") || slot.includes("布") || slot.includes("花") || slot.includes("景") || slot.includes("顶") || slot.includes("地") || slot.includes("迎")) {
+  if (SLOT_CATEGORY[slot]) return SLOT_CATEGORY[slot];
+  if (slot.includes("甜品") || /^dessert$/i.test(slot)) return "food";
+  if (slot.includes("装") || slot.includes("灯") || slot.includes("布") || slot.includes("花") || slot.includes("景") || slot.includes("顶") || slot.includes("地") || slot.includes("迎") || slot.includes("餐具")) {
     return "decor";
   }
   return "misc";
