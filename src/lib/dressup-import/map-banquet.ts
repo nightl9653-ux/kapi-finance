@@ -7,6 +7,7 @@ import type { DecorZone, Material, MaterialCategory, Party } from "@/lib/banquet
 import { BASE_CURRENCY } from "@/lib/fx";
 
 type SlotItem = { slot?: string; name?: string };
+type SpreadItem = { name?: string; kind?: string; qty?: number };
 
 const SLOT_TO_DECOR: Record<string, DecorZone> = {
   桌花: "table",
@@ -36,14 +37,8 @@ function todayISODate() {
   return `${y}-${m}-${day}`;
 }
 
-/** 宅宴宴会清单草稿 → 咔账宴会 */
-export function mapDressupBanquetDraft(data: Record<string, unknown>): Party {
-  const items = Array.isArray(data.items) ? (data.items as SlotItem[]) : [];
-  const score = data.score as { fengshui?: number; aesthetic?: number; note?: string } | undefined;
-  const plant = PLANTS[0]!;
-  const now = new Date().toISOString();
-
-  const materials: Material[] = items.map((it) => {
+function materialsFromHall(items: SlotItem[], plant: (typeof PLANTS)[number]): Material[] {
+  return items.map((it) => {
     const slot = String(it.slot ?? "").trim() || "细项";
     const name = String(it.name ?? "").trim() || slot;
     const category = categoryForSlot(slot);
@@ -68,6 +63,44 @@ export function mapDressupBanquetDraft(data: Record<string, unknown>): Party {
     }
     return material;
   });
+}
+
+function materialsFromSpread(items: SpreadItem[], plant: (typeof PLANTS)[number]): Material[] {
+  return items
+    .map((it) => {
+      const name = String(it.name ?? "").trim();
+      if (!name) return null;
+      const drink = it.kind === "drink";
+      const qty = typeof it.qty === "number" && it.qty > 0 ? Math.round(it.qty) : 1;
+      const material: Material = {
+        id: newMaterialId(),
+        name,
+        quantity: qty,
+        price: 0,
+        category: drink ? "drink" : "food",
+        plantColor: plant,
+        isPurchased: false,
+        characterNote: "来自宅宴席面",
+        menuCourse: drink ? "drink" : "main",
+      };
+      if (drink) material.drinkType = "other";
+      return material;
+    })
+    .filter((m): m is Material => m != null);
+}
+
+/** 宅宴宴会清单草稿 → 咔账宴会 */
+export function mapDressupBanquetDraft(data: Record<string, unknown>): Party {
+  const items = Array.isArray(data.items) ? (data.items as SlotItem[]) : [];
+  const spreadItems = Array.isArray(data.spreadItems) ? (data.spreadItems as SpreadItem[]) : [];
+  const score = data.score as { fengshui?: number; aesthetic?: number; note?: string } | undefined;
+  const plant = PLANTS[0]!;
+  const now = new Date().toISOString();
+
+  const materials: Material[] = [
+    ...materialsFromHall(items, plant),
+    ...materialsFromSpread(spreadItems, plant),
+  ];
 
   if (materials.length === 0) {
     materials.push({
@@ -88,9 +121,14 @@ export function mapDressupBanquetDraft(data: Record<string, unknown>): Party {
       ? `宅宴评分 风水${score.fengshui ?? "—"} / 审美${score.aesthetic ?? "—"}${score.note ? ` · ${score.note}` : ""}`
       : undefined;
 
+  const feastTitle =
+    (typeof data.title === "string" && data.title.trim()) ||
+    (typeof data.occasionLabel === "string" && data.occasionLabel.trim()) ||
+    "";
+
   const base: Party = {
     id: newPartyId(),
-    name: `宅宴宴会 · ${todayISODate()}`,
+    name: feastTitle ? `宅宴 · ${feastTitle}` : `宅宴宴会 · ${todayISODate()}`,
     date: todayISODate(),
     characterId: SOUL_CHARACTERS[0]?.id ?? "luna",
     currency: BASE_CURRENCY,
