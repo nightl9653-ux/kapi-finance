@@ -42,23 +42,6 @@ export function resolveArtReturnUrl(returnOrigin: string | null | undefined, pos
   return dest.href;
 }
 
-async function artSitePostExists(artOrigin: string, postId: string): Promise<"ok" | "missing" | "error"> {
-  try {
-    const res = await fetch(new URL(`/api/posts/${postId}`, artOrigin).href, {
-      method: "GET",
-      headers: { accept: "application/json" },
-      cache: "no-store",
-    });
-    if (res.status === 404) return "missing";
-    if (!res.ok) return "error";
-    const json = (await res.json()) as { ok?: boolean; post?: { id?: string } };
-    if (json?.ok && json.post?.id) return "ok";
-    return "missing";
-  } catch {
-    return "error";
-  }
-}
-
 export async function createArtTipCheckout(params: {
   postId: string;
   units: number;
@@ -81,13 +64,6 @@ export async function createArtTipCheckout(params: {
   }
 
   const returnOrigin = parseAllowedArtOrigin(params.returnOrigin) ?? getArtPublicUrl();
-  const lookupOrigin = getArtPublicUrl();
-  let exists = await artSitePostExists(lookupOrigin, postId);
-  if (exists !== "ok" && returnOrigin !== lookupOrigin) {
-    exists = await artSitePostExists(returnOrigin, postId);
-  }
-  if (exists === "error") return { ok: false, error: "post_lookup_failed" };
-  if (exists === "missing") return { ok: false, error: "post_not_found" };
 
   const artUserId = parseArtPostId(params.artUserId) ?? "";
   const successUrl = artCheckoutSuccessUrl(params.kapiOrigin, postId, returnOrigin);
