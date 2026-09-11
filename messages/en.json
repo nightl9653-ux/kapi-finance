@@ -1528,15 +1528,16 @@
   },
   "legalTerms": {
     "title": "Terms of Service",
-    "updated": "Last updated: June 1, 2026",
-    "intro": "These terms govern your use of Kash · Family Finance. By creating an account or using the app, you agree to them—including strict restrictions on sanctioned, embargoed, and other prohibited regions. Questions: support@919145.xyz.",
+    "updated": "Last updated: September 11, 2026",
+    "intro": "These terms govern your use of Kash · Family Finance. Kash is for personal and household bookkeeping only, not company or commercial accounting. By creating an account or using the app, you agree to them—including strict restrictions on sanctioned, embargoed, and other prohibited regions. Questions: support@919145.xyz.",
     "sections": [
       {
         "title": "The service",
         "paragraphs": [
           "Kash provides personal and household finance tools: transaction tracking, goals, reports, AI-assisted entry, budgeting chat, and optional Plus membership features.",
+          "Kash is intended only for personal and household day-to-day spending, budgets, and goals. It is not for company, sole-proprietor, or other commercial bookkeeping, tax filing, audit, payroll, or statutory accounts. If you use Kash for those purposes, you do so at your own risk.",
           "Features may change; we strive to keep core bookkeeping available on the Free plan as described on the pricing page.",
-          "Kash is not a bank, broker, tax advisor, or licensed financial planner. Outputs are informational only."
+          "Kash is not a bank, broker, accountant, tax advisor, or licensed financial planner. Outputs are informational only and are not accounting, audit, or legal advice."
         ]
       },
       {
@@ -1578,7 +1579,8 @@
         "title": "Disclaimer & liability",
         "paragraphs": [
           "The service is provided “as is” without warranties of uninterrupted or error-free operation, fitness for a particular purpose, or lawful use in your location.",
-          "To the maximum extent permitted by law, we are not liable for indirect, incidental, special, consequential, or punitive damages, or for lost profits, data, or goodwill, arising from use of Kash—including where access was unauthorized or contrary to these terms.",
+          "You are responsible for checking your own records and for your own tax, filing, and other compliance obligations.",
+          "To the maximum extent permitted by law, we are not liable for indirect, incidental, special, consequential, or punitive damages, or for lost profits, data, or goodwill, arising from use of Kash—including where access was unauthorized or contrary to these terms, and including losses from using Kash for company or commercial accounting. Mandatory legal protections, if any, still apply.",
           "You agree to indemnify us against claims caused by your misuse of the service, breach of these terms, or violation of sanctions, export-control, or other applicable laws."
         ]
       },

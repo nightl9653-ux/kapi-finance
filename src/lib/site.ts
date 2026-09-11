@@ -44,4 +44,4 @@ export function siteDescription(locale: "zh" | "en"): string {
 }
 
 /** Bump when legal pages change materially; shown at sign-up consent. */
-export const LEGAL_POLICY_VERSION = "2026-06-01";
+export const LEGAL_POLICY_VERSION = "2026-09-11";
