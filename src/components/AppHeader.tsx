@@ -38,6 +38,7 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
     { href: `/${locale}`, label: t("dashboard") },
     { href: `/${locale}/goals`, label: t("goals") },
     { href: `/${locale}/transactions`, label: t("transactions") },
+    { href: `/${locale}/meetings`, label: t("meetings") },
     { href: `/${locale}/quick-record`, label: t("quickRecord") },
     { href: `/${locale}/banquet-party`, label: t("banquetParty") },
     { href: `/${locale}/house-renovation`, label: t("houseRenovation") },
@@ -46,7 +47,6 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
   ];
 
   const navSecondary: NavItem[] = [
-    { href: `/${locale}/meetings`, label: t("meetings") },
     { href: `/${locale}/ai-assistant`, label: t("aiAssistant") },
     { href: `/${locale}/reports`, label: t("reports") },
     { href: `/${locale}/pricing`, label: t("pricing") },
