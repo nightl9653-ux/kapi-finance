@@ -1,0 +1,44 @@
+# 每天探活两个免费 Supabase，避免闲置暂停。
+# A = kapi-art（艺术站），B = home money（咔账记账）。
+# 密钥填本仓库 Settings → Secrets and variables → Actions。
+name: Supabase keepalive
+
+on:
+  schedule:
+    # 北京时间每天 0:00
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping both projects
+        env:
+          URL_A: ${{ secrets.SUPABASE_KEEPALIVE_URL_A }}
+          KEY_A: ${{ secrets.SUPABASE_KEEPALIVE_KEY_A }}
+          URL_B: ${{ secrets.SUPABASE_KEEPALIVE_URL_B }}
+          KEY_B: ${{ secrets.SUPABASE_KEEPALIVE_KEY_B }}
+        run: |
+          set -euo pipefail
+          ping_one() {
+            local name="$1" url="${2:-}" key="${3:-}"
+            if [ -z "$url" ] || [ -z "$key" ]; then
+              echo "skip $name: missing secrets"
+              return 0
+            fi
+            url="${url%/}"
+            echo "ping $name $url"
+            code="$(curl -sS -o /tmp/keepalive-body -w '%{http_code}' \
+              "$url/rest/v1/" \
+              -H "apikey: $key" \
+              -H "Authorization: Bearer $key")"
+            echo "status $code"
+            if [ "$code" -lt 200 ] || [ "$code" -ge 500 ]; then
+              echo "keepalive failed for $name"
+              cat /tmp/keepalive-body || true
+              return 1
+            fi
+          }
+          ping_one A "$URL_A" "$KEY_A"
+          ping_one B "$URL_B" "$KEY_B"
