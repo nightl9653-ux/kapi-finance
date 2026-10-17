@@ -1,6 +1,8 @@
 # 每天探活两个免费 Supabase，避免闲置暂停。
 # A = kapi-art（艺术站），B = home money（咔账记账）。
 # 密钥填本仓库 Settings → Secrets and variables → Actions。
+# 不要请求 /rest/v1/ 根路径：匿名密钥会被拒，请求进不了数据库。
+# 只把 2xx 当成成功。
 name: Supabase keepalive
 
 on:
@@ -20,25 +22,35 @@ jobs:
           URL_B: ${{ secrets.SUPABASE_KEEPALIVE_URL_B }}
           KEY_B: ${{ secrets.SUPABASE_KEEPALIVE_KEY_B }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          failed=0
           ping_one() {
-            local name="$1" url="${2:-}" key="${3:-}"
+            local name="$1" url="${2:-}" key="${3:-}" path="$4"
             if [ -z "$url" ] || [ -z "$key" ]; then
-              echo "skip $name: missing secrets"
+              echo "fail $name: missing secrets"
+              failed=1
               return 0
             fi
             url="${url%/}"
-            echo "ping $name $url"
-            code="$(curl -sS -o /tmp/keepalive-body -w '%{http_code}' \
-              "$url/rest/v1/" \
+            echo "ping $name"
+            code="$(curl -sS -o /tmp/keepalive-body -w '%{http_code}' --max-time 30 \
+              "$url$path" \
               -H "apikey: $key" \
-              -H "Authorization: Bearer $key")"
+              -H "Authorization: Bearer $key" \
+              -H "Accept: application/json" || true)"
+            if ! [[ "$code" =~ ^[0-9]{3}$ ]]; then
+              echo "fail $name: no http status"
+              failed=1
+              return 0
+            fi
             echo "status $code"
-            if [ "$code" -lt 200 ] || [ "$code" -ge 500 ]; then
+            if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
               echo "keepalive failed for $name"
-              cat /tmp/keepalive-body || true
-              return 1
+              head -c 240 /tmp/keepalive-body || true
+              echo
+              failed=1
             fi
           }
-          ping_one A "$URL_A" "$KEY_A"
-          ping_one B "$URL_B" "$KEY_B"
+          ping_one A "$URL_A" "$KEY_A" "/rest/v1/art_posts?select=id&limit=1"
+          ping_one B "$URL_B" "$KEY_B" "/rest/v1/transactions?select=id&limit=1"
+          exit "$failed"
