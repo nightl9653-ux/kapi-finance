@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { MeetingForm } from "@/components/meetings/MeetingForm";
 import { ContactForm } from "@/components/meetings/ContactForm";
 import { ContactAdviceSection } from "@/components/meetings/ContactAdviceSection";
+import { ContactMoneySection } from "@/components/meetings/ContactMoneySection";
 import { Button } from "@/components/ui/button";
 import { contactStats, formatScore, meetingsForContact } from "@/lib/meetings/stats";
 import type { Contact, Meeting, MeetingsStore } from "@/lib/meetings/types";
@@ -35,6 +36,7 @@ export function ContactDetail({
   onDeleteContact,
   onUpsertMeeting,
   onDeleteMeeting,
+  onMoneyChange,
 }: {
   contact: Contact;
   store: MeetingsStore;
@@ -44,6 +46,7 @@ export function ContactDetail({
   onDeleteContact: (id: string) => void | Promise<void>;
   onUpsertMeeting: (m: Meeting) => void | Promise<void>;
   onDeleteMeeting: (id: string) => void | Promise<void>;
+  onMoneyChange?: () => void;
 }) {
   const t = useTranslations("meetingsPage");
   const [editing, setEditing] = useState(false);
@@ -145,6 +148,12 @@ export function ContactDetail({
       </div>
 
       <ContactAdviceSection contact={contact} store={store} onChange={onUpsertContact} />
+
+      <ContactMoneySection
+        contactId={contact.id}
+        contactName={contact.name}
+        onSummariesChange={onMoneyChange}
+      />
 
       {(contact.phone || contact.email || contact.notes) && (
         <div className="rounded-2xl border bg-white/60 p-4 text-sm space-y-1">

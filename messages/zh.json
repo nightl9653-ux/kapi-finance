@@ -36,7 +36,7 @@
       "lead": "按硬装、软装与家电分项规划装修预算。"
     },
     "meetings": {
-      "lead": "朋友档案与见面感受：每次见面一条记录，分数是关系维度。"
+      "lead": "朋友档案、见面感受与资金往来：礼金与借贷写入总账。"
     }
   },
   "banquetParty": {
@@ -98,6 +98,8 @@
     "saveError": "保存失败，请稍后重试。",
     "currencyMigrationError": "数据库缺少 currency 列。请在 Supabase 执行迁移 20260713120000_project_currency.sql 后重试。",
     "retry": "重试",
+    "openDressup": "打开宅宴",
+    "dressupHint": "在宅宴装扮宴会场景，再导入到这里做预算与记账。",
     "dressupImportOk": "已从宅宴导入宴会清单。",
     "dressupImportError": "宅宴草稿导入失败，请稍后重试。",
     "tab": {
@@ -902,7 +904,7 @@
     "recurringMonthInYear": "{n}月"
   },
   "meetingsPage": {
-    "subtitle": "朋友档案与见面记录：每次见面一条，分数是关系维度。礼金仍走记账里的「人情往来」。",
+    "subtitle": "朋友档案、见面记录与资金往来：礼金与借贷写入总账，并挂在这位朋友下。",
     "loading": "加载中…",
     "loadError": "加载失败，请检查网络后重试。",
     "saveError": "保存失败，请稍后重试。",
@@ -918,6 +920,41 @@
     "newMeeting": "记一次见面",
     "editMeeting": "编辑见面",
     "deleteMeetingConfirm": "删除这条见面记录？",
+    "moneyTitle": "资金往来",
+    "moneyHint": "记一笔会写入总账（人情往来 / 礼金收入），并挂在这位朋友下。借贷余额按 USD 本位汇总。",
+    "moneyAdd": "记一笔钱",
+    "moneySave": "写入总账",
+    "moneySaving": "保存中…",
+    "moneyAmount": "金额",
+    "moneyCurrency": "币种",
+    "moneyNote": "备注",
+    "moneyNotePlaceholder": "如：婚礼随礼、还借款",
+    "moneyKindLabel": "类型",
+    "moneyEmpty": "还没有资金记录。",
+    "moneyLoadError": "资金记录加载失败。",
+    "moneySaveError": "资金记账失败，请稍后重试。",
+    "moneyFxError": "获取汇率失败，请稍后重试或改用 USD。",
+    "moneyInvalidAmount": "请输入有效金额。",
+    "moneyDeleteConfirm": "删除这笔资金记录？总账中对应流水也会删除。",
+    "moneySchemaMissing": "资金往来需执行迁移 20261022010000_transactions_social_contact_id.sql。",
+    "moneyLoanBalance": "借贷余额",
+    "moneyGiftNet": "礼金净值",
+    "moneyLoanSettled": "借贷两清",
+    "moneyTheyOwe": "对方欠我 {amount}",
+    "moneyIOwe": "我欠对方 {amount}",
+    "moneyTheyOweShort": "欠我 {amount}",
+    "moneyIOweShort": "我欠 {amount}",
+    "moneyGiftEven": "礼金进出相当",
+    "moneyGiftReceivedMore": "净收到 {amount}",
+    "moneyGiftSentMore": "净送出 {amount}",
+    "moneyKind": {
+      "gift_out": "礼金发出",
+      "gift_in": "礼金收到",
+      "lend": "借出",
+      "borrow": "借入",
+      "repay_in": "对方还我",
+      "repay_out": "我还对方"
+    },
     "name": "姓名",
     "alias": "备注名",
     "relation": "关系",
@@ -1176,6 +1213,9 @@
     "comingSoon": "即将开放",
     "checkoutEnvHint": "",
     "alreadyPlus": "已是 Plus 会员",
+    "artTitle": "艺术站",
+    "artBlurb": "站外艺术作品与出钱入口；付款由咔账结账承接。",
+    "artOpen": "打开艺术站",
     "creditPacks": {
       "title": "AI 加量包（文生图）",
       "blurb": "Plus 会员在每日额度用完后，可购买加量包继续生成画面。购买后 30 天内有效，未用完不结转。日限仍优先扣除。",
@@ -1395,13 +1435,13 @@
       ]
     },
     "meetings": {
-      "lead": "人情往来：为每位朋友建档案，每次见面记下场合、分数与感受——和记账同一心智，但管的是关系。",
+      "lead": "人情往来：朋友档案、见面记录，以及挂到总账的礼金与借贷。",
       "bullets": [
         "朋友档案：累计见面与均分",
         "见面记录：日期、场合、分数（-10～10）、感受",
-        "朋友页可下拉添加交往建议，并支持自定义",
-        "可选挂接礼金记账或宴会宾客",
-        "宴席结束后可一键给今日宾客补记"
+        "资金往来：礼金发出/收到、借出借入与还款，写入总账",
+        "朋友页可看借贷余额与礼金净值",
+        "交往建议可下拉添加或自定义"
       ]
     },
     "aiAssistant": {

@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { CreditPackCards } from "@/components/pricing/CreditPackCards";
 import { PlusPlanCards } from "@/components/pricing/PlusPlanCards";
 import { PricingCheckoutFlash } from "@/components/pricing/PricingCheckoutFlash";
+import { getArtPublicUrl } from "@/lib/art-public-url";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchUserIsPlusMember } from "@/lib/user-plus-membership";
@@ -20,6 +21,7 @@ export default async function PricingPage({
   const locale = (raw === "zh" ? "zh" : "en") as LocaleSeg;
   const t = await getTranslations("pricing");
   const ta = await getTranslations("auth");
+  const artUrl = getArtPublicUrl();
 
   let isPlus: boolean | null = null;
   if (isSupabaseConfigured) {
@@ -65,6 +67,19 @@ export default async function PricingPage({
       </div>
 
       <PlusPlanCards locale={locale} signInHref={`/${locale}/auth`} />
+
+      <div className="rounded-2xl border bg-white/70 p-5">
+        <h2 className="text-base font-semibold tracking-tight">{t("artTitle")}</h2>
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("artBlurb")}</p>
+        <a
+          href={artUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex text-sm font-medium text-foreground underline underline-offset-4"
+        >
+          {t("artOpen")}
+        </a>
+      </div>
 
       <CreditPackCards
         locale={locale}

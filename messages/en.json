@@ -36,7 +36,7 @@
       "lead": "Plan renovation budgets by structure, finishes, and appliances."
     },
     "meetings": {
-      "lead": "Friend profiles and meetup notes: one record per meeting, with a relationship score."
+      "lead": "Friend profiles, meetup notes, and money flows that post to the ledger."
     }
   },
   "banquetParty": {
@@ -98,6 +98,8 @@
     "saveError": "Failed to save. Please try again.",
     "currencyMigrationError": "Missing currency column. Run migration 20260713120000_project_currency.sql in Supabase, then retry.",
     "retry": "Retry",
+    "openDressup": "Open Manor",
+    "dressupHint": "Style the banquet in Manor (宅宴), then import here for budget and ledger.",
     "dressupImportOk": "Imported a banquet list from 宅宴.",
     "dressupImportError": "Could not import the 宅宴 draft. Please try again.",
     "tab": {
@@ -902,7 +904,7 @@
     "recurringMonthInYear": "Month {n}"
   },
   "meetingsPage": {
-    "subtitle": "Friend profiles and meetup notes: one record per meeting; scores track the relationship. Gift money still goes under Transactions → Gifts & social.",
+    "subtitle": "Friend profiles, meetup notes, and money flows: gifts and loans post to the ledger under each friend.",
     "loading": "Loading…",
     "loadError": "Couldn’t load. Check your connection and try again.",
     "saveError": "Couldn’t save. Please try again.",
@@ -918,6 +920,41 @@
     "newMeeting": "Log a meetup",
     "editMeeting": "Edit meetup",
     "deleteMeetingConfirm": "Delete this meetup record?",
+    "moneyTitle": "Money flows",
+    "moneyHint": "Each entry posts to the ledger (Gifts & social / Gift income) and links to this friend. Loan balances use USD base.",
+    "moneyAdd": "Log money",
+    "moneySave": "Post to ledger",
+    "moneySaving": "Saving…",
+    "moneyAmount": "Amount",
+    "moneyCurrency": "Currency",
+    "moneyNote": "Note",
+    "moneyNotePlaceholder": "e.g. wedding gift, loan repayment",
+    "moneyKindLabel": "Type",
+    "moneyEmpty": "No money records yet.",
+    "moneyLoadError": "Couldn’t load money records.",
+    "moneySaveError": "Couldn’t post money. Please try again.",
+    "moneyFxError": "FX lookup failed. Retry later or use USD.",
+    "moneyInvalidAmount": "Enter a valid amount.",
+    "moneyDeleteConfirm": "Delete this money record? The matching ledger entry will be removed too.",
+    "moneySchemaMissing": "Money flows need migration 20261022010000_transactions_social_contact_id.sql.",
+    "moneyLoanBalance": "Loan balance",
+    "moneyGiftNet": "Gift net",
+    "moneyLoanSettled": "Loans settled",
+    "moneyTheyOwe": "They owe you {amount}",
+    "moneyIOwe": "You owe them {amount}",
+    "moneyTheyOweShort": "Owes you {amount}",
+    "moneyIOweShort": "You owe {amount}",
+    "moneyGiftEven": "Gifts roughly even",
+    "moneyGiftReceivedMore": "Net received {amount}",
+    "moneyGiftSentMore": "Net given {amount}",
+    "moneyKind": {
+      "gift_out": "Gift sent",
+      "gift_in": "Gift received",
+      "lend": "Lent",
+      "borrow": "Borrowed",
+      "repay_in": "They repaid you",
+      "repay_out": "You repaid them"
+    },
     "name": "Name",
     "alias": "Nickname",
     "relation": "Relation",
@@ -1176,6 +1213,9 @@
     "comingSoon": "Coming soon",
     "checkoutEnvHint": "",
     "alreadyPlus": "You’re already on Plus",
+    "artTitle": "Art site",
+    "artBlurb": "Sister site for art posts and tips; checkout runs through Kash.",
+    "artOpen": "Open art site",
     "creditPacks": {
       "title": "AI image add-on packs",
       "blurb": "Plus members can buy extra dream visuals when daily quota runs out. Valid 30 days; unused balance does not roll over. Daily quota is used first.",
@@ -1395,13 +1435,13 @@
       ]
     },
     "meetings": {
-      "lead": "Social connections: a profile per friend, and one meetup note each time—same ledger mindset, for relationships.",
+      "lead": "Social connections: friend profiles, meetup notes, plus gifts and loans posted to the ledger.",
       "bullets": [
         "Friend profiles with meetup count and average score",
         "Meetup records: date, occasion, score (−10–10), and notes",
-        "On each friend, pick tips from a dropdown or add custom ones",
-        "Optional links to gift transactions or banquet guests",
-        "After a party, jump in to log today’s guests"
+        "Money flows: gifts, loans, and repayments posted to the ledger",
+        "See loan balance and gift net on each friend",
+        "Relationship tips from a dropdown or custom notes"
       ]
     },
     "aiAssistant": {

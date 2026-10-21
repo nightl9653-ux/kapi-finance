@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ContactDetail } from "@/components/meetings/ContactDetail";
 import { ContactForm } from "@/components/meetings/ContactForm";
 import { MeetingForm } from "@/components/meetings/MeetingForm";
+import { useContactMoneySummaries } from "@/components/meetings/ContactMoneySection";
 import { Button } from "@/components/ui/button";
 import {
   deleteContact,
@@ -15,6 +16,7 @@ import {
   upsertContact,
   upsertMeeting,
 } from "@/lib/meetings/storage";
+import { formatUsdBase } from "@/lib/meetings/money-flows";
 import { contactStats, formatScore, recentMeetings, sortedContacts } from "@/lib/meetings/stats";
 import type { Contact, Meeting, MeetingsStore } from "@/lib/meetings/types";
 import { cn } from "@/lib/utils";
@@ -55,6 +57,7 @@ export function MeetingsApp({ userId }: { userId: string }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [creatingFriend, setCreatingFriend] = useState(false);
   const [creatingMeeting, setCreatingMeeting] = useState(false);
+  const money = useContactMoneySummaries(ready);
 
   const refresh = useCallback(async () => {
     setReady(false);
@@ -160,6 +163,7 @@ export function MeetingsApp({ userId }: { userId: string }) {
           onDeleteContact={handleDeleteContact}
           onUpsertMeeting={handleUpsertMeeting}
           onDeleteMeeting={handleDeleteMeeting}
+          onMoneyChange={() => void money.refresh()}
         />
       </div>
     );
@@ -237,6 +241,7 @@ export function MeetingsApp({ userId }: { userId: string }) {
           <ul className="divide-y rounded-2xl border bg-white/60">
             {contacts.map((c) => {
               const s = contactStats(store, c.id);
+              const bal = money.byContact.get(c.id)?.loanBalanceBase ?? 0;
               return (
                 <li key={c.id}>
                   <button
@@ -251,6 +256,18 @@ export function MeetingsApp({ userId }: { userId: string }) {
                           .filter(Boolean)
                           .join(" · ") || t("noMeetingsYet")}
                       </p>
+                      {bal !== 0 ? (
+                        <p
+                          className={cn(
+                            "mt-0.5 truncate text-xs tabular-nums",
+                            bal > 0 ? "text-emerald-700" : "text-rose-700",
+                          )}
+                        >
+                          {bal > 0
+                            ? t("moneyTheyOweShort", { amount: formatUsdBase(bal) })
+                            : t("moneyIOweShort", { amount: formatUsdBase(Math.abs(bal)) })}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="shrink-0 text-right text-sm">
                       <p className="tabular-nums text-muted-foreground">

@@ -6,12 +6,14 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { PartyDetailClient } from "@/components/banquet-party/PartyDetailClient";
 import { PartyForm } from "@/components/banquet-party/PartyForm";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { takeDressupImport } from "@/lib/dressup-import/codec";
 import { mapDressupBanquetDraft } from "@/lib/dressup-import/map-banquet";
+import { getDressupPublicUrl } from "@/lib/dressup-origins";
 import { calculateColorPalette } from "@/lib/banquet-party/palette";
 import { deleteParty, loadParties, upsertParty } from "@/lib/banquet-party/storage";
 import type { Party } from "@/lib/banquet-party/types";
+import { cn } from "@/lib/utils";
 
 const IMPORT_MAX_AGE_MS = 30 * 60 * 1000;
 
@@ -19,6 +21,7 @@ export function BanquetPartyApp({ userId }: { userId: string }) {
   const t = useTranslations("banquetParty");
   const tCommon = useTranslations("common");
   const locale = useLocale();
+  const dressupUrl = getDressupPublicUrl();
   const [parties, setParties] = useState<Party[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -115,10 +118,18 @@ export function BanquetPartyApp({ userId }: { userId: string }) {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button type="button" className="rounded-full" onClick={() => setCreating(true)}>
           {t("newParty")}
         </Button>
+        <a
+          href={dressupUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(buttonVariants({ variant: "outline" }), "rounded-full")}
+        >
+          {t("openDressup")}
+        </a>
         <Link
           href={`/${locale}/transactions#recent-records`}
           className="self-center text-sm text-muted-foreground underline-offset-4 hover:underline"
@@ -126,6 +137,7 @@ export function BanquetPartyApp({ userId }: { userId: string }) {
           {t("linkTransactions")}
         </Link>
       </div>
+      <p className="text-xs text-muted-foreground">{t("dressupHint")}</p>
 
       {error ? (
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -174,6 +186,18 @@ export function BanquetPartyApp({ userId }: { userId: string }) {
       ) : parties.length === 0 && !creating ? (
         <div className="rounded-2xl border border-dashed bg-white/50 p-8 text-center">
           <p className="text-sm text-muted-foreground">{t("emptyList")}</p>
+          <a
+            href={dressupUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "mt-4 inline-flex rounded-full",
+            )}
+          >
+            {t("openDressup")}
+          </a>
+          <p className="mt-2 text-xs text-muted-foreground">{t("dressupHint")}</p>
         </div>
       ) : (
         <ul className="space-y-3">

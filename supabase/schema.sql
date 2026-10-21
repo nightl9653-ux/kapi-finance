@@ -168,6 +168,14 @@ create index if not exists social_meetings_user_id_idx on social_meetings (user_
 create index if not exists social_meetings_contact_id_idx on social_meetings (contact_id);
 create index if not exists social_meetings_met_on_idx on social_meetings (user_id, met_on desc);
 
+-- 往来资金：交易可选挂到朋友（须在 social_contacts 之后）
+alter table transactions
+  add column if not exists social_contact_id uuid references social_contacts(id) on delete set null;
+
+create index if not exists transactions_user_social_contact_id_idx
+on transactions (user_id, social_contact_id)
+where social_contact_id is not null;
+
 -- 预算方案（每月一份；AI 可生成并保存）
 create table if not exists budgets (
   id uuid default gen_random_uuid() primary key,

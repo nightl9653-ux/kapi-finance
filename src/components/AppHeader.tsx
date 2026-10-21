@@ -8,19 +8,10 @@ import { AppleEnControlsShift } from "@/components/AppleEnControlsShift";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { MobileNavDrawer } from "@/components/MobileNavDrawer";
 import { NotificationsEntry } from "@/components/NotificationsEntry";
-import { getArtPublicUrl } from "@/lib/art-public-url";
-import { getDressupPublicUrl } from "@/lib/dressup-origins";
 
-type NavItem = { href: string; label: string; external?: boolean };
+type NavItem = { href: string; label: string };
 
 function NavLink({ item, className }: { item: NavItem; className: string }) {
-  if (item.external) {
-    return (
-      <a href={item.href} target="_blank" rel="noopener noreferrer" className={className}>
-        {item.label}
-      </a>
-    );
-  }
   return (
     <Link href={item.href} className={className}>
       {item.label}
@@ -31,8 +22,6 @@ function NavLink({ item, className }: { item: NavItem; className: string }) {
 export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
   const t = useTranslations("nav");
   const locale = useLocale();
-  const dressupUrl = getDressupPublicUrl();
-  const artUrl = getArtPublicUrl();
 
   const navPrimary: NavItem[] = [
     { href: `/${locale}`, label: t("dashboard") },
@@ -42,8 +31,6 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
     { href: `/${locale}/meetings`, label: t("meetings") },
     { href: `/${locale}/banquet-party`, label: t("banquetParty") },
     { href: `/${locale}/house-renovation`, label: t("houseRenovation") },
-    { href: dressupUrl, label: t("dressup"), external: true },
-    { href: artUrl, label: t("art"), external: true },
   ];
 
   const navSecondary: NavItem[] = [
