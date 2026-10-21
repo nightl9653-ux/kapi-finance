@@ -23,6 +23,7 @@ const PUBLIC_PATHS = new Set([
   "/transactions",
   "/quick-record",
   "/house-renovation",
+  "/travel",
   "/meetings",
   "/import-dressup",
   "/unlock-dressup",
@@ -48,6 +49,7 @@ function isPublicPath(pathname: string, locale: "en" | "zh") {
   // Landing only — /banquet-studio and /renovation-studio require sign-in
   if (rest === "/banquet-party") return true;
   if (rest === "/house-renovation") return true;
+  if (rest === "/travel") return true;
   for (const p of PUBLIC_PATHS) {
     if (rest === p || rest.startsWith(`${p}/`)) return true;
   }

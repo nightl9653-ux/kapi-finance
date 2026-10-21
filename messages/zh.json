@@ -14,6 +14,7 @@
     "quickRecord": "快捷记账",
     "banquetParty": "宴会派对",
     "houseRenovation": "房屋装修",
+    "travel": "旅行",
     "dressup": "宅宴",
     "art": "艺术",
     "menu": "菜单",
@@ -34,6 +35,9 @@
     },
     "houseRenovation": {
       "lead": "按硬装、软装与家电分项规划装修预算。"
+    },
+    "travel": {
+      "lead": "旅行预算清单：交通住宿餐饮门票，实付记入总账。"
     },
     "meetings": {
       "lead": "朋友档案、见面感受与资金往来：礼金与借贷写入总账。"
@@ -709,6 +713,80 @@
       "yardPaving": "庭院铺装"
     }
   },
+  "travel": {
+    "title": "旅行",
+    "subtitle": "行程预算清单 · 分类费用 · 实付入总账",
+    "workflowHint": "费用清单只在旅行里维护。花完后在对应行点「记入记账」才会入总账。请勿在记账页手动作旅行清单项。",
+    "prepWorkflowHint": "花完后在对应行点「记入记账」才会入总账并标记已付。请勿到记账页补旅行清单项。",
+    "newTrip": "新建行程",
+    "editTrip": "编辑行程",
+    "tripName": "行程名称",
+    "tripNamePlaceholder": "例如：五一京都三日",
+    "destination": "目的地",
+    "destinationPlaceholder": "城市或地区",
+    "currency": "项目币种",
+    "currencyHint": "清单金额按此币种显示；记入记账时自动按汇率折算为 USD 本位。",
+    "budgetCap": "预算上限",
+    "budgetCapPlaceholder": "例如：8000",
+    "startDate": "出发",
+    "endDate": "返回",
+    "notes": "备注",
+    "template": "清单模板",
+    "templateWeekend": "周末短途",
+    "templateFamily": "家庭出游",
+    "templateBusiness": "商务差旅",
+    "templateBlank": "空白清单",
+    "createAndOpen": "创建并进入",
+    "save": "保存",
+    "cancel": "取消",
+    "open": "打开",
+    "delete": "删除",
+    "deleteConfirm": "确定删除此行程？清单将一并删除。",
+    "emptyList": "还没有行程。先新建一趟，用模板预填常见费用。",
+    "loading": "加载行程中…",
+    "saving": "保存中…",
+    "loadError": "加载失败，请检查网络后重试。",
+    "saveError": "保存失败，请稍后重试。",
+    "retry": "重试",
+    "schemaMissing": "旅行云端表尚未创建。请在 Supabase SQL Editor 执行迁移 20261022020000_travel_trips.sql。",
+    "linkTransactions": "查看总账（不会改旅行清单）",
+    "backToList": "返回列表",
+    "noDates": "未设日期",
+    "itemCount": "{n} 项费用",
+    "plannedTotal": "计划合计",
+    "loggedTotal": "已记入账",
+    "pendingTotal": "待记入账",
+    "pendingCount": "{n} 项待付",
+    "budgetRemaining": "剩余 {amount}",
+    "overCap": "已超预算上限",
+    "overviewLinkedSpend": "总账已挂本行程实付 {amount}",
+    "itemsTitle": "费用清单",
+    "addItem": "添加费用",
+    "emptyItems": "还没有费用项。可添加交通、住宿等。",
+    "itemName": "费用名称",
+    "itemNamePlaceholder": "例如：机票、酒店",
+    "itemCategoryLabel": "分类",
+    "itemAmount": "单价",
+    "itemQuantity": "数量",
+    "itemNote": "备注",
+    "saveItem": "保存费用",
+    "invalidItem": "请填写有效名称与金额。",
+    "deleteItemConfirm": "删除这项费用？",
+    "pending": "待记入账",
+    "loggedToTransactions": "已记账",
+    "logExpense": "记入记账",
+    "logExpenseLogging": "记账中…",
+    "logExpenseError": "记账失败，请稍后重试。",
+    "fxError": "获取汇率失败，请稍后重试或改用 USD。",
+    "itemCategory": {
+      "transport": "交通",
+      "lodging": "住宿",
+      "food": "餐饮",
+      "tickets": "门票活动",
+      "shopping": "购物",
+      "other": "其他"
+    }
+  },
   "goals": {
     "housing": "住房",
     "travel": "旅行",
@@ -787,6 +865,7 @@
     "catEntertainment": "娱乐",
     "catSocial": "人情往来",
     "catBanquet": "宴会",
+    "catTravel": "旅行",
     "catUtilities": "水电燃气",
     "catExpenseOther": "其他（支出）",
     "catSalary": "工资",
@@ -1432,6 +1511,15 @@
         "材料清单：大类、阶段、空间与采购进度",
         "概览汇总计划/已采，支持预算上限提醒",
         "清单「记入记账」同步住房支出，并挂回项目"
+      ]
+    },
+    "travel": {
+      "lead": "旅行计划账：按行程维护费用清单，实付一键记入总账。",
+      "bullets": [
+        "周末短途 / 家庭出游 / 商务差旅模板",
+        "交通、住宿、餐饮、门票等分类预算",
+        "预算上限与计划/已付汇总",
+        "清单「记入记账」同步旅行支出，并挂回行程"
       ]
     },
     "meetings": {

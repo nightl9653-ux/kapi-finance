@@ -176,6 +176,56 @@ create index if not exists transactions_user_social_contact_id_idx
 on transactions (user_id, social_contact_id)
 where social_contact_id is not null;
 
+-- 旅行计划账
+create table if not exists travel_trips (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade not null,
+  name text not null,
+  destination text,
+  currency text not null default 'USD',
+  budget_cap decimal(12, 2),
+  start_date date,
+  end_date date,
+  notes text,
+  items jsonb not null default '[]'::jsonb,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists travel_trips_user_id_idx on travel_trips (user_id);
+create index if not exists travel_trips_updated_at_idx on travel_trips (user_id, updated_at desc);
+
+alter table travel_trips enable row level security;
+
+drop policy if exists "travel_trips_select_own" on travel_trips;
+create policy "travel_trips_select_own"
+on travel_trips for select
+using (user_id = auth.uid());
+
+drop policy if exists "travel_trips_insert_own" on travel_trips;
+create policy "travel_trips_insert_own"
+on travel_trips for insert
+with check (user_id = auth.uid());
+
+drop policy if exists "travel_trips_update_own" on travel_trips;
+create policy "travel_trips_update_own"
+on travel_trips for update
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+drop policy if exists "travel_trips_delete_own" on travel_trips;
+create policy "travel_trips_delete_own"
+on travel_trips for delete
+using (user_id = auth.uid());
+
+alter table transactions
+  add column if not exists travel_trip_id uuid references travel_trips(id) on delete set null;
+
+create index if not exists transactions_user_travel_trip_id_idx
+on transactions (user_id, travel_trip_id)
+where travel_trip_id is not null;
+
 -- 预算方案（每月一份；AI 可生成并保存）
 create table if not exists budgets (
   id uuid default gen_random_uuid() primary key,

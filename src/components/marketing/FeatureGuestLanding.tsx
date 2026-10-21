@@ -10,6 +10,7 @@ export type GuestFeatureKey =
   | "quickRecord"
   | "banquetParty"
   | "houseRenovation"
+  | "travel"
   | "meetings"
   | "aiAssistant"
   | "reports"

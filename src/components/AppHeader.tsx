@@ -30,12 +30,13 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
     { href: `/${locale}/quick-record`, label: t("quickRecord") },
     { href: `/${locale}/meetings`, label: t("meetings") },
     { href: `/${locale}/banquet-party`, label: t("banquetParty") },
-    { href: `/${locale}/house-renovation`, label: t("houseRenovation") },
+    { href: `/${locale}/travel`, label: t("travel") },
   ];
 
   const navSecondary: NavItem[] = [
     { href: `/${locale}/ai-assistant`, label: t("aiAssistant") },
     { href: `/${locale}/reports`, label: t("reports") },
+    { href: `/${locale}/house-renovation`, label: t("houseRenovation") },
     { href: `/${locale}/pricing`, label: t("pricing") },
     { href: `/${locale}/settings`, label: t("settings") },
   ];

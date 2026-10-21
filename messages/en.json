@@ -14,6 +14,7 @@
     "quickRecord": "Quick record",
     "banquetParty": "Banquet & party",
     "houseRenovation": "Home renovation",
+    "travel": "Travel",
     "dressup": "Manor",
     "art": "Art",
     "menu": "Menu",
@@ -34,6 +35,9 @@
     },
     "houseRenovation": {
       "lead": "Plan renovation budgets by structure, finishes, and appliances."
+    },
+    "travel": {
+      "lead": "Trip budget lists—transport, stays, food, tickets—then log spend to the ledger."
     },
     "meetings": {
       "lead": "Friend profiles, meetup notes, and money flows that post to the ledger."
@@ -709,6 +713,80 @@
       "yardPaving": "Yard paving"
     }
   },
+  "travel": {
+    "title": "Travel",
+    "subtitle": "Trip budget list · categories · post spend to the ledger",
+    "workflowHint": "Keep the expense list inside Travel. After spending, tap “Log to ledger” to post it. Don’t add travel line items on the Transactions page.",
+    "prepWorkflowHint": "After spending, tap “Log to ledger” on that row to post it. Don’t add travel line items on the Transactions page.",
+    "newTrip": "New trip",
+    "editTrip": "Edit trip",
+    "tripName": "Trip name",
+    "tripNamePlaceholder": "e.g. Kyoto long weekend",
+    "destination": "Destination",
+    "destinationPlaceholder": "City or region",
+    "currency": "Trip currency",
+    "currencyHint": "List amounts use this currency; logging to the ledger converts to USD base via FX.",
+    "budgetCap": "Budget cap",
+    "budgetCapPlaceholder": "e.g. 8000",
+    "startDate": "Start",
+    "endDate": "End",
+    "notes": "Notes",
+    "template": "List template",
+    "templateWeekend": "Weekend getaway",
+    "templateFamily": "Family trip",
+    "templateBusiness": "Business travel",
+    "templateBlank": "Blank list",
+    "createAndOpen": "Create & open",
+    "save": "Save",
+    "cancel": "Cancel",
+    "open": "Open",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this trip and its expense list?",
+    "emptyList": "No trips yet. Create one and start from a template.",
+    "loading": "Loading trips…",
+    "saving": "Saving…",
+    "loadError": "Failed to load. Check your network and try again.",
+    "saveError": "Failed to save. Please try again.",
+    "retry": "Retry",
+    "schemaMissing": "Travel tables are missing. Run migration 20261022020000_travel_trips.sql in the Supabase SQL Editor.",
+    "linkTransactions": "View ledger (won’t change the trip list)",
+    "backToList": "Back to list",
+    "noDates": "No dates set",
+    "itemCount": "{n} items",
+    "plannedTotal": "Planned total",
+    "loggedTotal": "Logged",
+    "pendingTotal": "Pending",
+    "pendingCount": "{n} pending",
+    "budgetRemaining": "{amount} remaining",
+    "overCap": "Over budget cap",
+    "overviewLinkedSpend": "Ledger spend linked to this trip: {amount}",
+    "itemsTitle": "Expense list",
+    "addItem": "Add expense",
+    "emptyItems": "No expenses yet. Add transport, lodging, and more.",
+    "itemName": "Expense name",
+    "itemNamePlaceholder": "e.g. flights, hotel",
+    "itemCategoryLabel": "Category",
+    "itemAmount": "Unit price",
+    "itemQuantity": "Qty",
+    "itemNote": "Note",
+    "saveItem": "Save expense",
+    "invalidItem": "Enter a valid name and amount.",
+    "deleteItemConfirm": "Delete this expense?",
+    "pending": "Pending",
+    "loggedToTransactions": "Logged",
+    "logExpense": "Log to ledger",
+    "logExpenseLogging": "Logging…",
+    "logExpenseError": "Failed to log. Please try again.",
+    "fxError": "FX lookup failed. Retry later or use USD.",
+    "itemCategory": {
+      "transport": "Transport",
+      "lodging": "Lodging",
+      "food": "Food",
+      "tickets": "Tickets & activities",
+      "shopping": "Shopping",
+      "other": "Other"
+    }
+  },
   "goals": {
     "travel": "Travel",
     "housing": "Housing",
@@ -787,6 +865,7 @@
     "catEntertainment": "Entertainment",
     "catSocial": "Gifts & social",
     "catBanquet": "Banquets & parties",
+    "catTravel": "Travel",
     "catUtilities": "Utilities",
     "catExpenseOther": "Other (expense)",
     "catSalary": "Salary",
@@ -1432,6 +1511,15 @@
         "Materials list by category, phase, room, and purchase progress",
         "Overview of planned vs purchased, with optional budget-cap alerts",
         "“Log to ledger” posts housing expenses and links them to the project"
+      ]
+    },
+    "travel": {
+      "lead": "Trip planning ledger: keep an expense list per trip, then post real spend to the main ledger.",
+      "bullets": [
+        "Weekend, family, and business templates",
+        "Transport, lodging, food, tickets, and more",
+        "Budget cap with planned vs logged totals",
+        "“Log to ledger” posts travel expenses linked to the trip"
       ]
     },
     "meetings": {
