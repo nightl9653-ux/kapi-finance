@@ -174,9 +174,44 @@ function isoToTimestampAt2000(iso: string): string {
   return new Date(`${iso}T20:00:00`).toISOString();
 }
 
+/** 用户对某一期点过「确认逾期」的到期日集合；表未迁移时返回空 */
+export async function loadOverdueDueDates(params: {
+  supabase: import("@supabase/supabase-js").SupabaseClient;
+  userId: string;
+  billIds?: string[];
+}): Promise<Set<string>> {
+  const key = (billId: string, dueOn: string) => `${billId}|${dueOn}`;
+  let query = params.supabase
+    .from("recurring_occurrence_overdue")
+    .select("recurring_bill_id,due_on")
+    .eq("user_id", params.userId);
+  if (params.billIds?.length) {
+    query = query.in("recurring_bill_id", params.billIds);
+  }
+  const { data, error } = await query;
+  if (error) {
+    const code = (error as { code?: string } | null)?.code;
+    if (code === "PGRST205" || /recurring_occurrence_overdue|schema cache|does not exist/i.test(error.message ?? "")) {
+      return new Set();
+    }
+    throw error;
+  }
+  const out = new Set<string>();
+  for (const row of data ?? []) {
+    const billId = String((row as { recurring_bill_id?: string }).recurring_bill_id ?? "");
+    const dueOn = String((row as { due_on?: string }).due_on ?? "").slice(0, 10);
+    if (billId && dueOn) out.add(key(billId, dueOn));
+  }
+  return out;
+}
+
+export function occurrenceOverdueKey(billId: string, dueOn: string): string {
+  return `${billId}|${dueOn}`;
+}
+
 /**
  * 在用户打开记账页时，自动把到期的周期账单“落地”为 transactions。
- * 设计目标：无 cron 时也能逐步补齐，不重复生成。
+ * 某一期若已被用户确认逾期，则跳过入账，但仍推进 last_generated_on，避免反复重试。
  */
 export async function materializeRecurringBills(params: {
   // 用宽类型避免 TS 在 build 时对 dynamic import 的解析差异
@@ -202,6 +237,12 @@ export async function materializeRecurringBills(params: {
   const rows = (rules ?? []) as RecurringBillRow[];
   if (!rows.length) return;
 
+  const overdueKeys = await loadOverdueDueDates({
+    supabase: params.supabase,
+    userId: params.userId,
+    billIds: rows.map((r) => r.id),
+  });
+
   for (const r of rows) {
     const start = r.start_date ?? upTo;
     const begin = r.last_generated_on ? addDays(r.last_generated_on, 1) : start;
@@ -209,21 +250,26 @@ export async function materializeRecurringBills(params: {
     const dates = nextDueDates({ ...r, start_date: effectiveBegin }, upTo);
     if (!dates.length) continue;
 
-    const payload = dates.map((iso) => ({
-      user_id: params.userId,
-      amount: r.amount,
-      type: r.type,
-      category: r.category,
-      merchant: r.merchant,
-      note: r.note,
-      occurred_on: iso,
-      timestamp: isoToTimestampAt2000(iso),
-      is_auto_recorded: true,
-    }));
+    const toInsert = dates.filter((iso) => !overdueKeys.has(occurrenceOverdueKey(r.id, iso)));
 
-    const { error: insErr } = await params.supabase.from("transactions").insert(payload);
-    if (insErr) throw insErr;
+    if (toInsert.length) {
+      const payload = toInsert.map((iso) => ({
+        user_id: params.userId,
+        amount: r.amount,
+        type: r.type,
+        category: r.category,
+        merchant: r.merchant,
+        note: r.note,
+        occurred_on: iso,
+        timestamp: isoToTimestampAt2000(iso),
+        is_auto_recorded: true,
+      }));
 
+      const { error: insErr } = await params.supabase.from("transactions").insert(payload);
+      if (insErr) throw insErr;
+    }
+
+    // 推进游标：含被跳过的逾期期次，避免下回再捞同一天
     const last = dates[dates.length - 1]!;
     const { error: upErr } = await params.supabase
       .from("recurring_bills")
@@ -232,5 +278,73 @@ export async function materializeRecurringBills(params: {
       .eq("user_id", params.userId);
     if (upErr) throw upErr;
   }
+}
+
+/** 用户确认某一期逾期：记标记、删掉该期自动流水（若有）、必要时推进游标 */
+export async function markRecurringOccurrenceOverdue(params: {
+  supabase: import("@supabase/supabase-js").SupabaseClient;
+  userId: string;
+  billId: string;
+  dueOn: string;
+}): Promise<{ ok: true } | { ok: false; error: "invalid" | "not_found" | "schema_missing" | "failed"; detail?: string }> {
+  const dueOn = params.dueOn.trim();
+  if (!params.billId || !/^\d{4}-\d{2}-\d{2}$/.test(dueOn)) return { ok: false, error: "invalid" };
+
+  const { data: bill, error: billErr } = await params.supabase
+    .from("recurring_bills")
+    .select("id,amount,type,category,last_generated_on")
+    .eq("id", params.billId)
+    .eq("user_id", params.userId)
+    .maybeSingle();
+
+  if (billErr) {
+    return { ok: false, error: "failed", detail: billErr.message };
+  }
+  if (!bill) return { ok: false, error: "not_found" };
+
+  const { error: markErr } = await params.supabase.from("recurring_occurrence_overdue").upsert(
+    {
+      user_id: params.userId,
+      recurring_bill_id: params.billId,
+      due_on: dueOn,
+    },
+    { onConflict: "recurring_bill_id,due_on" },
+  );
+
+  if (markErr) {
+    const code = (markErr as { code?: string } | null)?.code;
+    if (
+      code === "PGRST205" ||
+      /recurring_occurrence_overdue|schema cache|does not exist/i.test(markErr.message ?? "")
+    ) {
+      return { ok: false, error: "schema_missing", detail: markErr.message };
+    }
+    return { ok: false, error: "failed", detail: markErr.message };
+  }
+
+  // 取消该期已自动写入的流水
+  await params.supabase
+    .from("transactions")
+    .delete()
+    .eq("user_id", params.userId)
+    .eq("occurred_on", dueOn)
+    .eq("type", bill.type)
+    .eq("category", bill.category)
+    .eq("amount", bill.amount)
+    .eq("is_auto_recorded", true);
+
+  // 仅当该期已到期时推进游标，避免把未来日期提前「吃掉」
+  const today = isoToday();
+  const prev = bill.last_generated_on ? String(bill.last_generated_on).slice(0, 10) : null;
+  if (dueOn <= today && (!prev || prev < dueOn)) {
+    const { error: upErr } = await params.supabase
+      .from("recurring_bills")
+      .update({ last_generated_on: dueOn })
+      .eq("id", params.billId)
+      .eq("user_id", params.userId);
+    if (upErr) return { ok: false, error: "failed", detail: upErr.message };
+  }
+
+  return { ok: true };
 }
 

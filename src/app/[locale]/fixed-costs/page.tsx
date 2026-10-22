@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import type { Locale } from "@/i18n/locales";
 import { buildFixedCostBoard } from "@/lib/fixed-costs/board";
 import { formatCategoryLabel } from "@/lib/transaction-categories";
-import { materializeRecurringBills, type RecurringBillRow } from "@/lib/recurring-bills";
+import {
+  loadOverdueDueDates,
+  markRecurringOccurrenceOverdue,
+  materializeRecurringBills,
+  type RecurringBillRow,
+} from "@/lib/recurring-bills";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,16 +94,55 @@ async function updateRecurring(formData: FormData) {
   redirect(`/${locale}/fixed-costs?success=updated`);
 }
 
-function statusClass(status: string): string {
+async function confirmOccurrenceOverdue(formData: FormData) {
+  "use server";
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) throw new Error("Not authenticated");
+  const locale = String(formData.get("locale") ?? "en") as Locale;
+  const billId = String(formData.get("bill_id") ?? "").trim();
+  const dueOn = String(formData.get("due_on") ?? "").trim();
+
+  const result = await markRecurringOccurrenceOverdue({
+    supabase,
+    userId: data.user.id,
+    billId,
+    dueOn,
+  });
+
+  if (!result.ok) {
+    if (result.error === "schema_missing") redirect(`/${locale}/fixed-costs?error=overdue_schema`);
+    redirect(`/${locale}/fixed-costs?error=overdue_failed`);
+  }
+  redirect(`/${locale}/fixed-costs?success=overdue_marked`);
+}
+
+function statusBadgeClass(status: string): string {
   switch (status) {
     case "posted":
-      return "text-emerald-700";
+      return "bg-emerald-100 text-emerald-900 ring-1 ring-emerald-200/80";
+    case "markedOverdue":
+      return "bg-rose-200 text-rose-950 ring-1 ring-rose-300/80";
     case "overdue":
-      return "text-rose-700";
+      return "bg-rose-100 text-rose-900 ring-1 ring-rose-200/80";
     case "dueToday":
-      return "text-amber-800";
+      return "bg-amber-100 text-amber-950 ring-1 ring-amber-200/80";
     default:
-      return "text-muted-foreground";
+      return "bg-muted text-muted-foreground ring-1 ring-foreground/10";
+  }
+}
+
+function rowAccentClass(status: string): string {
+  switch (status) {
+    case "posted":
+      return "border-l-4 border-l-emerald-500";
+    case "markedOverdue":
+    case "overdue":
+      return "border-l-4 border-l-rose-500";
+    case "dueToday":
+      return "border-l-4 border-l-amber-500";
+    default:
+      return "border-l-4 border-l-transparent";
   }
 }
 
@@ -116,6 +160,8 @@ export default async function FixedCostsPage({
   const common = await getTranslations("common");
   const sp = searchParams ? await searchParams : {};
   const editParam = firstSearchParam(sp.edit)?.trim();
+  const flashError = firstSearchParam(sp.error)?.trim();
+  const flashSuccess = firstSearchParam(sp.success)?.trim();
 
   const supabase = await createSupabaseServerClient();
   const { data: auth, error: authError } = await supabase.auth.getUser();
@@ -141,9 +187,15 @@ export default async function FixedCostsPage({
   if (error && !unavailable) redirect(`/${locale}/fixed-costs?error=unknown`);
 
   const bills = (rows ?? []) as RecurringBillRow[];
+  const overdueKeys = await loadOverdueDueDates({
+    supabase,
+    userId: auth.user.id,
+    billIds: bills.map((b) => b.id),
+  });
   const now = new Date();
   const board = buildFixedCostBoard({
     bills,
+    overdueKeys,
     year: now.getUTCFullYear(),
     month: now.getUTCMonth() + 1,
     locale,
@@ -161,21 +213,26 @@ export default async function FixedCostsPage({
           <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={`/${locale}/transactions`}
-            className={cn(buttonVariants(), "rounded-full")}
-          >
-            {t("addBill")}
-          </Link>
-          <Link
-            href={`/${locale}/transactions`}
-            className={cn(buttonVariants({ variant: "secondary" }), "rounded-full")}
-          >
-            {t("goTransactions")}
-          </Link>
-        </div>
+        <Link href={`/${locale}/transactions`} className={cn(buttonVariants(), "rounded-full")}>
+          {t("addBill")}
+        </Link>
       </div>
+
+      {flashError === "overdue_schema" ? (
+        <p className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
+          {t("overdueSchemaMissing")}
+        </p>
+      ) : null}
+      {flashError === "overdue_failed" ? (
+        <p className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          {t("overdueMarkFailed")}
+        </p>
+      ) : null}
+      {flashSuccess === "overdue_marked" ? (
+        <p className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-900">
+          {t("overdueMarkOk")}
+        </p>
+      ) : null}
 
       {unavailable ? (
         <p className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
@@ -192,21 +249,30 @@ export default async function FixedCostsPage({
                   {formatProjectMoney(board.expensePlannedUsd, "USD")}
                 </p>
               </div>
-              <div className="rounded-2xl border bg-white/70 p-4">
-                <p className="text-xs text-muted-foreground">{t("expensePosted")}</p>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-800">
+              <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/50 p-4">
+                <p className="text-xs font-medium text-emerald-900">{t("expensePosted")}</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-900">
                   {formatProjectMoney(board.expensePostedUsd, "USD")}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">{t("postedPct", { pct: expensePct })}</p>
+                <p className="mt-1 text-xs text-emerald-800/80">{t("postedHint")}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{t("postedPct", { pct: expensePct })}</p>
               </div>
-              <div className="rounded-2xl border bg-white/70 p-4">
-                <p className="text-xs text-muted-foreground">{t("expensePending")}</p>
-                <p className="mt-1 text-xl font-semibold tabular-nums">
+              <div className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-4">
+                <p className="text-xs font-medium text-amber-950">{t("expensePending")}</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-amber-950">
                   {formatProjectMoney(board.expensePendingUsd, "USD")}
                 </p>
+                <p className="mt-1 text-xs text-amber-900/80">{t("pendingHint")}</p>
                 {board.expenseOverdueUsd > 0 ? (
-                  <p className="mt-1 text-xs text-rose-700">
+                  <p className="mt-1 text-xs font-medium text-rose-700">
                     {t("overdueAmount", { amount: formatProjectMoney(board.expenseOverdueUsd, "USD") })}
+                  </p>
+                ) : null}
+                {board.expenseMarkedOverdueUsd > 0 ? (
+                  <p className="mt-1 text-xs font-medium text-rose-800">
+                    {t("markedOverdueAmount", {
+                      amount: formatProjectMoney(board.expenseMarkedOverdueUsd, "USD"),
+                    })}
                   </p>
                 ) : null}
               </div>
@@ -221,58 +287,107 @@ export default async function FixedCostsPage({
             ) : null}
           </section>
 
-          <section className="space-y-3">
+          <section className="space-y-4">
             <h2 className="text-base font-medium">{t("monthListTitle")}</h2>
             {board.occurrences.length === 0 ? (
               <p className="rounded-2xl border border-dashed bg-white/50 p-6 text-sm text-muted-foreground">
                 {t("monthEmpty")}
               </p>
             ) : (
-              <ul className="divide-y rounded-2xl border bg-white/70">
-                {board.occurrences.map((o) => (
-                  <li
-                    key={`${o.billId}-${o.dueOn}`}
-                    className="flex flex-wrap items-start justify-between gap-2 px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">
-                        <span className="tabular-nums">{o.dueOn}</span>
-                        <span className="text-muted-foreground">
-                          {" "}
-                          · {formatCategoryLabel(o.category, o.type, (k) => tx(k))}
-                        </span>
-                        {o.note ? <span className="text-muted-foreground"> · {o.note}</span> : null}
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {o.cadence === "daily"
-                          ? tx("recurringDaily")
-                          : o.cadence === "quarterly"
-                            ? tx("recurringQuarterly")
-                            : o.cadence === "yearly"
-                              ? tx("recurringYearly")
-                              : tx("recurringMonthly")}
-                        {o.currency !== "USD"
-                          ? ` · ${formatProjectMoney(o.amount, o.currency)} ≈ ${formatProjectMoney(o.amountUsd, "USD")}`
-                          : ` · ${formatProjectMoney(o.amountUsd, "USD")}`}
-                      </p>
+              <>
+                {(["pending", "markedOverdue", "posted"] as const).map((group) => {
+                  const items =
+                    group === "posted"
+                      ? board.occurrences.filter((o) => o.status === "posted")
+                      : group === "markedOverdue"
+                        ? board.occurrences.filter((o) => o.status === "markedOverdue")
+                        : board.occurrences.filter(
+                            (o) => o.status !== "posted" && o.status !== "markedOverdue",
+                          );
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={group} className="space-y-2">
+                      <h3 className="text-sm font-medium text-muted-foreground">
+                        {group === "posted"
+                          ? t("groupPosted")
+                          : group === "markedOverdue"
+                            ? t("groupMarkedOverdue")
+                            : t("groupPending")}
+                        <span className="ml-1 tabular-nums">({items.length})</span>
+                      </h3>
+                      <ul className="overflow-hidden rounded-2xl border bg-white/70">
+                        {items.map((o) => (
+                          <li
+                            key={`${o.billId}-${o.dueOn}`}
+                            className={cn(
+                              "flex flex-wrap items-start justify-between gap-2 border-b border-foreground/5 px-4 py-3 last:border-b-0",
+                              rowAccentClass(o.status),
+                            )}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span
+                                  className={cn(
+                                    "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                                    statusBadgeClass(o.status),
+                                  )}
+                                >
+                                  {t(`status.${o.status}`)}
+                                </span>
+                                <span className="text-sm font-medium tabular-nums">{o.dueOn}</span>
+                              </div>
+                              <p className="mt-1 text-sm">
+                                {formatCategoryLabel(o.category, o.type, (k) => tx(k))}
+                                {o.note ? (
+                                  <span className="text-muted-foreground"> · {o.note}</span>
+                                ) : null}
+                              </p>
+                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                {o.cadence === "daily"
+                                  ? tx("recurringDaily")
+                                  : o.cadence === "quarterly"
+                                    ? tx("recurringQuarterly")
+                                    : o.cadence === "yearly"
+                                      ? tx("recurringYearly")
+                                      : tx("recurringMonthly")}
+                                {o.currency !== "USD"
+                                  ? ` · ${formatProjectMoney(o.amount, o.currency)} ≈ ${formatProjectMoney(o.amountUsd, "USD")}`
+                                  : ` · ${formatProjectMoney(o.amountUsd, "USD")}`}
+                              </p>
+                            </div>
+                            <div className="flex shrink-0 flex-col items-end gap-2">
+                              <p
+                                className={cn(
+                                  "text-sm font-semibold tabular-nums",
+                                  o.type === "income" ? "text-emerald-800" : "",
+                                )}
+                              >
+                                {o.type === "income" ? "+" : "−"}
+                                {formatProjectMoney(o.amountUsd, "USD")}
+                              </p>
+                              {o.canMarkOverdue ? (
+                                <form action={confirmOccurrenceOverdue}>
+                                  <input type="hidden" name="locale" value={locale} />
+                                  <input type="hidden" name="bill_id" value={o.billId} />
+                                  <input type="hidden" name="due_on" value={o.dueOn} />
+                                  <Button
+                                    type="submit"
+                                    variant="outline"
+                                    size="sm"
+                                    className="rounded-full text-rose-800"
+                                  >
+                                    {o.status === "posted" ? t("markOverdueCancelPost") : t("markOverdue")}
+                                  </Button>
+                                </form>
+                              ) : null}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="text-right">
-                      <p
-                        className={cn(
-                          "text-sm font-medium tabular-nums",
-                          o.type === "income" ? "text-emerald-800" : "",
-                        )}
-                      >
-                        {o.type === "income" ? "+" : "−"}
-                        {formatProjectMoney(o.amountUsd, "USD")}
-                      </p>
-                      <p className={cn("text-xs font-medium", statusClass(o.status))}>
-                        {t(`status.${o.status}`)}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                  );
+                })}
+              </>
             )}
           </section>
 

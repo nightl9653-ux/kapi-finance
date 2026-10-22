@@ -1,7 +1,11 @@
 import type { RecurringBillRow } from "@/lib/recurring-bills";
-import { amountTowardUsd, calendarDueDatesInMonth } from "@/lib/recurring-bills";
+import {
+  amountTowardUsd,
+  calendarDueDatesInMonth,
+  occurrenceOverdueKey,
+} from "@/lib/recurring-bills";
 
-export type FixedCostStatus = "posted" | "overdue" | "dueToday" | "upcoming";
+export type FixedCostStatus = "posted" | "markedOverdue" | "overdue" | "dueToday" | "upcoming";
 
 export type FixedCostOccurrence = {
   billId: string;
@@ -15,35 +19,44 @@ export type FixedCostOccurrence = {
   currency: string;
   amountUsd: number;
   status: FixedCostStatus;
+  /** 可点「确认逾期」：尚未被用户标逾期 */
+  canMarkOverdue: boolean;
 };
 
 export type FixedCostBoard = {
   year: number;
   month: number;
   monthLabel: string;
-  /** 本月支出计划（USD） */
   expensePlannedUsd: number;
-  /** 本月支出已入账（USD） */
   expensePostedUsd: number;
-  /** 本月支出待入账（已到期未入账 + 未到期）（USD） */
   expensePendingUsd: number;
   expenseOverdueUsd: number;
+  expenseMarkedOverdueUsd: number;
   incomePlannedUsd: number;
   incomePostedUsd: number;
   occurrences: FixedCostOccurrence[];
 };
 
-function statusFor(dueOn: string, lastGeneratedOn: string | null, today: string): FixedCostStatus {
-  const posted = Boolean(lastGeneratedOn && lastGeneratedOn >= dueOn);
+function statusFor(params: {
+  dueOn: string;
+  lastGeneratedOn: string | null;
+  today: string;
+  userMarkedOverdue: boolean;
+}): FixedCostStatus {
+  if (params.userMarkedOverdue) return "markedOverdue";
+  // 已推进游标且未被标逾期 → 视为已自动入账
+  const posted = Boolean(params.lastGeneratedOn && params.lastGeneratedOn >= params.dueOn);
   if (posted) return "posted";
-  if (dueOn < today) return "overdue";
-  if (dueOn === today) return "dueToday";
+  if (params.dueOn < params.today) return "overdue";
+  if (params.dueOn === params.today) return "dueToday";
   return "upcoming";
 }
 
-/** 由周期账单规则生成本月固定开销看板（须先 materialize 再算更准） */
+/** 由周期账单规则 + 用户逾期标记生成本月看板 */
 export function buildFixedCostBoard(params: {
   bills: RecurringBillRow[];
+  /** billId|dueOn */
+  overdueKeys: Set<string>;
   year: number;
   month: number; // 1–12
   today?: string;
@@ -62,6 +75,13 @@ export function buildFixedCostBoard(params: {
     const dues = calendarDueDatesInMonth(bill, params.year, params.month);
     const amountUsd = amountTowardUsd(bill);
     for (const dueOn of dues) {
+      const userMarkedOverdue = params.overdueKeys.has(occurrenceOverdueKey(bill.id, dueOn));
+      const status = statusFor({
+        dueOn,
+        lastGeneratedOn: bill.last_generated_on,
+        today,
+        userMarkedOverdue,
+      });
       occurrences.push({
         billId: bill.id,
         type: bill.type,
@@ -73,7 +93,9 @@ export function buildFixedCostBoard(params: {
         amount: Number(bill.amount) || 0,
         currency: (bill.currency ?? "USD").toUpperCase(),
         amountUsd,
-        status: statusFor(dueOn, bill.last_generated_on, today),
+        status,
+        // 到期日已到（含今天）且尚未点过确认逾期，可标记；已入账也可点以取消该期入账
+        canMarkOverdue: !userMarkedOverdue && dueOn <= today,
       });
     }
   }
@@ -87,6 +109,7 @@ export function buildFixedCostBoard(params: {
   let expensePostedUsd = 0;
   let expensePendingUsd = 0;
   let expenseOverdueUsd = 0;
+  let expenseMarkedOverdueUsd = 0;
   let incomePlannedUsd = 0;
   let incomePostedUsd = 0;
 
@@ -94,6 +117,7 @@ export function buildFixedCostBoard(params: {
     if (o.type === "expense") {
       expensePlannedUsd += o.amountUsd;
       if (o.status === "posted") expensePostedUsd += o.amountUsd;
+      else if (o.status === "markedOverdue") expenseMarkedOverdueUsd += o.amountUsd;
       else {
         expensePendingUsd += o.amountUsd;
         if (o.status === "overdue") expenseOverdueUsd += o.amountUsd;
@@ -114,6 +138,7 @@ export function buildFixedCostBoard(params: {
     expensePostedUsd: round2(expensePostedUsd),
     expensePendingUsd: round2(expensePendingUsd),
     expenseOverdueUsd: round2(expenseOverdueUsd),
+    expenseMarkedOverdueUsd: round2(expenseMarkedOverdueUsd),
     incomePlannedUsd: round2(incomePlannedUsd),
     incomePostedUsd: round2(incomePostedUsd),
     occurrences,
