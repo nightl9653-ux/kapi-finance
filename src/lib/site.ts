@@ -1,7 +1,7 @@
 /** Public site identity for metadata, footer, and legal pages. */
 
-export const SITE_NAME_EN = "Kash · Family Finance";
-export const SITE_NAME_ZH = "咔账·家庭财务规划";
+export const SITE_NAME_EN = "Kash";
+export const SITE_NAME_ZH = "咔账";
 
 export const SITE_DESCRIPTION_EN =
   "Family finance planning: goals, transactions, AI receipt scan, voice entry, budgets, and Dream Theater visualizations.";

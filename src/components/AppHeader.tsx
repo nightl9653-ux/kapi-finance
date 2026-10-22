@@ -24,18 +24,18 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
   const locale = useLocale();
 
   const navPrimary: NavItem[] = [
-    { href: `/${locale}`, label: t("dashboard") },
-    { href: `/${locale}/goals`, label: t("goals") },
-    { href: `/${locale}/transactions`, label: t("transactions") },
-    { href: `/${locale}/fixed-costs`, label: t("fixedCosts") },
-    { href: `/${locale}/quick-record`, label: t("quickRecord") },
-    { href: `/${locale}/meetings`, label: t("meetings") },
     { href: `/${locale}/gigs`, label: t("gigs") },
-    { href: `/${locale}/banquet-party`, label: t("banquetParty") },
-    { href: `/${locale}/travel`, label: t("travel") },
+    { href: `/${locale}/transactions`, label: t("transactions") },
   ];
 
   const navSecondary: NavItem[] = [
+    { href: `/${locale}`, label: t("dashboard") },
+    { href: `/${locale}/goals`, label: t("goals") },
+    { href: `/${locale}/fixed-costs`, label: t("fixedCosts") },
+    { href: `/${locale}/quick-record`, label: t("quickRecord") },
+    { href: `/${locale}/meetings`, label: t("meetings") },
+    { href: `/${locale}/banquet-party`, label: t("banquetParty") },
+    { href: `/${locale}/travel`, label: t("travel") },
     { href: `/${locale}/ai-assistant`, label: t("aiAssistant") },
     { href: `/${locale}/reports`, label: t("reports") },
     { href: `/${locale}/house-renovation`, label: t("houseRenovation") },

@@ -1,6 +1,6 @@
 {
   "nav": {
-    "brand": "咔账·家庭财务规划",
+    "brand": "咔账",
     "brandShort": "咔账",
     "dashboard": "仪表盘",
     "goals": "目标管理",
@@ -24,7 +24,7 @@
     "openMenu": "打开导航",
     "closeMenu": "关闭导航",
     "navSectionPrimary": "常用",
-    "navSectionSecondary": "工具与账户",
+    "navSectionSecondary": "更多",
     "swipeHint": "从屏幕左边缘向右滑可打开导航"
   },
   "featurePages": {
