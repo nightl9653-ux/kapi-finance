@@ -744,7 +744,7 @@
     "rulesTitle": "All rules",
     "rulesSubtitle": "Editing a rule keeps auto-posting; deleting stops future entries.",
     "rulesEmpty": "No fixed-cost rules yet.",
-    "addBill": "Add fixed cost",
+    "addBill": "Add fixed bill",
     "goTransactions": "Open transactions",
     "status": {
       "posted": "Posted",
@@ -1011,7 +1011,7 @@
     "recurringDayPlaceholder": "e.g. 5",
     "recurringMonthPlaceholder": "e.g. 5 (May)",
     "recurringEndDate": "End date",
-    "recurringManageTitle": "Fixed costs",
+    "recurringManageTitle": "Fixed bills",
     "recurringManageSubtitle": "Manage fixed expense/income rules; due dates auto-post to the ledger. Use the Fixed costs board for this month’s progress.",
     "recurringEmpty": "No recurring bills yet. Create one from the Transactions form.",
     "recurringCadenceLabel": "Cadence",

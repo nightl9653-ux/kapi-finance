@@ -744,7 +744,7 @@
     "rulesTitle": "全部规则",
     "rulesSubtitle": "编辑规则不会取消自动入账；删除规则后不再生成新流水。",
     "rulesEmpty": "还没有固定开销规则。",
-    "addBill": "添加固定开销",
+    "addBill": "添加固定账单",
     "goTransactions": "打开记账",
     "status": {
       "posted": "已入账",
@@ -1011,7 +1011,7 @@
     "recurringDayPlaceholder": "如：5",
     "recurringMonthPlaceholder": "如：5（五月）",
     "recurringEndDate": "结束日期",
-    "recurringManageTitle": "固定开销",
+    "recurringManageTitle": "固定账单",
     "recurringManageSubtitle": "管理固定开销/收入规则；到期会自动生成记账。也可在「固定开销」看板查看本月进度。",
     "recurringEmpty": "暂无周期性账单。你可以在记账页面创建周期性账单。",
     "recurringCadenceLabel": "周期",
