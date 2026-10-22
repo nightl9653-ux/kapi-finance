@@ -54,7 +54,7 @@ export default async function SettingsPage({
           <Link href={`/${locale}/quick-record`} className={cn(buttonVariants(), "rounded-full")}>
             {s("openQuickRecord")}
           </Link>
-          <Link href={`/${locale}/recurring-bills`} className={cn(buttonVariants({ variant: "secondary" }), "rounded-full")}>
+          <Link href={`/${locale}/fixed-costs`} className={cn(buttonVariants({ variant: "secondary" }), "rounded-full")}>
             {t("recurringManageTitle")}
           </Link>
         </div>

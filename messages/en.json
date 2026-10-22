@@ -15,6 +15,7 @@
     "banquetParty": "Banquet & party",
     "houseRenovation": "Home renovation",
     "travel": "Travel",
+    "fixedCosts": "Fixed costs",
     "dressup": "Manor",
     "art": "Art",
     "menu": "Menu",
@@ -713,6 +714,30 @@
       "yardPaving": "Yard paving"
     }
   },
+  "fixedCosts": {
+    "title": "Fixed costs",
+    "subtitle": "Board for rent, memberships, insurance, and other recurring bills—planned, posted, and pending this month. Still powered by recurring rules that auto-post to the ledger.",
+    "thisMonth": "{month}",
+    "expensePlanned": "Planned expenses",
+    "expensePosted": "Posted expenses",
+    "expensePending": "Pending expenses",
+    "postedPct": "{pct}% posted",
+    "overdueAmount": "Overdue {amount}",
+    "incomeLine": "Fixed income planned {planned}, posted {posted}",
+    "monthListTitle": "Due this month",
+    "monthEmpty": "Nothing due this month. Create a recurring rule on Transactions first.",
+    "rulesTitle": "All rules",
+    "rulesSubtitle": "Editing a rule keeps auto-posting; deleting stops future entries.",
+    "rulesEmpty": "No fixed-cost rules yet.",
+    "addBill": "Add on Transactions",
+    "goTransactions": "Open transactions",
+    "status": {
+      "posted": "Posted",
+      "overdue": "Overdue",
+      "dueToday": "Due today",
+      "upcoming": "Upcoming"
+    }
+  },
   "travel": {
     "title": "Travel",
     "subtitle": "Trip budget list · categories · post spend to the ledger",
@@ -970,15 +995,15 @@
     "recurringDayPlaceholder": "e.g. 5",
     "recurringMonthPlaceholder": "e.g. 5 (May)",
     "recurringEndDate": "End date",
-    "recurringManageTitle": "Recurring bills",
-    "recurringManageSubtitle": "Manage fixed expenses/income. We'll auto-generate entries on due dates.",
+    "recurringManageTitle": "Fixed costs",
+    "recurringManageSubtitle": "Manage fixed expense/income rules; due dates auto-post to the ledger. Use the Fixed costs board for this month’s progress.",
     "recurringEmpty": "No recurring bills yet. Create one from the Transactions form.",
     "recurringCadenceLabel": "Cadence",
     "recurringDayShort": "Day {n}",
     "recurringEndShort": "Ends {d}",
     "recurringUsesAbove": "Recurring bills use the amount, category, and note you entered above.",
     "recurringSave": "Save recurring bill",
-    "recurringManageLink": "Manage recurring bills",
+    "recurringManageLink": "Open fixed costs board",
     "recurringEdit": "Edit",
     "recurringMonthInYear": "Month {n}"
   },

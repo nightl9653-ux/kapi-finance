@@ -15,6 +15,7 @@
     "banquetParty": "宴会派对",
     "houseRenovation": "房屋装修",
     "travel": "旅行",
+    "fixedCosts": "固定开销",
     "dressup": "宅宴",
     "art": "艺术",
     "menu": "菜单",
@@ -713,6 +714,30 @@
       "yardPaving": "庭院铺装"
     }
   },
+  "fixedCosts": {
+    "title": "固定开销",
+    "subtitle": "房租、会员、保险等周期账单看板：本月计划、已入账与待付。底层仍是周期账单，到期自动写入总账。",
+    "thisMonth": "{month}",
+    "expensePlanned": "本月支出计划",
+    "expensePosted": "已入账支出",
+    "expensePending": "待入账支出",
+    "postedPct": "已入账 {pct}%",
+    "overdueAmount": "其中逾期 {amount}",
+    "incomeLine": "本月固定收入计划 {planned}，已入账 {posted}",
+    "monthListTitle": "本月到期明细",
+    "monthEmpty": "本月没有到期的固定开销。可先在记账页创建周期规则。",
+    "rulesTitle": "全部规则",
+    "rulesSubtitle": "编辑规则不会取消自动入账；删除规则后不再生成新流水。",
+    "rulesEmpty": "还没有固定开销规则。",
+    "addBill": "去记账页添加",
+    "goTransactions": "打开记账",
+    "status": {
+      "posted": "已入账",
+      "overdue": "已逾期",
+      "dueToday": "今日到期",
+      "upcoming": "未到期"
+    }
+  },
   "travel": {
     "title": "旅行",
     "subtitle": "行程预算清单 · 分类费用 · 实付入总账",
@@ -970,15 +995,15 @@
     "recurringDayPlaceholder": "如：5",
     "recurringMonthPlaceholder": "如：5（五月）",
     "recurringEndDate": "结束日期",
-    "recurringManageTitle": "周期性账单",
-    "recurringManageSubtitle": "管理你的固定开销/收入，到期日会自动生成记账记录。",
+    "recurringManageTitle": "固定开销",
+    "recurringManageSubtitle": "管理固定开销/收入规则；到期会自动生成记账。也可在「固定开销」看板查看本月进度。",
     "recurringEmpty": "暂无周期性账单。你可以在记账页面创建周期性账单。",
     "recurringCadenceLabel": "周期",
     "recurringDayShort": "每月 {n} 号",
     "recurringEndShort": "截止 {d}",
     "recurringUsesAbove": "周期账单会使用上方填写的金额、分类、备注等信息。",
     "recurringSave": "保存周期账单",
-    "recurringManageLink": "管理周期性账单",
+    "recurringManageLink": "打开固定开销看板",
     "recurringEdit": "编辑",
     "recurringMonthInYear": "{n}月"
   },

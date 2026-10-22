@@ -1,9 +1,11 @@
-type Cadence = "daily" | "monthly" | "quarterly" | "yearly";
+export type Cadence = "daily" | "monthly" | "quarterly" | "yearly";
 
-type RecurringBillRow = {
+export type RecurringBillRow = {
   id: string;
   user_id: string;
   amount: number;
+  currency?: string | null;
+  fx_rate?: number | null;
   type: "expense" | "income";
   category: string;
   merchant: string | null;
@@ -15,6 +17,46 @@ type RecurringBillRow = {
   end_date: string | null; // YYYY-MM-DD
   last_generated_on: string | null; // YYYY-MM-DD
 };
+
+/** 规则金额折合 USD（有 fx_rate 用原币×汇率，否则按原币当作 USD） */
+export function amountTowardUsd(row: Pick<RecurringBillRow, "amount" | "currency" | "fx_rate">): number {
+  const amount = Number(row.amount);
+  if (!Number.isFinite(amount) || amount <= 0) return 0;
+  const cur = String(row.currency ?? "USD").toUpperCase();
+  if (cur === "USD") return amount;
+  const rate = Number(row.fx_rate);
+  if (Number.isFinite(rate) && rate > 0) return Math.round(amount * rate * 100) / 100;
+  return amount;
+}
+
+/**
+ * 日历意义上「该月应出现的到期日」（忽略 last_generated_on，用于看板）。
+ * 起算日取 max(规则 start, 月初)。
+ */
+export function calendarDueDatesInMonth(
+  row: RecurringBillRow,
+  year: number,
+  month: number,
+): string[] {
+  const y = String(year).padStart(4, "0");
+  const m = String(month).padStart(2, "0");
+  const monthStart = `${y}-${m}-01`;
+  const dim = daysInMonth(year, month);
+  const monthEnd = `${y}-${m}-${String(dim).padStart(2, "0")}`;
+  if (row.end_date && row.end_date < monthStart) return [];
+  const start = row.start_date ?? monthStart;
+  if (start > monthEnd) return [];
+  const begin = maxIso(start, monthStart);
+  const limit = row.end_date && row.end_date < monthEnd ? row.end_date : monthEnd;
+  return nextDueDates(
+    {
+      ...row,
+      start_date: begin,
+      last_generated_on: null,
+    },
+    limit,
+  ).filter((d) => d >= monthStart && d <= monthEnd);
+}
 
 function isoToday(): string {
   return new Date().toISOString().slice(0, 10);

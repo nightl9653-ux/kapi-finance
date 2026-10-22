@@ -352,7 +352,7 @@ export function RecurringBillForm({
             {t("recurringSave")}
           </Button>
           <Link
-            href={`/${locale}/recurring-bills`}
+            href={`/${locale}/fixed-costs`}
             className={cn(buttonVariants({ variant: "secondary" }), "rounded-full")}
           >
             {t("recurringManageLink")}
