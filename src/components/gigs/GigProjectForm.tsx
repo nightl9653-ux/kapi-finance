@@ -103,7 +103,6 @@ export function GigProjectForm({
             className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm"
             value={vertical}
             onChange={(e) => setVertical(e.target.value as GigVertical)}
-            disabled={Boolean(initial)}
           >
             {GIG_VERTICALS.map((v) => (
               <option key={v} value={v}>
@@ -164,6 +163,7 @@ export function GigProjectForm({
         <Input id="gig-project-notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
       </div>
       {!initial ? <p className="text-xs text-muted-foreground">{t("templateHint")}</p> : null}
+      {initial ? <p className="text-xs text-muted-foreground">{t("currencyEditHint")}</p> : null}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" className="rounded-full" disabled={saving || !canSubmit}>
           {t("save")}

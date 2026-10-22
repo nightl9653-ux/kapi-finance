@@ -135,6 +135,7 @@ export function GigsApp({ userId }: { userId: string }) {
       <GigProjectDetail
         project={activeProject}
         client={clientById.get(activeProject.clientId)}
+        clients={store.clients}
         userId={userId}
         onBack={() => setActiveProjectId(null)}
         onStore={setStore}

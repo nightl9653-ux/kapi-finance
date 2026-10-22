@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { GigProjectForm } from "@/components/gigs/GigProjectForm";
 import { NudgeControls } from "@/components/gigs/NudgeControls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,12 +39,14 @@ import {
 export function GigProjectDetail({
   project,
   client,
+  clients,
   userId,
   onBack,
   onStore,
 }: {
   project: GigProject;
   client: GigClient | undefined;
+  clients: GigClient[];
   userId: string;
   onBack: () => void;
   onStore: (store: GigsStore) => void;
@@ -57,6 +60,10 @@ export function GigProjectDetail({
   const [timeQty, setTimeQty] = useState("");
   const [timeRate, setTimeRate] = useState("");
   const [timeNote, setTimeNote] = useState("");
+  const [editingTimeId, setEditingTimeId] = useState<string | null>(null);
+  const [editingProject, setEditingProject] = useState(false);
+  const [editingInstallmentId, setEditingInstallmentId] = useState<string | null>(null);
+  const [editingCostId, setEditingCostId] = useState<string | null>(null);
 
   function saveErrorText(err: unknown): string {
     const code = gigsErrorCode(err);
@@ -65,13 +72,15 @@ export function GigProjectDetail({
     return t("saveError");
   }
 
-  async function persist(next: GigProject) {
+  async function persist(next: GigProject): Promise<boolean> {
     setBusy(true);
     setError(null);
     try {
       onStore(await upsertProject(userId, { ...next, updatedAt: new Date().toISOString() }));
+      return true;
     } catch (err) {
       setError(saveErrorText(err));
+      return false;
     } finally {
       setBusy(false);
     }
@@ -148,10 +157,78 @@ export function GigProjectDetail({
   }
 
   async function removeTime(id: string) {
-    await persist({
+    const ok = await persist({
       ...project,
       timeLogs: (project.timeLogs ?? []).filter((entry) => entry.id !== id),
     });
+    if (ok) setEditingTimeId((current) => (current === id ? null : current));
+  }
+
+  async function saveInstallment(next: GigInstallment) {
+    const label = next.label.trim();
+    const amount = Math.round(Math.max(0, Number(next.amount) || 0) * 100) / 100;
+    if (!label || amount <= 0) return;
+    let status = next.status;
+    let paidAmount = Math.max(0, Number(next.paidAmount) || 0);
+    if (status === "paid" || paidAmount >= amount) {
+      status = "paid";
+      paidAmount = amount;
+    } else if (paidAmount > 0) {
+      status = "partial";
+    } else {
+      status = "pending";
+      paidAmount = 0;
+    }
+    const updated: GigInstallment = {
+      ...next,
+      label,
+      amount,
+      status,
+      paidAmount,
+      dueOn: next.dueOn?.trim() || undefined,
+    };
+    const ok = await persist({
+      ...project,
+      installments: project.installments.map((inst) => (inst.id === updated.id ? updated : inst)),
+    });
+    if (ok) setEditingInstallmentId(null);
+  }
+
+  async function removeInstallment(id: string) {
+    if (!confirm(t("confirmDeleteInstallment"))) return;
+    const ok = await persist({
+      ...project,
+      installments: project.installments.filter((inst) => inst.id !== id),
+    });
+    if (ok) setEditingInstallmentId((current) => (current === id ? null : current));
+  }
+
+  async function saveCostEdit(next: GigCost) {
+    const name = next.name.trim();
+    const amount = Math.round(Math.max(0, Number(next.amount) || 0) * 100) / 100;
+    if (!name || amount <= 0) return;
+    const ok = await persist({
+      ...project,
+      costs: project.costs.map((cost) => (cost.id === next.id ? { ...next, name, amount } : cost)),
+    });
+    if (ok) setEditingCostId(null);
+  }
+
+  async function removeCost(id: string) {
+    if (!confirm(t("confirmDeleteCost"))) return;
+    const ok = await persist({
+      ...project,
+      costs: project.costs.filter((cost) => cost.id !== id),
+    });
+    if (ok) setEditingCostId((current) => (current === id ? null : current));
+  }
+
+  async function saveTime(next: GigTimeLog) {
+    const ok = await persist({
+      ...project,
+      timeLogs: (project.timeLogs ?? []).map((entry) => (entry.id === next.id ? next : entry)),
+    });
+    if (ok) setEditingTimeId(null);
   }
 
   async function logCost(cost: GigCost) {
@@ -206,7 +283,23 @@ export function GigProjectDetail({
             {client?.name ?? t("unknownClient")} · {t(`verticals.${project.vertical}`)} · {t(`statuses.${project.status}`)}
           </p>
         </div>
+        <Button type="button" variant="outline" className="rounded-full" disabled={busy} onClick={() => setEditingProject(true)}>
+          {t("editProject")}
+        </Button>
       </div>
+
+      {editingProject ? (
+        <GigProjectForm
+          clients={clients}
+          initial={project}
+          saving={busy}
+          onCancel={() => setEditingProject(false)}
+          onSave={async (next) => {
+            const ok = await persist(next);
+            if (ok) setEditingProject(false);
+          }}
+        />
+      ) : null}
 
       {error ? (
         <p className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{error}</p>
@@ -229,9 +322,22 @@ export function GigProjectDetail({
 
       <section className="space-y-3">
         <h3 className="text-base font-medium">{t("installments")}</h3>
+        <p className="text-xs text-muted-foreground">{t("editKeepsLedger")}</p>
         <ul className="space-y-2">
           {project.installments.map((inst) => {
             const left = installmentOutstanding(inst);
+            if (editingInstallmentId === inst.id) {
+              return (
+                <li key={inst.id}>
+                  <InstallmentEditor
+                    installment={inst}
+                    busy={busy}
+                    onCancel={() => setEditingInstallmentId(null)}
+                    onSave={(next) => void saveInstallment(next)}
+                  />
+                </li>
+              );
+            }
             return (
               <li key={inst.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-white/70 px-4 py-3">
                 <div>
@@ -274,6 +380,28 @@ export function GigProjectDetail({
                 ) : inst.transactionId ? (
                   <span className="text-xs text-emerald-800">{t("onLedger")}</span>
                 ) : null}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full"
+                    disabled={busy}
+                    onClick={() => setEditingInstallmentId(inst.id)}
+                  >
+                    {t("edit")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full"
+                    disabled={busy}
+                    onClick={() => void removeInstallment(inst.id)}
+                  >
+                    {t("delete")}
+                  </Button>
+                </div>
               </li>
             );
           })}
@@ -322,6 +450,19 @@ export function GigProjectDetail({
           ) : (
             (project.timeLogs ?? []).map((entry) => {
               const entryCost = timeEntryCost(entry);
+              if (editingTimeId === entry.id) {
+                return (
+                  <li key={entry.id}>
+                    <TimeLogEditor
+                      entry={entry}
+                      sessions={sessions}
+                      busy={busy}
+                      onCancel={() => setEditingTimeId(null)}
+                      onSave={(next) => void saveTime(next)}
+                    />
+                  </li>
+                );
+              }
               return (
                 <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-white/70 px-4 py-3">
                   <div>
@@ -336,16 +477,28 @@ export function GigProjectDetail({
                         : t("timeNotInProfit")}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full"
-                    disabled={busy}
-                    onClick={() => void removeTime(entry.id)}
-                  >
-                    {t("deleteTime")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full"
+                      disabled={busy}
+                      onClick={() => setEditingTimeId(entry.id)}
+                    >
+                      {t("editTime")}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full"
+                      disabled={busy}
+                      onClick={() => void removeTime(entry.id)}
+                    >
+                      {t("deleteTime")}
+                    </Button>
+                  </div>
                 </li>
               );
             })
@@ -379,7 +532,12 @@ export function GigProjectDetail({
           {project.costs.length === 0 ? (
             <li className="text-sm text-muted-foreground">{t("costsEmpty")}</li>
           ) : (
-            project.costs.map((c) => (
+            project.costs.map((c) =>
+              editingCostId === c.id ? (
+                <li key={c.id}>
+                  <CostEditor cost={c} busy={busy} onCancel={() => setEditingCostId(null)} onSave={(next) => void saveCostEdit(next)} />
+                </li>
+              ) : (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-white/70 px-4 py-3">
                 <div>
                   <p className="font-medium">{c.name}</p>
@@ -388,18 +546,216 @@ export function GigProjectDetail({
                     {c.occurredOn ? ` · ${c.occurredOn}` : ""}
                   </p>
                 </div>
-                {c.transactionId ? (
-                  <span className="text-xs text-emerald-800">{t("onLedger")}</span>
-                ) : (
-                  <Button type="button" size="sm" variant="outline" className="rounded-full" disabled={busy} onClick={() => void logCost(c)}>
-                    {t("logToLedger")}
+                <div className="flex flex-wrap items-center gap-2">
+                  {c.transactionId ? (
+                    <span className="text-xs text-emerald-800">{t("onLedger")}</span>
+                  ) : (
+                    <Button type="button" size="sm" variant="outline" className="rounded-full" disabled={busy} onClick={() => void logCost(c)}>
+                      {t("logToLedger")}
+                    </Button>
+                  )}
+                  <Button type="button" size="sm" variant="outline" className="rounded-full" disabled={busy} onClick={() => setEditingCostId(c.id)}>
+                    {t("edit")}
                   </Button>
-                )}
+                  <Button type="button" size="sm" variant="outline" className="rounded-full" disabled={busy} onClick={() => void removeCost(c.id)}>
+                    {t("delete")}
+                  </Button>
+                </div>
               </li>
-            ))
+              ),
+            )
           )}
         </ul>
       </section>
+    </div>
+  );
+}
+
+function TimeLogEditor({
+  entry,
+  sessions,
+  busy,
+  onCancel,
+  onSave,
+}: {
+  entry: GigTimeLog;
+  sessions: boolean;
+  busy: boolean;
+  onCancel: () => void;
+  onSave: (next: GigTimeLog) => void;
+}) {
+  const t = useTranslations("gigs");
+  const [qty, setQty] = useState(String(entry.quantity));
+  const [rate, setRate] = useState(entry.rate != null && entry.rate > 0 ? String(entry.rate) : "");
+  const [note, setNote] = useState(entry.note ?? "");
+  const [occurredOn, setOccurredOn] = useState(entry.occurredOn ?? isoToday());
+
+  return (
+    <div className="flex flex-wrap items-end gap-2 rounded-xl border bg-white/70 p-3">
+      <div className="space-y-1">
+        <Label htmlFor={`time-qty-${entry.id}`}>{t("timeQuantity")}</Label>
+        <Input
+          id={`time-qty-${entry.id}`}
+          type="number"
+          min={0}
+          step="0.01"
+          value={qty}
+          disabled={busy}
+          onChange={(e) => setQty(e.target.value)}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`time-rate-${entry.id}`}>{sessions ? t("timeRateSessions") : t("timeRateHours")}</Label>
+        <Input
+          id={`time-rate-${entry.id}`}
+          type="number"
+          min={0}
+          step="0.01"
+          value={rate}
+          disabled={busy}
+          onChange={(e) => setRate(e.target.value)}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`time-date-${entry.id}`}>{t("timeDate")}</Label>
+        <Input
+          id={`time-date-${entry.id}`}
+          type="date"
+          value={occurredOn}
+          disabled={busy}
+          onChange={(e) => setOccurredOn(e.target.value)}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`time-note-${entry.id}`}>{t("timeNote")}</Label>
+        <Input id={`time-note-${entry.id}`} value={note} disabled={busy} onChange={(e) => setNote(e.target.value)} />
+      </div>
+      <Button
+        type="button"
+        size="sm"
+        className="rounded-full"
+        disabled={busy}
+        onClick={() => {
+          const quantity = Number(qty);
+          if (!Number.isFinite(quantity) || quantity <= 0) return;
+          const rateNum = Number(rate);
+          onSave({
+            ...entry,
+            quantity,
+            rate: Number.isFinite(rateNum) && rateNum > 0 ? rateNum : undefined,
+            occurredOn: occurredOn.trim() || undefined,
+            note: note.trim() || undefined,
+          });
+        }}
+      >
+        {t("save")}
+      </Button>
+      <Button type="button" size="sm" variant="outline" className="rounded-full" disabled={busy} onClick={onCancel}>
+        {t("cancel")}
+      </Button>
+    </div>
+  );
+}
+
+function InstallmentEditor({
+  installment,
+  busy,
+  onCancel,
+  onSave,
+}: {
+  installment: GigInstallment;
+  busy: boolean;
+  onCancel: () => void;
+  onSave: (next: GigInstallment) => void;
+}) {
+  const t = useTranslations("gigs");
+  const [label, setLabel] = useState(installment.label);
+  const [amount, setAmount] = useState(String(installment.amount));
+  const [dueOn, setDueOn] = useState(installment.dueOn ?? "");
+
+  return (
+    <div className="flex flex-wrap items-end gap-2 rounded-xl border bg-white/70 p-3">
+      <div className="space-y-1">
+        <Label htmlFor={`inst-label-${installment.id}`}>{t("installmentLabel")}</Label>
+        <Input id={`inst-label-${installment.id}`} value={label} disabled={busy} onChange={(e) => setLabel(e.target.value)} />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`inst-amount-${installment.id}`}>{t("amount")}</Label>
+        <Input
+          id={`inst-amount-${installment.id}`}
+          type="number"
+          min={0}
+          step="0.01"
+          value={amount}
+          disabled={busy}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`inst-due-${installment.id}`}>{t("dueOn")}</Label>
+        <Input id={`inst-due-${installment.id}`} type="date" value={dueOn} disabled={busy} onChange={(e) => setDueOn(e.target.value)} />
+      </div>
+      <Button
+        type="button"
+        size="sm"
+        className="rounded-full"
+        disabled={busy}
+        onClick={() => onSave({ ...installment, label, amount: Number(amount), dueOn: dueOn.trim() || undefined })}
+      >
+        {t("save")}
+      </Button>
+      <Button type="button" size="sm" variant="outline" className="rounded-full" disabled={busy} onClick={onCancel}>
+        {t("cancel")}
+      </Button>
+    </div>
+  );
+}
+
+function CostEditor({
+  cost,
+  busy,
+  onCancel,
+  onSave,
+}: {
+  cost: GigCost;
+  busy: boolean;
+  onCancel: () => void;
+  onSave: (next: GigCost) => void;
+}) {
+  const t = useTranslations("gigs");
+  const [name, setName] = useState(cost.name);
+  const [amount, setAmount] = useState(String(cost.amount));
+
+  return (
+    <div className="flex flex-wrap items-end gap-2 rounded-xl border bg-white/70 p-3">
+      <div className="space-y-1">
+        <Label htmlFor={`cost-name-${cost.id}`}>{t("costName")}</Label>
+        <Input id={`cost-name-${cost.id}`} value={name} disabled={busy} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`cost-amount-${cost.id}`}>{t("amount")}</Label>
+        <Input
+          id={`cost-amount-${cost.id}`}
+          type="number"
+          min={0}
+          step="0.01"
+          value={amount}
+          disabled={busy}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+      </div>
+      <Button
+        type="button"
+        size="sm"
+        className="rounded-full"
+        disabled={busy}
+        onClick={() => onSave({ ...cost, name, amount: Number(amount) })}
+      >
+        {t("save")}
+      </Button>
+      <Button type="button" size="sm" variant="outline" className="rounded-full" disabled={busy} onClick={onCancel}>
+        {t("cancel")}
+      </Button>
     </div>
   );
 }
