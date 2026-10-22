@@ -13,12 +13,27 @@ import {
   type GigProject,
   type GigProjectRow,
   type GigProjectStatus,
+  type GigTimeLog,
   type GigVertical,
   type GigsStore,
 } from "@/lib/gigs/types";
 
 const CLIENTS_TABLE = "studio_clients";
 const PROJECTS_TABLE = "studio_projects";
+
+export function gigsErrorCode(err: unknown): "time_schema" | "schema" | "other" {
+  const code = err instanceof Error ? (err as Error & { code?: string }).code : undefined;
+  const msg = err instanceof Error ? err.message : "";
+  if (/time_logs/i.test(msg)) return "time_schema";
+  if (
+    code === "42P01" ||
+    code === "PGRST205" ||
+    /studio_clients|studio_projects|schema cache|does not exist/i.test(msg)
+  ) {
+    return "schema";
+  }
+  return "other";
+}
 
 function throwIfError(error: { message?: string; code?: string } | null): asserts error is null {
   if (!error) return;
@@ -72,6 +87,20 @@ function normalizeInstallment(raw: Partial<GigInstallment>): GigInstallment {
   };
 }
 
+function normalizeTimeLog(raw: Partial<GigTimeLog>): GigTimeLog | null {
+  const quantity = Math.round((Number(raw.quantity) || 0) * 100) / 100;
+  if (quantity <= 0) return null;
+  const rateNum = Number(raw.rate);
+  const rate = Number.isFinite(rateNum) && rateNum > 0 ? Math.round(rateNum * 100) / 100 : undefined;
+  return {
+    id: raw.id || newGigId(),
+    quantity,
+    rate,
+    occurredOn: isoDateOrUndef(raw.occurredOn),
+    note: raw.note?.trim() || undefined,
+  };
+}
+
 function normalizeCost(raw: Partial<GigCost>): GigCost {
   return {
     id: raw.id || newGigId(),
@@ -104,6 +133,9 @@ export function projectFromRow(row: GigProjectRow): GigProject {
     ? row.installments.map((i) => normalizeInstallment(i))
     : [];
   const costs = Array.isArray(row.costs) ? row.costs.map((c) => normalizeCost(c)) : [];
+  const timeLogs = Array.isArray(row.time_logs)
+    ? row.time_logs.map((entry) => normalizeTimeLog(entry)).filter((entry): entry is GigTimeLog => entry !== null)
+    : [];
   return {
     id: row.id,
     clientId: row.client_id,
@@ -114,6 +146,7 @@ export function projectFromRow(row: GigProjectRow): GigProject {
     notes: row.notes?.trim() || undefined,
     installments,
     costs,
+    timeLogs,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -185,6 +218,9 @@ export async function upsertProject(userId: string, project: GigProject): Promis
     notes: project.notes?.trim() || null,
     installments: project.installments.map((i) => normalizeInstallment(i)),
     costs: project.costs.map((c) => normalizeCost(c)),
+    time_logs: (project.timeLogs ?? [])
+      .map((entry) => normalizeTimeLog(entry))
+      .filter((entry): entry is GigTimeLog => entry !== null),
     updated_at: new Date().toISOString(),
   };
 

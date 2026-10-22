@@ -277,6 +277,7 @@ create table if not exists studio_projects (
   notes text,
   installments jsonb not null default '[]'::jsonb,
   costs jsonb not null default '[]'::jsonb,
+  time_logs jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

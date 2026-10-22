@@ -14,18 +14,31 @@ import {
   agingBucket,
   clientCurrencyTotals,
   collectUnpaid,
+  formatTimeQuantity,
   isChaseDue,
   nudgeInstallment,
+  projectTimeQuantity,
   sumUnpaidByCurrency,
+  timeUnitForVertical,
   type UnpaidRow,
 } from "@/lib/gigs/money";
-import { deleteClient, deleteProject, loadGigsStore, upsertClient, upsertProject } from "@/lib/gigs/storage";
+import { deleteClient, deleteProject, gigsErrorCode, loadGigsStore, upsertClient, upsertProject } from "@/lib/gigs/storage";
 import { isoToday, type GigClient, type GigProject, type GigsStore } from "@/lib/gigs/types";
 import { cn } from "@/lib/utils";
 
 type Tab = "unpaid" | "projects" | "clients";
 
 const TAB_KEY = "kapi-gigs-tab";
+
+function saveErrorText(
+  err: unknown,
+  t: (key: "timeSchemaMissing" | "schemaMissing" | "saveError") => string,
+): string {
+  const code = gigsErrorCode(err);
+  if (code === "time_schema") return t("timeSchemaMissing");
+  if (code === "schema") return t("schemaMissing");
+  return t("saveError");
+}
 
 function isSchemaMissing(err: unknown): boolean {
   const code = err instanceof Error ? (err as Error & { code?: string }).code : undefined;
@@ -110,7 +123,7 @@ export function GigsApp({ userId }: { userId: string }) {
     try {
       setStore(await upsertProject(userId, nudgeInstallment(project, row.installmentId, nextOn, today)));
     } catch (e) {
-      setError(isSchemaMissing(e) ? t("schemaMissing") : t("saveError"));
+      setError(saveErrorText(e, t));
     } finally {
       setSaving(false);
     }
@@ -269,7 +282,7 @@ export function GigsApp({ userId }: { userId: string }) {
                   setCreatingProject(false);
                   setActiveProjectId(project.id);
                 } catch (e) {
-                  setError(isSchemaMissing(e) ? t("schemaMissing") : t("saveError"));
+                  setError(saveErrorText(e, t));
                 } finally {
                   setSaving(false);
                 }
@@ -294,7 +307,7 @@ export function GigsApp({ userId }: { userId: string }) {
                     try {
                       setStore(await deleteProject(userId, p.id));
                     } catch (e) {
-                      setError(isSchemaMissing(e) ? t("schemaMissing") : t("saveError"));
+                      setError(saveErrorText(e, t));
                     } finally {
                       setSaving(false);
                     }
@@ -304,6 +317,16 @@ export function GigsApp({ userId }: { userId: string }) {
                     vertical: t(`verticals.${p.vertical}`),
                     delete: t("delete"),
                     unknownClient: t("unknownClient"),
+                    time:
+                      projectTimeQuantity(p) > 0
+                        ? t("timeInvested", {
+                            qty: formatTimeQuantity(projectTimeQuantity(p)),
+                            unit:
+                              timeUnitForVertical(p.vertical) === "sessions"
+                                ? t("timeUnitSessions")
+                                : t("timeUnitHours"),
+                          })
+                        : undefined,
                   }}
                 />
               ))}
@@ -328,7 +351,7 @@ export function GigsApp({ userId }: { userId: string }) {
                   setStore(await upsertClient(userId, client));
                   setCreatingClient(false);
                 } catch (e) {
-                  setError(isSchemaMissing(e) ? t("schemaMissing") : t("saveError"));
+                  setError(saveErrorText(e, t));
                 } finally {
                   setSaving(false);
                 }
@@ -373,7 +396,7 @@ export function GigsApp({ userId }: { userId: string }) {
                       try {
                         setStore(await deleteClient(userId, c.id));
                       } catch (e) {
-                        setError(isSchemaMissing(e) ? t("schemaMissing") : t("saveError"));
+                        setError(saveErrorText(e, t));
                       } finally {
                         setSaving(false);
                       }
@@ -403,7 +426,7 @@ function ProjectRow({
   clientName?: string;
   onOpen: () => void;
   onDelete: () => void;
-  labels: { status: string; vertical: string; delete: string; unknownClient: string };
+  labels: { status: string; vertical: string; delete: string; unknownClient: string; time?: string };
 }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-white/70 px-4 py-3">
@@ -411,6 +434,7 @@ function ProjectRow({
         <p className="font-medium">{project.name}</p>
         <p className="text-xs text-muted-foreground">
           {clientName ?? labels.unknownClient} · {labels.vertical} · {labels.status}
+          {labels.time ? ` · ${labels.time}` : ""}
         </p>
       </button>
       <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={onDelete}>

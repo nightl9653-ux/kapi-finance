@@ -1,4 +1,4 @@
-import type { GigInstallment, GigProject } from "@/lib/gigs/types";
+import type { GigInstallment, GigProject, GigTimeLog, GigVertical } from "@/lib/gigs/types";
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -33,9 +33,34 @@ export function projectCostTotal(project: GigProject): number {
   return round2(project.costs.reduce((s, c) => s + (Number(c.amount) || 0), 0));
 }
 
-/** 已收 − 成本（项目币种；未换汇） */
+export function timeUnitForVertical(vertical: GigVertical): "hours" | "sessions" {
+  return vertical === "training" ? "sessions" : "hours";
+}
+
+export function timeEntryCost(entry: GigTimeLog): number {
+  const quantity = Math.max(0, Number(entry.quantity) || 0);
+  const rate = Number(entry.rate);
+  if (!Number.isFinite(rate) || rate <= 0) return 0;
+  return round2(quantity * rate);
+}
+
+export function projectTimeQuantity(project: GigProject): number {
+  return round2((project.timeLogs ?? []).reduce((s, entry) => s + (Number(entry.quantity) || 0), 0));
+}
+
+/** 只加总填了单价的记录 */
+export function projectTimeCost(project: GigProject): number {
+  return round2((project.timeLogs ?? []).reduce((s, entry) => s + timeEntryCost(entry), 0));
+}
+
+export function formatTimeQuantity(quantity: number): string {
+  const rounded = round2(quantity);
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+}
+
+/** 已收 − 成本 − 时间成本。没有单价时时间成本为 0，利润与原来相同。 */
 export function projectProfit(project: GigProject): number {
-  return round2(projectReceivedTotal(project) - projectCostTotal(project));
+  return round2(projectReceivedTotal(project) - projectCostTotal(project) - projectTimeCost(project));
 }
 
 export type UnpaidRow = {

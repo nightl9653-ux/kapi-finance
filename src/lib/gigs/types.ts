@@ -45,6 +45,15 @@ export type GigCost = {
   transactionId?: string;
 };
 
+/** 开发/设计/顾问记小时；私教记节。单价可选，有单价才计入利润。 */
+export type GigTimeLog = {
+  id: string;
+  quantity: number;
+  rate?: number;
+  occurredOn?: string;
+  note?: string;
+};
+
 export type GigProject = {
   id: string;
   clientId: string;
@@ -55,6 +64,7 @@ export type GigProject = {
   notes?: string;
   installments: GigInstallment[];
   costs: GigCost[];
+  timeLogs: GigTimeLog[];
   createdAt: string;
   updatedAt: string;
 };
@@ -82,6 +92,7 @@ export type GigProjectRow = {
   notes: string | null;
   installments: GigInstallment[];
   costs: GigCost[];
+  time_logs?: GigTimeLog[];
   created_at: string;
   updated_at: string;
 };

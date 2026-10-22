@@ -68,6 +68,7 @@ export function GigProjectForm({
           notes: notes.trim() || undefined,
           installments,
           costs: initial?.costs ?? [],
+          timeLogs: initial?.timeLogs ?? [],
           createdAt: initial?.createdAt || now,
           updatedAt: now,
         });
