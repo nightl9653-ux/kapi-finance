@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import type { Locale } from "@/i18n/locales";
 
-/** 旧入口：周期账单管理已并入「固定开销」看板 */
+/** 旧入口：周期账单管理已并入「固定账单」看板 */
 export default async function RecurringBillsRedirectPage({
   params,
   searchParams,

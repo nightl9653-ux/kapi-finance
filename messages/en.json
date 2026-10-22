@@ -15,7 +15,7 @@
     "banquetParty": "Banquet & party",
     "houseRenovation": "Home renovation",
     "travel": "Travel",
-    "fixedCosts": "Fixed costs",
+    "fixedCosts": "Fixed bills",
     "dressup": "Manor",
     "art": "Art",
     "menu": "Menu",
@@ -715,7 +715,7 @@
     }
   },
   "fixedCosts": {
-    "title": "Fixed costs",
+    "title": "Fixed bills",
     "subtitle": "Due items auto-post by default. If you tap “Mark overdue” on one period, only that period is skipped—other periods keep auto-posting.",
     "thisMonth": "{month}",
     "expensePlanned": "Planned expenses",
@@ -743,7 +743,7 @@
     "overdueMarkOk": "This period is marked overdue and won’t auto-post.",
     "rulesTitle": "All rules",
     "rulesSubtitle": "Editing a rule keeps auto-posting; deleting stops future entries.",
-    "rulesEmpty": "No fixed-cost rules yet.",
+    "rulesEmpty": "No fixed-bill rules yet.",
     "addBill": "Add fixed bill",
     "goTransactions": "Open transactions",
     "status": {
@@ -1012,14 +1012,14 @@
     "recurringMonthPlaceholder": "e.g. 5 (May)",
     "recurringEndDate": "End date",
     "recurringManageTitle": "Fixed bills",
-    "recurringManageSubtitle": "Manage fixed expense/income rules; due dates auto-post to the ledger. Use the Fixed costs board for this month’s progress.",
+    "recurringManageSubtitle": "Manage fixed expense/income rules; due dates auto-post to the ledger. Use the Fixed bills board for this month’s progress.",
     "recurringEmpty": "No recurring bills yet. Create one from the Transactions form.",
     "recurringCadenceLabel": "Cadence",
     "recurringDayShort": "Day {n}",
     "recurringEndShort": "Ends {d}",
     "recurringUsesAbove": "Recurring bills use the amount, category, and note you entered above.",
     "recurringSave": "Save recurring bill",
-    "recurringManageLink": "Open fixed costs board",
+    "recurringManageLink": "Open fixed bills board",
     "recurringEdit": "Edit",
     "recurringMonthInYear": "Month {n}"
   },
