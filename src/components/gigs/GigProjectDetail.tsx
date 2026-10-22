@@ -63,6 +63,9 @@ export function GigProjectDetail({
   const [showingQuote, setShowingQuote] = useState(false);
   const [editingInstallmentId, setEditingInstallmentId] = useState<string | null>(null);
   const [editingCostId, setEditingCostId] = useState<string | null>(null);
+  const [instLabel, setInstLabel] = useState("");
+  const [instAmount, setInstAmount] = useState("");
+  const [instDueOn, setInstDueOn] = useState("");
 
   function saveErrorText(err: unknown): string {
     const code = gigsErrorCode(err);
@@ -121,6 +124,26 @@ export function GigProjectDetail({
       ...project,
       installments: project.installments.map((i) => (i.id === inst.id ? nextInst : i)),
     });
+  }
+
+  async function addInstallment() {
+    const label = instLabel.trim();
+    const amount = Math.round(Math.max(0, Number(instAmount) || 0) * 100) / 100;
+    if (!label || amount <= 0) return;
+    const inst: GigInstallment = {
+      id: newGigId(),
+      label,
+      amount,
+      dueOn: instDueOn.trim() || undefined,
+      status: "pending",
+      paidAmount: 0,
+    };
+    const ok = await persist({ ...project, installments: [...project.installments, inst] });
+    if (ok) {
+      setInstLabel("");
+      setInstAmount("");
+      setInstDueOn("");
+    }
   }
 
   async function addCost() {
@@ -323,6 +346,37 @@ export function GigProjectDetail({
       <section className="space-y-3">
         <h3 className="text-base font-medium">{t("installments")}</h3>
         <p className="text-xs text-muted-foreground">{t("editKeepsLedger")}</p>
+        <div className="flex flex-wrap items-end gap-2 rounded-xl border bg-white/50 p-3">
+          <div className="space-y-1">
+            <Label htmlFor="gig-inst-label">{t("installmentLabel")}</Label>
+            <Input id="gig-inst-label" value={instLabel} disabled={busy} onChange={(e) => setInstLabel(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="gig-inst-amount">{t("amount")}</Label>
+            <Input
+              id="gig-inst-amount"
+              type="number"
+              min={0}
+              step="0.01"
+              value={instAmount}
+              disabled={busy}
+              onChange={(e) => setInstAmount(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="gig-inst-due">{t("dueOn")}</Label>
+            <Input
+              id="gig-inst-due"
+              type="date"
+              value={instDueOn}
+              disabled={busy}
+              onChange={(e) => setInstDueOn(e.target.value)}
+            />
+          </div>
+          <Button type="button" className="rounded-full" disabled={busy} onClick={() => void addInstallment()}>
+            {t("addInstallment")}
+          </Button>
+        </div>
         <ul className="space-y-2">
           {project.installments.map((inst) => {
             const left = installmentOutstanding(inst);
