@@ -1713,7 +1713,7 @@
       "bullets": [
         "Client profiles linked to projects",
         "Installment templates for design, dev, training, consulting",
-        "Mark an unpaid installment received from the list, with aging and follow-ups due today",
+        "Mark an unpaid installment received and set its due date from the list, with aging and follow-ups due today",
         "Project costs and profit on amounts received",
         "Dev hours and coaching lessons record your own time",
         "A quote from the installments, ready to print or save as PDF",

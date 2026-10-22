@@ -78,6 +78,24 @@ export function addIsoDays(iso: string, days: number): string {
   return `${y}-${m}-${day}`;
 }
 
+/** 改这一期的到期日。空字符串会清掉。分期不存在或日期没变时返回 null。 */
+export function setInstallmentDueOn(
+  project: GigProject,
+  installmentId: string,
+  dueOn: string | undefined,
+): GigProject | null {
+  const current = project.installments.find((inst) => inst.id === installmentId);
+  if (!current) return null;
+  const nextDue = isIsoDate(dueOn) ? dueOn : undefined;
+  if ((current.dueOn || undefined) === nextDue) return null;
+  return {
+    ...project,
+    installments: project.installments.map((inst) =>
+      inst.id === installmentId ? { ...inst, dueOn: nextDue } : inst,
+    ),
+  };
+}
+
 /** 下次再催日期已到（含今天） */
 export function isChaseDue(nextNudgeOn: string | undefined, today: string): boolean {
   return Boolean(nextNudgeOn && nextNudgeOn <= today);

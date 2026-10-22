@@ -9,6 +9,8 @@ import { GigProjectDetail } from "@/components/gigs/GigProjectDetail";
 import { GigProjectForm } from "@/components/gigs/GigProjectForm";
 import { NudgeControls } from "@/components/gigs/NudgeControls";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { formatProjectMoney } from "@/lib/fx";
 import { logGigInstallmentIncome } from "@/lib/gigs/log-ledger";
 import {
@@ -18,9 +20,11 @@ import {
   formatTimeQuantity,
   installmentOutstanding,
   isChaseDue,
+  isIsoDate,
   markInstallmentPaid,
   nudgeInstallment,
   projectTimeQuantity,
+  setInstallmentDueOn,
   sumUnpaidByCurrency,
   timeUnitForVertical,
   type UnpaidRow,
@@ -118,6 +122,22 @@ export function GigsApp({ userId }: { userId: string }) {
     });
   }, [unpaid, today]);
   const chaseCount = orderedUnpaid.filter((row) => isChaseDue(row.nextNudgeOn, today)).length;
+
+  async function saveDueOn(row: UnpaidRow, dueOn: string) {
+    const project = store.projects.find((p) => p.id === row.projectId);
+    if (!project) return;
+    const next = setInstallmentDueOn(project, row.installmentId, dueOn);
+    if (!next) return;
+    setSaving(true);
+    setError(null);
+    try {
+      setStore(await upsertProject(userId, next));
+    } catch (e) {
+      setError(saveErrorText(e, t));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function markNudged(row: UnpaidRow, nextOn: string) {
     const project = store.projects.find((p) => p.id === row.projectId);
@@ -279,7 +299,6 @@ export function GigsApp({ userId }: { userId: string }) {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {clientById.get(row.clientId)?.name ?? t("unknownClient")}
-                        {row.dueOn ? ` · ${t("dueOn")} ${row.dueOn}` : ""}
                         {` · ${t(`aging.${bucket}`)}`}
                         {row.lastNudgedOn ? ` · ${t("nudgedOn", { date: row.lastNudgedOn })}` : ""}
                         {row.nextNudgeOn ? ` · ${t("nextNudge", { date: row.nextNudgeOn })}` : ""}
@@ -290,26 +309,34 @@ export function GigsApp({ userId }: { userId: string }) {
                     </p>
                   </div>
                   <div className="flex flex-wrap items-end justify-between gap-2">
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        className="rounded-full"
+                    <div className="flex flex-wrap items-end gap-2">
+                      <DueOnField
+                        rowKey={row.installmentId}
+                        dueOn={row.dueOn}
                         disabled={saving}
-                        onClick={() => void markPaid(row, false)}
-                      >
-                        {t("markPaid")}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="rounded-full"
-                        disabled={saving}
-                        onClick={() => void markPaid(row, true)}
-                      >
-                        {t("markPaidAndLedger")}
-                      </Button>
+                        onChange={(dueOn) => void saveDueOn(row, dueOn)}
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="rounded-full"
+                          disabled={saving}
+                          onClick={() => void markPaid(row, false)}
+                        >
+                          {t("markPaid")}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full"
+                          disabled={saving}
+                          onClick={() => void markPaid(row, true)}
+                        >
+                          {t("markPaidAndLedger")}
+                        </Button>
+                      </div>
                     </div>
                     <NudgeControls
                       rowKey={row.installmentId}
@@ -529,6 +556,64 @@ export function GigsApp({ userId }: { userId: string }) {
           )}
         </section>
       ) : null}
+    </div>
+  );
+}
+
+function DueOnField({
+  rowKey,
+  dueOn,
+  disabled,
+  onChange,
+}: {
+  rowKey: string;
+  dueOn?: string;
+  disabled?: boolean;
+  onChange: (dueOn: string) => void;
+}) {
+  return (
+    <DueOnInput
+      key={`${rowKey}:${dueOn ?? ""}`}
+      rowKey={rowKey}
+      dueOn={dueOn}
+      disabled={disabled}
+      onChange={onChange}
+    />
+  );
+}
+
+function DueOnInput({
+  rowKey,
+  dueOn,
+  disabled,
+  onChange,
+}: {
+  rowKey: string;
+  dueOn?: string;
+  disabled?: boolean;
+  onChange: (dueOn: string) => void;
+}) {
+  const t = useTranslations("gigs");
+  const [draft, setDraft] = useState(dueOn && isIsoDate(dueOn) ? dueOn : "");
+
+  return (
+    <div className="space-y-1">
+      <Label htmlFor={`due-${rowKey}`} className="text-xs text-muted-foreground">
+        {t("dueOn")}
+      </Label>
+      <Input
+        id={`due-${rowKey}`}
+        type="date"
+        className="h-8 w-[9.5rem]"
+        value={draft}
+        disabled={disabled}
+        onChange={(e) => {
+          const next = e.target.value;
+          setDraft(next);
+          if (next === (dueOn ?? "")) return;
+          if (next === "" || isIsoDate(next)) onChange(next);
+        }}
+      />
     </div>
   );
 }
