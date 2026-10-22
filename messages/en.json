@@ -759,7 +759,79 @@
     "status": "Status",
     "currency": "Currency",
     "contractTotal": "Contract total",
-    "templateHint": "Installment labels follow the vertical; amounts split from the total. You can add, edit, or delete them on the project.",
+    "openingPackage": "Opening package",
+    "templateHint": "Amounts split from the contract total. You can still add, edit, or delete installments on the project.",
+    "packages": {
+      "designBrand": {
+        "name": "Brand design pack",
+        "hint": "Deposit 30%, midpoint 40%, final 30%.",
+        "item0": "Deposit 30%",
+        "item1": "Midpoint",
+        "item2": "Final"
+      },
+      "designPoster": {
+        "name": "Single design",
+        "hint": "Paid in full.",
+        "item0": "Full payment"
+      },
+      "designSite": {
+        "name": "Website visuals",
+        "hint": "Deposit 30%, homepage 20%, inner pages 20%, final 30%.",
+        "item0": "Deposit",
+        "item1": "Homepage",
+        "item2": "Inner pages",
+        "item3": "Final"
+      },
+      "devSite": {
+        "name": "Website build",
+        "hint": "Kickoff, two milestones, and acceptance, split evenly.",
+        "item0": "Kickoff",
+        "item1": "Milestone 1",
+        "item2": "Milestone 2",
+        "item3": "Acceptance"
+      },
+      "devFeature": {
+        "name": "Small feature",
+        "hint": "Kickoff and acceptance, half each.",
+        "item0": "Kickoff",
+        "item1": "Acceptance"
+      },
+      "trainPack": {
+        "name": "Lesson pack",
+        "hint": "Paid in full.",
+        "item0": "Lesson pack"
+      },
+      "train12": {
+        "name": "12 lessons",
+        "hint": "Twelve lessons in four payments of three, split evenly.",
+        "item0": "Lessons 1–3",
+        "item1": "Lessons 4–6",
+        "item2": "Lessons 7–9",
+        "item3": "Lessons 10–12"
+      },
+      "consultTwo": {
+        "name": "Two-part consulting",
+        "hint": "First half and final half.",
+        "item0": "First payment",
+        "item1": "Final payment"
+      },
+      "consultOnce": {
+        "name": "Single session",
+        "hint": "Paid in full.",
+        "item0": "Full payment"
+      },
+      "otherFull": {
+        "name": "Full payment",
+        "hint": "Paid in full.",
+        "item0": "Full payment"
+      },
+      "otherTwo": {
+        "name": "Two payments",
+        "hint": "First half and final half.",
+        "item0": "First payment",
+        "item1": "Final payment"
+      }
+    },
     "currencyEditHint": "Changing currency only changes the label. Existing amounts are not converted.",
     "installmentLabel": "Installment name",
     "confirmDeleteInstallment": "Delete this installment? Ledger entries already posted will stay.",
@@ -1712,7 +1784,7 @@
       "lead": "A gig workspace: clients, projects, installment receivables, costs and profit—optional ledger posting.",
       "bullets": [
         "Client profiles linked to projects",
-        "Installment templates for design, dev, training, consulting",
+        "Opening packages such as a brand design pack or 12 lessons",
         "Mark an unpaid installment received and set its due date from the list, with aging and follow-ups due today",
         "Project costs and profit on amounts received",
         "Dev hours and coaching lessons record your own time",

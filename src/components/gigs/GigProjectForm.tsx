@@ -7,7 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BASE_CURRENCY, type Currency } from "@/lib/fx";
-import { makeInstallmentsFromTemplate } from "@/lib/gigs/templates";
+import {
+  defaultPackageForVertical,
+  makeInstallmentsFromPackage,
+  packageById,
+  packagesForVertical,
+} from "@/lib/gigs/templates";
 import {
   GIG_PROJECT_STATUSES,
   GIG_VERTICALS,
@@ -17,6 +22,7 @@ import {
   type GigProjectStatus,
   type GigVertical,
 } from "@/lib/gigs/types";
+import { cn } from "@/lib/utils";
 
 export function GigProjectForm({
   clients,
@@ -32,9 +38,12 @@ export function GigProjectForm({
   saving?: boolean;
 }) {
   const t = useTranslations("gigs");
-  const [name, setName] = useState(initial?.name ?? "");
+  const initialPackageId = defaultPackageForVertical(initial?.vertical ?? "design").id;
+  const [nameFromPackage, setNameFromPackage] = useState(!initial);
+  const [name, setName] = useState(initial?.name ?? t(`packages.${initialPackageId}.name`));
   const [clientId, setClientId] = useState(initial?.clientId ?? clients[0]?.id ?? "");
   const [vertical, setVertical] = useState<GigVertical>(initial?.vertical ?? "design");
+  const [packageId, setPackageId] = useState(initialPackageId);
   const [status, setStatus] = useState<GigProjectStatus>(initial?.status ?? "active");
   const [currency, setCurrency] = useState<string>(initial?.currency ?? BASE_CURRENCY);
   const [totalHint, setTotalHint] = useState(
@@ -43,8 +52,16 @@ export function GigProjectForm({
   const [notes, setNotes] = useState(initial?.notes ?? "");
 
   const canSubmit = name.trim() && clientId;
+  const packages = packagesForVertical(vertical);
 
   const currencies = useMemo(() => ["USD", "CNY", "HKD", "EUR", "JPY"] as Currency[], []);
+
+  function choosePackage(id: string) {
+    const label = t(`packages.${id}.name`);
+    setPackageId(id);
+    setName((current) => (nameFromPackage || !current.trim() ? label : current));
+    setNameFromPackage((fromPackage) => fromPackage || !name.trim());
+  }
 
   return (
     <form
@@ -54,10 +71,15 @@ export function GigProjectForm({
         if (!canSubmit) return;
         const now = new Date().toISOString();
         const total = Math.max(0, Number(totalHint) || 0);
+        const selected = packageById(packageId) ?? defaultPackageForVertical(vertical);
         const installments =
           initial?.installments?.length && initial.id
             ? initial.installments
-            : makeInstallmentsFromTemplate(vertical, total);
+            : makeInstallmentsFromPackage(
+                selected,
+                total,
+                selected.ratios.map((_, index) => t(`packages.${selected.id}.item${index}`)),
+              );
         void onSave({
           id: initial?.id || newGigId(),
           clientId,
@@ -76,7 +98,15 @@ export function GigProjectForm({
     >
       <div className="space-y-1.5">
         <Label htmlFor="gig-project-name">{t("projectName")}</Label>
-        <Input id="gig-project-name" value={name} onChange={(e) => setName(e.target.value)} required />
+        <Input
+          id="gig-project-name"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+            setNameFromPackage(false);
+          }}
+          required
+        />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
@@ -102,7 +132,11 @@ export function GigProjectForm({
             id="gig-project-vertical"
             className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm"
             value={vertical}
-            onChange={(e) => setVertical(e.target.value as GigVertical)}
+            onChange={(e) => {
+              const next = e.target.value as GigVertical;
+              setVertical(next);
+              if (!initial) choosePackage(defaultPackageForVertical(next).id);
+            }}
           >
             {GIG_VERTICALS.map((v) => (
               <option key={v} value={v}>
@@ -112,6 +146,28 @@ export function GigProjectForm({
           </select>
         </div>
       </div>
+      {!initial ? (
+        <div className="space-y-1.5">
+          <Label>{t("openingPackage")}</Label>
+          <div className="flex flex-wrap gap-2">
+            {packages.map((pkg) => (
+              <button
+                key={pkg.id}
+                type="button"
+                className={cn(
+                  "rounded-full border px-3 py-1 text-sm",
+                  packageId === pkg.id ? "border-foreground bg-foreground text-background" : "text-muted-foreground hover:bg-muted",
+                )}
+                onClick={() => choosePackage(pkg.id)}
+              >
+                {t(`packages.${pkg.id}.name`)}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">{t(`packages.${packageId}.hint`)}</p>
+          <p className="text-xs text-muted-foreground">{t("templateHint")}</p>
+        </div>
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1.5">
           <Label htmlFor="gig-project-status">{t("status")}</Label>
@@ -162,7 +218,6 @@ export function GigProjectForm({
         <Label htmlFor="gig-project-notes">{t("notes")}</Label>
         <Input id="gig-project-notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
       </div>
-      {!initial ? <p className="text-xs text-muted-foreground">{t("templateHint")}</p> : null}
       {initial ? <p className="text-xs text-muted-foreground">{t("currencyEditHint")}</p> : null}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" className="rounded-full" disabled={saving || !canSubmit}>
