@@ -90,12 +90,9 @@ function normalizeInstallment(raw: Partial<GigInstallment>): GigInstallment {
 function normalizeTimeLog(raw: Partial<GigTimeLog>): GigTimeLog | null {
   const quantity = Math.round((Number(raw.quantity) || 0) * 100) / 100;
   if (quantity <= 0) return null;
-  const rateNum = Number(raw.rate);
-  const rate = Number.isFinite(rateNum) && rateNum > 0 ? Math.round(rateNum * 100) / 100 : undefined;
   return {
     id: raw.id || newGigId(),
     quantity,
-    rate,
     occurredOn: isoDateOrUndef(raw.occurredOn),
     note: raw.note?.trim() || undefined,
   };

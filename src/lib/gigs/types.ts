@@ -45,11 +45,10 @@ export type GigCost = {
   transactionId?: string;
 };
 
-/** 开发/设计/顾问记小时；私教记节。单价可选，有单价才计入利润。 */
+/** 开发/设计/顾问记小时；私教记节。只记自己的投入，不计入利润。 */
 export type GigTimeLog = {
   id: string;
   quantity: number;
-  rate?: number;
   occurredOn?: string;
   note?: string;
 };

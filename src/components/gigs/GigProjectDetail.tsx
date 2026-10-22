@@ -19,9 +19,7 @@ import {
   projectProfit,
   projectReceivableTotal,
   projectReceivedTotal,
-  projectTimeCost,
   projectTimeQuantity,
-  timeEntryCost,
   timeUnitForVertical,
 } from "@/lib/gigs/money";
 import { gigsErrorCode, upsertProject } from "@/lib/gigs/storage";
@@ -58,7 +56,6 @@ export function GigProjectDetail({
   const [costName, setCostName] = useState("");
   const [costAmount, setCostAmount] = useState("");
   const [timeQty, setTimeQty] = useState("");
-  const [timeRate, setTimeRate] = useState("");
   const [timeNote, setTimeNote] = useState("");
   const [editingTimeId, setEditingTimeId] = useState<string | null>(null);
   const [editingProject, setEditingProject] = useState(false);
@@ -142,16 +139,13 @@ export function GigProjectDetail({
   async function addTime() {
     const quantity = Number(timeQty);
     if (!Number.isFinite(quantity) || quantity <= 0) return;
-    const rateNum = Number(timeRate);
     const entry: GigTimeLog = {
       id: newGigId(),
       quantity,
       occurredOn: isoToday(),
       note: timeNote.trim() || undefined,
-      rate: Number.isFinite(rateNum) && rateNum > 0 ? rateNum : undefined,
     };
     setTimeQty("");
-    setTimeRate("");
     setTimeNote("");
     await persist({ ...project, timeLogs: [...(project.timeLogs ?? []), entry] });
   }
@@ -259,7 +253,6 @@ export function GigProjectDetail({
   const sessions = timeUnitForVertical(project.vertical) === "sessions";
   const timeUnit = sessions ? t("timeUnitSessions") : t("timeUnitHours");
   const timeQtyTotal = projectTimeQuantity(project);
-  const timeCostTotal = projectTimeCost(project);
   const timeTitle = sessions
     ? t("timeTitleSessions")
     : project.vertical === "development"
@@ -309,15 +302,11 @@ export function GigProjectDetail({
         <SummaryCard label={t("contractTotal")} value={money(projectContractTotal(project))} />
         <SummaryCard label={t("received")} value={money(projectReceivedTotal(project))} tone="emerald" />
         <SummaryCard label={t("receivable")} value={money(projectReceivableTotal(project))} tone="amber" />
-        <SummaryCard
-          label={timeCostTotal > 0 ? t("profitWithTime") : t("profit")}
-          value={money(projectProfit(project))}
-        />
+        <SummaryCard label={t("profit")} value={money(projectProfit(project))} />
       </div>
       <p className="text-xs text-muted-foreground">
         {t("costTotal")}: {money(projectCostTotal(project))}
         {timeQtyTotal > 0 ? ` · ${t("timeInvested", { qty: formatTimeQuantity(timeQtyTotal), unit: timeUnit })}` : ""}
-        {timeCostTotal > 0 ? ` · ${t("timeCost")}: ${money(timeCostTotal)}` : ""}
       </p>
 
       <section className="space-y-3">
@@ -426,17 +415,6 @@ export function GigProjectDetail({
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="gig-time-rate">{sessions ? t("timeRateSessions") : t("timeRateHours")}</Label>
-            <Input
-              id="gig-time-rate"
-              type="number"
-              min={0}
-              step="0.01"
-              value={timeRate}
-              onChange={(e) => setTimeRate(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1">
             <Label htmlFor="gig-time-note">{t("timeNote")}</Label>
             <Input id="gig-time-note" value={timeNote} onChange={(e) => setTimeNote(e.target.value)} />
           </div>
@@ -449,13 +427,11 @@ export function GigProjectDetail({
             <li className="text-sm text-muted-foreground">{sessions ? t("timeEmptySessions") : t("timeEmptyHours")}</li>
           ) : (
             (project.timeLogs ?? []).map((entry) => {
-              const entryCost = timeEntryCost(entry);
               if (editingTimeId === entry.id) {
                 return (
                   <li key={entry.id}>
                     <TimeLogEditor
                       entry={entry}
-                      sessions={sessions}
                       busy={busy}
                       onCancel={() => setEditingTimeId(null)}
                       onSave={(next) => void saveTime(next)}
@@ -470,12 +446,7 @@ export function GigProjectDetail({
                       {formatTimeQuantity(entry.quantity)} {timeUnit}
                       {entry.note ? ` · ${entry.note}` : ""}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {entry.occurredOn ? `${entry.occurredOn} · ` : ""}
-                      {entryCost > 0
-                        ? `${t("timeCost")} ${money(entryCost)}`
-                        : t("timeNotInProfit")}
-                    </p>
+                    {entry.occurredOn ? <p className="text-xs text-muted-foreground">{entry.occurredOn}</p> : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button
@@ -573,20 +544,17 @@ export function GigProjectDetail({
 
 function TimeLogEditor({
   entry,
-  sessions,
   busy,
   onCancel,
   onSave,
 }: {
   entry: GigTimeLog;
-  sessions: boolean;
   busy: boolean;
   onCancel: () => void;
   onSave: (next: GigTimeLog) => void;
 }) {
   const t = useTranslations("gigs");
   const [qty, setQty] = useState(String(entry.quantity));
-  const [rate, setRate] = useState(entry.rate != null && entry.rate > 0 ? String(entry.rate) : "");
   const [note, setNote] = useState(entry.note ?? "");
   const [occurredOn, setOccurredOn] = useState(entry.occurredOn ?? isoToday());
 
@@ -602,18 +570,6 @@ function TimeLogEditor({
           value={qty}
           disabled={busy}
           onChange={(e) => setQty(e.target.value)}
-        />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor={`time-rate-${entry.id}`}>{sessions ? t("timeRateSessions") : t("timeRateHours")}</Label>
-        <Input
-          id={`time-rate-${entry.id}`}
-          type="number"
-          min={0}
-          step="0.01"
-          value={rate}
-          disabled={busy}
-          onChange={(e) => setRate(e.target.value)}
         />
       </div>
       <div className="space-y-1">
@@ -638,11 +594,9 @@ function TimeLogEditor({
         onClick={() => {
           const quantity = Number(qty);
           if (!Number.isFinite(quantity) || quantity <= 0) return;
-          const rateNum = Number(rate);
           onSave({
             ...entry,
             quantity,
-            rate: Number.isFinite(rateNum) && rateNum > 0 ? rateNum : undefined,
             occurredOn: occurredOn.trim() || undefined,
             note: note.trim() || undefined,
           });
