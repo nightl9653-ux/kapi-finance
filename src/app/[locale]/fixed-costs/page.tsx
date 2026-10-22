@@ -278,12 +278,35 @@ export default async function FixedCostsPage({
               </div>
             </div>
             {board.incomePlannedUsd > 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t("incomeLine", {
-                  planned: formatProjectMoney(board.incomePlannedUsd, "USD"),
-                  posted: formatProjectMoney(board.incomePostedUsd, "USD"),
-                })}
-              </p>
+              <div className="rounded-2xl border border-emerald-200/70 border-l-4 border-l-emerald-600 bg-emerald-50/40 px-4 py-3">
+                <p className="text-xs font-medium text-emerald-900">{t("incomeTitle")}</p>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs text-emerald-900/70">{t("incomePlanned")}</p>
+                    <p className="mt-0.5 text-xl font-semibold tabular-nums text-emerald-950">
+                      {formatProjectMoney(board.incomePlannedUsd, "USD")}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-emerald-900/70">{t("incomePosted")}</p>
+                    <p className="mt-0.5 text-xl font-semibold tabular-nums text-emerald-950">
+                      {formatProjectMoney(board.incomePostedUsd, "USD")}
+                    </p>
+                  </div>
+                </div>
+                {board.incomePostedUsd >= board.incomePlannedUsd ? (
+                  <p className="mt-2 text-xs font-medium text-emerald-800">{t("incomeComplete")}</p>
+                ) : (
+                  <p className="mt-2 text-xs font-medium text-amber-900">
+                    {t("incomeRemaining", {
+                      amount: formatProjectMoney(
+                        Math.max(0, board.incomePlannedUsd - board.incomePostedUsd),
+                        "USD",
+                      ),
+                    })}
+                  </p>
+                )}
+              </div>
             ) : null}
           </section>
 
