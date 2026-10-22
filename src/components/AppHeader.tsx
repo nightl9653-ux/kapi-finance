@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -19,23 +20,74 @@ function NavLink({ item, className }: { item: NavItem; className: string }) {
   );
 }
 
+function MoreMenu({ label, items }: { label: string; items: NavItem[] }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointer(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={rootRef}>
+      <button
+        type="button"
+        className="whitespace-nowrap text-xs text-muted-foreground transition-colors hover:text-foreground"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        {label}
+      </button>
+      {open ? (
+        <div className="absolute left-0 top-full z-50 mt-2 min-w-40 rounded-xl border bg-[#FAF9F7] p-1 shadow-lg">
+          {items.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted/60"
+              onClick={() => setOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
   const t = useTranslations("nav");
   const locale = useLocale();
 
-  const navPrimary: NavItem[] = [
+  const navLead: NavItem[] = [
     { href: `/${locale}/gigs`, label: t("gigs") },
     { href: `/${locale}/transactions`, label: t("transactions") },
   ];
 
-  const navSecondary: NavItem[] = [
+  const navBeside: NavItem[] = [
+    { href: `/${locale}/meetings`, label: t("meetings") },
+    { href: `/${locale}/travel`, label: t("travel") },
+    { href: `/${locale}/fixed-costs`, label: t("fixedCosts") },
+  ];
+
+  const navMore: NavItem[] = [
     { href: `/${locale}`, label: t("dashboard") },
     { href: `/${locale}/goals`, label: t("goals") },
-    { href: `/${locale}/fixed-costs`, label: t("fixedCosts") },
     { href: `/${locale}/quick-record`, label: t("quickRecord") },
-    { href: `/${locale}/meetings`, label: t("meetings") },
     { href: `/${locale}/banquet-party`, label: t("banquetParty") },
-    { href: `/${locale}/travel`, label: t("travel") },
     { href: `/${locale}/ai-assistant`, label: t("aiAssistant") },
     { href: `/${locale}/reports`, label: t("reports") },
     { href: `/${locale}/house-renovation`, label: t("houseRenovation") },
@@ -43,8 +95,8 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
     { href: `/${locale}/settings`, label: t("settings") },
   ];
 
-  const linkClassName =
-    "whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground";
+  const leadClassName = "whitespace-nowrap text-base font-medium text-foreground transition-colors hover:text-foreground";
+  const besideClassName = "whitespace-nowrap text-xs text-muted-foreground transition-colors hover:text-foreground";
 
   return (
     <AuthProvider initialAuth={initialAuth}>
@@ -59,8 +111,8 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
                 primaryLabel={t("navSectionPrimary")}
                 secondaryLabel={t("navSectionSecondary")}
                 swipeHint={t("swipeHint")}
-                primaryNav={navPrimary}
-                secondaryNav={navSecondary}
+                primaryNav={[...navLead, ...navBeside]}
+                secondaryNav={navMore}
               />
               <Link
                 href={`/${locale}`}
@@ -81,16 +133,15 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
             </div>
           </div>
 
-          <nav className="hidden space-y-1.5 border-t border-border/60 pb-3 pt-2 md:block" aria-label={t("menu")}>
+          <nav className="hidden border-t border-border/60 pb-3 pt-2 md:block" aria-label={t("menu")}>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
-              {navPrimary.map((item) => (
-                <NavLink key={item.href} item={item} className={linkClassName} />
+              {navLead.map((item) => (
+                <NavLink key={item.href} item={item} className={leadClassName} />
               ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
-              {navSecondary.map((item) => (
-                <NavLink key={item.href} item={item} className={linkClassName} />
+              {navBeside.map((item) => (
+                <NavLink key={item.href} item={item} className={besideClassName} />
               ))}
+              <MoreMenu label={t("more")} items={navMore} />
             </div>
           </nav>
         </div>
