@@ -205,6 +205,10 @@ export default async function FixedCostsPage({
     board.expensePlannedUsd > 0
       ? Math.min(100, Math.round((board.expensePostedUsd / board.expensePlannedUsd) * 100))
       : 0;
+  const incomePct =
+    board.incomePlannedUsd > 0
+      ? Math.min(100, Math.round((board.incomePostedUsd / board.incomePlannedUsd) * 100))
+      : 0;
 
   return (
     <div className="space-y-8">
@@ -278,34 +282,43 @@ export default async function FixedCostsPage({
               </div>
             </div>
             {board.incomePlannedUsd > 0 ? (
-              <div className="rounded-2xl border border-emerald-200/70 border-l-4 border-l-emerald-600 bg-emerald-50/40 px-4 py-3">
-                <p className="text-xs font-medium text-emerald-900">{t("incomeTitle")}</p>
-                <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs text-emerald-900/70">{t("incomePlanned")}</p>
-                    <p className="mt-0.5 text-xl font-semibold tabular-nums text-emerald-950">
+              <div className="space-y-3 pt-2">
+                <h3 className="text-sm font-medium text-muted-foreground">{t("incomeTitle")}</h3>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border bg-white/70 p-4">
+                    <p className="text-xs text-muted-foreground">{t("incomePlanned")}</p>
+                    <p className="mt-1 text-xl font-semibold tabular-nums">
                       {formatProjectMoney(board.incomePlannedUsd, "USD")}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-xs text-emerald-900/70">{t("incomePosted")}</p>
-                    <p className="mt-0.5 text-xl font-semibold tabular-nums text-emerald-950">
+                  <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/50 p-4">
+                    <p className="text-xs font-medium text-emerald-900">{t("incomePosted")}</p>
+                    <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-900">
                       {formatProjectMoney(board.incomePostedUsd, "USD")}
                     </p>
+                    <p className="mt-1 text-xs text-emerald-800/80">{t("postedHint")}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{t("postedPct", { pct: incomePct })}</p>
+                  </div>
+                  <div className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-4">
+                    <p className="text-xs font-medium text-amber-950">{t("incomePending")}</p>
+                    <p className="mt-1 text-xl font-semibold tabular-nums text-amber-950">
+                      {formatProjectMoney(board.incomePendingUsd, "USD")}
+                    </p>
+                    <p className="mt-1 text-xs text-amber-900/80">{t("pendingHint")}</p>
+                    {board.incomeOverdueUsd > 0 ? (
+                      <p className="mt-1 text-xs font-medium text-rose-700">
+                        {t("overdueAmount", { amount: formatProjectMoney(board.incomeOverdueUsd, "USD") })}
+                      </p>
+                    ) : null}
+                    {board.incomeMarkedOverdueUsd > 0 ? (
+                      <p className="mt-1 text-xs font-medium text-rose-800">
+                        {t("markedOverdueAmount", {
+                          amount: formatProjectMoney(board.incomeMarkedOverdueUsd, "USD"),
+                        })}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
-                {board.incomePostedUsd >= board.incomePlannedUsd ? (
-                  <p className="mt-2 text-xs font-medium text-emerald-800">{t("incomeComplete")}</p>
-                ) : (
-                  <p className="mt-2 text-xs font-medium text-amber-900">
-                    {t("incomeRemaining", {
-                      amount: formatProjectMoney(
-                        Math.max(0, board.incomePlannedUsd - board.incomePostedUsd),
-                        "USD",
-                      ),
-                    })}
-                  </p>
-                )}
               </div>
             ) : null}
           </section>

@@ -34,6 +34,9 @@ export type FixedCostBoard = {
   expenseMarkedOverdueUsd: number;
   incomePlannedUsd: number;
   incomePostedUsd: number;
+  incomePendingUsd: number;
+  incomeOverdueUsd: number;
+  incomeMarkedOverdueUsd: number;
   occurrences: FixedCostOccurrence[];
 };
 
@@ -112,6 +115,9 @@ export function buildFixedCostBoard(params: {
   let expenseMarkedOverdueUsd = 0;
   let incomePlannedUsd = 0;
   let incomePostedUsd = 0;
+  let incomePendingUsd = 0;
+  let incomeOverdueUsd = 0;
+  let incomeMarkedOverdueUsd = 0;
 
   for (const o of occurrences) {
     if (o.type === "expense") {
@@ -125,6 +131,11 @@ export function buildFixedCostBoard(params: {
     } else {
       incomePlannedUsd += o.amountUsd;
       if (o.status === "posted") incomePostedUsd += o.amountUsd;
+      else if (o.status === "markedOverdue") incomeMarkedOverdueUsd += o.amountUsd;
+      else {
+        incomePendingUsd += o.amountUsd;
+        if (o.status === "overdue") incomeOverdueUsd += o.amountUsd;
+      }
     }
   }
 
@@ -141,6 +152,9 @@ export function buildFixedCostBoard(params: {
     expenseMarkedOverdueUsd: round2(expenseMarkedOverdueUsd),
     incomePlannedUsd: round2(incomePlannedUsd),
     incomePostedUsd: round2(incomePostedUsd),
+    incomePendingUsd: round2(incomePendingUsd),
+    incomeOverdueUsd: round2(incomeOverdueUsd),
+    incomeMarkedOverdueUsd: round2(incomeMarkedOverdueUsd),
     occurrences,
   };
 }
