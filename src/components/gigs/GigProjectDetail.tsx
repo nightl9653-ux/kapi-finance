@@ -14,6 +14,7 @@ import { logGigCostExpense, logGigInstallmentIncome } from "@/lib/gigs/log-ledge
 import {
   formatTimeQuantity,
   installmentOutstanding,
+  markInstallmentPaid,
   nudgeInstallment,
   projectContractTotal,
   projectCostTotal,
@@ -113,17 +114,9 @@ export function GigProjectDetail({
       }
       transactionId = res.transactionId;
     }
-    const nextInst: GigInstallment = {
-      ...inst,
-      status: "paid",
-      paidAmount: inst.amount,
-      paidOn,
-      transactionId,
-    };
-    await persist({
-      ...project,
-      installments: project.installments.map((i) => (i.id === inst.id ? nextInst : i)),
-    });
+    const next = markInstallmentPaid(project, inst.id, paidOn, transactionId);
+    if (!next) return;
+    await persist(next);
   }
 
   async function addInstallment() {

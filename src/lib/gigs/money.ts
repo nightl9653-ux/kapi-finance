@@ -83,6 +83,31 @@ export function isChaseDue(nextNudgeOn: string | undefined, today: string): bool
   return Boolean(nextNudgeOn && nextNudgeOn <= today);
 }
 
+/** 把这一期标成已收清。传入 transactionId 时挂上总账流水。尚欠为 0 时不改。 */
+export function markInstallmentPaid(
+  project: GigProject,
+  installmentId: string,
+  paidOn: string,
+  transactionId?: string,
+): GigProject | null {
+  const current = project.installments.find((inst) => inst.id === installmentId);
+  if (!current || installmentOutstanding(current) <= 0) return null;
+  return {
+    ...project,
+    installments: project.installments.map((inst) =>
+      inst.id === installmentId
+        ? {
+            ...inst,
+            status: "paid",
+            paidAmount: inst.amount,
+            paidOn,
+            transactionId: transactionId ?? inst.transactionId,
+          }
+        : inst,
+    ),
+  };
+}
+
 export function nudgeInstallment(
   project: GigProject,
   installmentId: string,

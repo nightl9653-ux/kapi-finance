@@ -10,12 +10,15 @@ import { GigProjectForm } from "@/components/gigs/GigProjectForm";
 import { NudgeControls } from "@/components/gigs/NudgeControls";
 import { Button } from "@/components/ui/button";
 import { formatProjectMoney } from "@/lib/fx";
+import { logGigInstallmentIncome } from "@/lib/gigs/log-ledger";
 import {
   agingBucket,
   clientCurrencyTotals,
   collectUnpaid,
   formatTimeQuantity,
+  installmentOutstanding,
   isChaseDue,
+  markInstallmentPaid,
   nudgeInstallment,
   projectTimeQuantity,
   sumUnpaidByCurrency,
@@ -123,6 +126,49 @@ export function GigsApp({ userId }: { userId: string }) {
     setError(null);
     try {
       setStore(await upsertProject(userId, nudgeInstallment(project, row.installmentId, nextOn, today)));
+    } catch (e) {
+      setError(saveErrorText(e, t));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function markPaid(row: UnpaidRow, alsoLedger: boolean) {
+    const project = store.projects.find((p) => p.id === row.projectId);
+    const inst = project?.installments.find((item) => item.id === row.installmentId);
+    if (!project || !inst) return;
+    const outstanding = installmentOutstanding(inst);
+    if (outstanding <= 0) return;
+    let transactionId = inst.transactionId;
+    if (alsoLedger) {
+      setSaving(true);
+      setError(null);
+      const res = await logGigInstallmentIncome({
+        projectId: project.id,
+        projectName: project.name,
+        clientName: clientById.get(project.clientId)?.name || project.name,
+        installmentLabel: inst.label,
+        amount: outstanding,
+        currency: project.currency,
+        occurredOn: today,
+        locale,
+      });
+      if (!res.ok) {
+        setSaving(false);
+        setError(res.error === "schema_missing" ? t("schemaMissing") : t("ledgerError"));
+        return;
+      }
+      transactionId = res.transactionId;
+    }
+    const next = markInstallmentPaid(project, inst.id, today, transactionId);
+    if (!next) {
+      setSaving(false);
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      setStore(await upsertProject(userId, next));
     } catch (e) {
       setError(saveErrorText(e, t));
     } finally {
@@ -243,12 +289,35 @@ export function GigsApp({ userId }: { userId: string }) {
                       {formatProjectMoney(row.outstanding, row.currency)}
                     </p>
                   </div>
-                  <NudgeControls
-                    rowKey={row.installmentId}
-                    nextNudgeOn={row.nextNudgeOn}
-                    disabled={saving}
-                    onMarkNudged={(nextOn) => void markNudged(row, nextOn)}
-                  />
+                  <div className="flex flex-wrap items-end justify-between gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="rounded-full"
+                        disabled={saving}
+                        onClick={() => void markPaid(row, false)}
+                      >
+                        {t("markPaid")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full"
+                        disabled={saving}
+                        onClick={() => void markPaid(row, true)}
+                      >
+                        {t("markPaidAndLedger")}
+                      </Button>
+                    </div>
+                    <NudgeControls
+                      rowKey={row.installmentId}
+                      nextNudgeOn={row.nextNudgeOn}
+                      disabled={saving}
+                      onMarkNudged={(nextOn) => void markNudged(row, nextOn)}
+                    />
+                  </div>
                 </li>
               );
             })}
