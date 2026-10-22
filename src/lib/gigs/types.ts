@@ -30,6 +30,10 @@ export type GigInstallment = {
   paidAmount: number;
   paidOn?: string;
   transactionId?: string;
+  /** 最近一次点「已催」的日期 */
+  lastNudgedOn?: string;
+  /** 下次再催；到了这一天会出现在「今天该催」 */
+  nextNudgeOn?: string;
 };
 
 export type GigCost = {

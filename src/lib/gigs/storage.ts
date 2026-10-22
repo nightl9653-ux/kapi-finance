@@ -37,6 +37,12 @@ function asProjectStatus(raw: string): GigProjectStatus {
     : "active";
 }
 
+function isoDateOrUndef(raw: unknown): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  const value = raw.trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : undefined;
+}
+
 function asInstallmentStatus(raw: string): GigInstallmentStatus {
   return (GIG_INSTALLMENT_STATUSES as readonly string[]).includes(raw)
     ? (raw as GigInstallmentStatus)
@@ -57,6 +63,8 @@ function normalizeInstallment(raw: Partial<GigInstallment>): GigInstallment {
     status,
     paidAmount,
     paidOn: raw.paidOn?.trim() || undefined,
+    lastNudgedOn: isoDateOrUndef(raw.lastNudgedOn),
+    nextNudgeOn: isoDateOrUndef(raw.nextNudgeOn),
     transactionId:
       typeof raw.transactionId === "string" && raw.transactionId.trim()
         ? raw.transactionId.trim()

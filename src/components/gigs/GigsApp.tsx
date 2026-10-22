@@ -7,9 +7,18 @@ import { useLocale, useTranslations } from "next-intl";
 import { GigClientForm } from "@/components/gigs/GigClientForm";
 import { GigProjectDetail } from "@/components/gigs/GigProjectDetail";
 import { GigProjectForm } from "@/components/gigs/GigProjectForm";
+import { NudgeControls } from "@/components/gigs/NudgeControls";
 import { Button } from "@/components/ui/button";
 import { formatProjectMoney } from "@/lib/fx";
-import { agingBucket, collectUnpaid, sumUnpaidByCurrency } from "@/lib/gigs/money";
+import {
+  agingBucket,
+  clientCurrencyTotals,
+  collectUnpaid,
+  isChaseDue,
+  nudgeInstallment,
+  sumUnpaidByCurrency,
+  type UnpaidRow,
+} from "@/lib/gigs/money";
 import { deleteClient, deleteProject, loadGigsStore, upsertClient, upsertProject } from "@/lib/gigs/storage";
 import { isoToday, type GigClient, type GigProject, type GigsStore } from "@/lib/gigs/types";
 import { cn } from "@/lib/utils";
@@ -84,6 +93,28 @@ export function GigsApp({ userId }: { userId: string }) {
   const unpaid = useMemo(() => collectUnpaid(store.projects), [store.projects]);
   const unpaidSums = useMemo(() => sumUnpaidByCurrency(unpaid), [unpaid]);
   const today = isoToday();
+  const orderedUnpaid = useMemo(() => {
+    return [...unpaid].sort((a, b) => {
+      const ac = isChaseDue(a.nextNudgeOn, today) ? 0 : 1;
+      const bc = isChaseDue(b.nextNudgeOn, today) ? 0 : 1;
+      return ac - bc;
+    });
+  }, [unpaid, today]);
+  const chaseCount = orderedUnpaid.filter((row) => isChaseDue(row.nextNudgeOn, today)).length;
+
+  async function markNudged(row: UnpaidRow, nextOn: string) {
+    const project = store.projects.find((p) => p.id === row.projectId);
+    if (!project) return;
+    setSaving(true);
+    setError(null);
+    try {
+      setStore(await upsertProject(userId, nudgeInstallment(project, row.installmentId, nextOn, today)));
+    } catch (e) {
+      setError(isSchemaMissing(e) ? t("schemaMissing") : t("saveError"));
+    } finally {
+      setSaving(false);
+    }
+  }
   const activeProject = store.projects.find((p) => p.id === activeProjectId);
 
   if (activeProject) {
@@ -155,34 +186,54 @@ export function GigsApp({ userId }: { userId: string }) {
                 </p>
               </div>
             ))}
+            <div className="rounded-2xl border border-rose-200/80 bg-rose-50/50 px-4 py-3">
+              <p className="text-xs text-rose-950">{t("chaseToday")}</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-rose-950">
+                {t("chaseTodayCount", { n: chaseCount })}
+              </p>
+            </div>
             {unpaidSums.size === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("unpaidEmpty")}</p>
+              <p className="w-full text-sm text-muted-foreground">{t("unpaidEmpty")}</p>
+            ) : chaseCount === 0 ? (
+              <p className="w-full text-sm text-muted-foreground">{t("chaseTodayNone")}</p>
             ) : null}
           </div>
           <ul className="space-y-2">
-            {unpaid.map((row) => {
+            {orderedUnpaid.map((row) => {
               const bucket = agingBucket(row.dueOn, today);
+              const chase = isChaseDue(row.nextNudgeOn, today);
               return (
-                <li key={`${row.projectId}-${row.installmentId}`}>
-                  <button
-                    type="button"
-                    className="flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border bg-white/70 px-4 py-3 text-left hover:bg-white"
-                    onClick={() => setActiveProjectId(row.projectId)}
-                  >
-                    <div>
+                <li
+                  key={`${row.projectId}-${row.installmentId}`}
+                  className={cn(
+                    "space-y-3 rounded-xl border px-4 py-3",
+                    chase ? "border-rose-300 bg-rose-50/60" : "bg-white/70",
+                  )}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setActiveProjectId(row.projectId)}>
                       <p className="font-medium">
+                        {chase ? `${t("chaseToday")} · ` : ""}
                         {row.projectName} · {row.label}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {clientById.get(row.clientId)?.name ?? t("unknownClient")}
                         {row.dueOn ? ` · ${t("dueOn")} ${row.dueOn}` : ""}
                         {` · ${t(`aging.${bucket}`)}`}
+                        {row.lastNudgedOn ? ` · ${t("nudgedOn", { date: row.lastNudgedOn })}` : ""}
+                        {row.nextNudgeOn ? ` · ${t("nextNudge", { date: row.nextNudgeOn })}` : ""}
                       </p>
-                    </div>
+                    </button>
                     <p className="text-sm font-semibold tabular-nums text-amber-950">
                       {formatProjectMoney(row.outstanding, row.currency)}
                     </p>
-                  </button>
+                  </div>
+                  <NudgeControls
+                    rowKey={row.installmentId}
+                    nextNudgeOn={row.nextNudgeOn}
+                    disabled={saving}
+                    onMarkNudged={(nextOn) => void markNudged(row, nextOn)}
+                  />
                 </li>
               );
             })}
@@ -290,7 +341,11 @@ export function GigsApp({ userId }: { userId: string }) {
             </p>
           ) : (
             <ul className="space-y-2">
-              {store.clients.map((c) => (
+              {store.clients.map((c) => {
+                const totals = clientCurrencyTotals(store.projects, c.id);
+                const received = totals.map((row) => formatProjectMoney(row.received, row.currency)).join(" · ");
+                const owed = totals.map((row) => formatProjectMoney(row.receivable, row.currency)).join(" · ");
+                return (
                 <li
                   key={c.id}
                   className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-white/70 px-4 py-3"
@@ -299,6 +354,11 @@ export function GigsApp({ userId }: { userId: string }) {
                     <p className="font-medium">{c.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {[c.company, c.phone, c.email].filter(Boolean).join(" · ") || t("noClientMeta")}
+                    </p>
+                    <p className="mt-1 text-xs text-foreground/80">
+                      {totals.length === 0
+                        ? t("clientNoProjects")
+                        : `${t("clientReceivedLine", { amounts: received })} · ${t("clientOwesLine", { amounts: owed })}`}
                     </p>
                   </div>
                   <Button
@@ -322,7 +382,8 @@ export function GigsApp({ userId }: { userId: string }) {
                     {t("delete")}
                   </Button>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </section>

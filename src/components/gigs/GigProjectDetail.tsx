@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { NudgeControls } from "@/components/gigs/NudgeControls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,7 @@ import { formatProjectMoney } from "@/lib/fx";
 import { logGigCostExpense, logGigInstallmentIncome } from "@/lib/gigs/log-ledger";
 import {
   installmentOutstanding,
+  nudgeInstallment,
   projectContractTotal,
   projectCostTotal,
   projectProfit,
@@ -180,23 +182,35 @@ export function GigProjectDetail({
                     {inst.dueOn ? ` · ${t("dueOn")} ${inst.dueOn}` : ""}
                     {` · ${t(`installmentStatus.${inst.status}`)}`}
                     {left > 0 ? ` · ${t("outstanding")} ${money(left)}` : ""}
+                    {inst.lastNudgedOn ? ` · ${t("nudgedOn", { date: inst.lastNudgedOn })}` : ""}
+                    {inst.nextNudgeOn ? ` · ${t("nextNudge", { date: inst.nextNudgeOn })}` : ""}
                   </p>
                 </div>
                 {left > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" size="sm" className="rounded-full" disabled={busy} onClick={() => void markPaid(inst, false)}>
-                      {t("markPaid")}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="rounded-full"
+                  <div className="flex flex-col items-stretch gap-2 sm:items-end">
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" size="sm" className="rounded-full" disabled={busy} onClick={() => void markPaid(inst, false)}>
+                        {t("markPaid")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full"
+                        disabled={busy}
+                        onClick={() => void markPaid(inst, true)}
+                      >
+                        {t("markPaidAndLedger")}
+                      </Button>
+                    </div>
+                    <NudgeControls
+                      rowKey={inst.id}
+                      nextNudgeOn={inst.nextNudgeOn}
                       disabled={busy}
-                      onClick={() => void markPaid(inst, true)}
-                    >
-                      {t("markPaidAndLedger")}
-                    </Button>
+                      onMarkNudged={(nextOn) =>
+                        void persist(nudgeInstallment(project, inst.id, nextOn, isoToday()))
+                      }
+                    />
                   </div>
                 ) : inst.transactionId ? (
                   <span className="text-xs text-emerald-800">{t("onLedger")}</span>

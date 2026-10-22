@@ -800,7 +800,17 @@
       "d31_60": "逾期 31–60 天",
       "d60plus": "逾期 60 天以上",
       "noDue": "未设到期日"
-    }
+    },
+    "chaseToday": "今天该催",
+    "chaseTodayCount": "{n} 笔",
+    "chaseTodayNone": "今天没有要催的。在未收款上记下下次再催日期，到了就会出现在这里。",
+    "markNudged": "已催",
+    "nextNudgeOn": "下次再催",
+    "nudgedOn": "上次催收 {date}",
+    "nextNudge": "下次 {date}",
+    "clientNoProjects": "还没有项目",
+    "clientReceivedLine": "累计已收 {amounts}",
+    "clientOwesLine": "还欠 {amounts}"
   },
   "fixedCosts": {
     "title": "固定账单",
@@ -1666,7 +1676,7 @@
       "bullets": [
         "客户档案与项目绑定",
         "设计/开发/私教/顾问等业态分期模板",
-        "未收款与账龄一览",
+        "未收款、账龄与今天该催",
         "项目成本与已收利润",
         "收款/成本可记入咔账总账"
       ]

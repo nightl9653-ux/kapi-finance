@@ -800,7 +800,17 @@
       "d31_60": "31–60 days overdue",
       "d60plus": "60+ days overdue",
       "noDue": "No due date"
-    }
+    },
+    "chaseToday": "Follow up today",
+    "chaseTodayCount": "{n}",
+    "chaseTodayNone": "Nothing to chase today. Set a next follow-up date on an unpaid installment and it will show up here.",
+    "markNudged": "Followed up",
+    "nextNudgeOn": "Next follow-up",
+    "nudgedOn": "Last follow-up {date}",
+    "nextNudge": "Next {date}",
+    "clientNoProjects": "No projects yet",
+    "clientReceivedLine": "Received {amounts}",
+    "clientOwesLine": "Still owed {amounts}"
   },
   "fixedCosts": {
     "title": "Fixed bills",
@@ -1666,7 +1676,7 @@
       "bullets": [
         "Client profiles linked to projects",
         "Installment templates for design, dev, training, consulting",
-        "Unpaid and aging overview",
+        "Unpaid list with aging and follow-ups due today",
         "Project costs and profit on amounts received",
         "Post receipts and costs to the Kash ledger"
       ]

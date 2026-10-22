@@ -48,7 +48,42 @@ export type UnpaidRow = {
   currency: string;
   dueOn?: string;
   status: GigInstallment["status"];
+  lastNudgedOn?: string;
+  nextNudgeOn?: string;
 };
+
+export function isIsoDate(value: string | undefined | null): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+export function addIsoDays(iso: string, days: number): string {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + days);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** 下次再催日期已到（含今天） */
+export function isChaseDue(nextNudgeOn: string | undefined, today: string): boolean {
+  return Boolean(nextNudgeOn && nextNudgeOn <= today);
+}
+
+export function nudgeInstallment(
+  project: GigProject,
+  installmentId: string,
+  nextOn: string,
+  today: string,
+): GigProject {
+  const nextNudgeOn = isIsoDate(nextOn) ? nextOn : addIsoDays(today, 7);
+  return {
+    ...project,
+    installments: project.installments.map((inst) =>
+      inst.id === installmentId ? { ...inst, lastNudgedOn: today, nextNudgeOn } : inst,
+    ),
+  };
+}
 
 export function collectUnpaid(projects: GigProject[]): UnpaidRow[] {
   const rows: UnpaidRow[] = [];
@@ -67,6 +102,8 @@ export function collectUnpaid(projects: GigProject[]): UnpaidRow[] {
         currency: p.currency,
         dueOn: inst.dueOn,
         status: inst.status,
+        lastNudgedOn: inst.lastNudgedOn,
+        nextNudgeOn: inst.nextNudgeOn,
       });
     }
   }
@@ -90,6 +127,25 @@ export function agingBucket(dueOn: string | undefined, today: string): AgingBuck
   if (days <= 30) return "d0_30";
   if (days <= 60) return "d31_60";
   return "d60plus";
+}
+
+export type ClientCurrencyTotals = {
+  currency: string;
+  received: number;
+  receivable: number;
+};
+
+/** 该客户名下未取消项目的累计已收与还欠，按项目币种分开 */
+export function clientCurrencyTotals(projects: GigProject[], clientId: string): ClientCurrencyTotals[] {
+  const map = new Map<string, { received: number; receivable: number }>();
+  for (const project of projects) {
+    if (project.clientId !== clientId || project.status === "cancelled") continue;
+    const prev = map.get(project.currency) ?? { received: 0, receivable: 0 };
+    prev.received = round2(prev.received + projectReceivedTotal(project));
+    prev.receivable = round2(prev.receivable + projectReceivableTotal(project));
+    map.set(project.currency, prev);
+  }
+  return [...map.entries()].map(([currency, totals]) => ({ currency, ...totals }));
 }
 
 export function sumUnpaidByCurrency(rows: UnpaidRow[]): Map<string, number> {
