@@ -60,6 +60,7 @@ export function GigsApp({ userId }: { userId: string }) {
   const [saving, setSaving] = useState(false);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [creatingClient, setCreatingClient] = useState(false);
+  const [editingClientId, setEditingClientId] = useState<string | null>(null);
   const [creatingProject, setCreatingProject] = useState(false);
 
   useEffect(() => {
@@ -338,7 +339,14 @@ export function GigsApp({ userId }: { userId: string }) {
 
       {!loading && tab === "clients" ? (
         <section className="space-y-4">
-          <Button type="button" className="rounded-full" onClick={() => setCreatingClient(true)}>
+          <Button
+            type="button"
+            className="rounded-full"
+            onClick={() => {
+              setEditingClientId(null);
+              setCreatingClient(true);
+            }}
+          >
             {t("newClient")}
           </Button>
           {creatingClient ? (
@@ -369,6 +377,29 @@ export function GigsApp({ userId }: { userId: string }) {
                 const totals = clientCurrencyTotals(store.projects, c.id);
                 const received = totals.map((row) => formatProjectMoney(row.received, row.currency)).join(" · ");
                 const owed = totals.map((row) => formatProjectMoney(row.receivable, row.currency)).join(" · ");
+                if (editingClientId === c.id) {
+                  return (
+                    <li key={c.id}>
+                      <GigClientForm
+                        initial={c}
+                        saving={saving}
+                        onCancel={() => setEditingClientId(null)}
+                        onSave={async (client) => {
+                          setSaving(true);
+                          setError(null);
+                          try {
+                            setStore(await upsertClient(userId, client));
+                            setEditingClientId(null);
+                          } catch (e) {
+                            setError(saveErrorText(e, t));
+                          } finally {
+                            setSaving(false);
+                          }
+                        }}
+                      />
+                    </li>
+                  );
+                }
                 return (
                 <li
                   key={c.id}
@@ -379,32 +410,49 @@ export function GigsApp({ userId }: { userId: string }) {
                     <p className="text-xs text-muted-foreground">
                       {[c.company, c.phone, c.email].filter(Boolean).join(" · ") || t("noClientMeta")}
                     </p>
+                    {c.notes ? <p className="mt-1 text-xs text-muted-foreground">{c.notes}</p> : null}
                     <p className="mt-1 text-xs text-foreground/80">
                       {totals.length === 0
                         ? t("clientNoProjects")
                         : `${t("clientReceivedLine", { amounts: received })} · ${t("clientOwesLine", { amounts: owed })}`}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full"
-                    disabled={saving}
-                    onClick={async () => {
-                      if (!confirm(t("confirmDeleteClient"))) return;
-                      setSaving(true);
-                      try {
-                        setStore(await deleteClient(userId, c.id));
-                      } catch (e) {
-                        setError(saveErrorText(e, t));
-                      } finally {
-                        setSaving(false);
-                      }
-                    }}
-                  >
-                    {t("delete")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full"
+                      disabled={saving}
+                      onClick={() => {
+                        setCreatingClient(false);
+                        setEditingClientId(c.id);
+                      }}
+                    >
+                      {t("edit")}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full"
+                      disabled={saving}
+                      onClick={async () => {
+                        if (!confirm(t("confirmDeleteClient"))) return;
+                        setSaving(true);
+                        try {
+                          setStore(await deleteClient(userId, c.id));
+                          setEditingClientId((current) => (current === c.id ? null : current));
+                        } catch (e) {
+                          setError(saveErrorText(e, t));
+                        } finally {
+                          setSaving(false);
+                        }
+                      }}
+                    >
+                      {t("delete")}
+                    </Button>
+                  </div>
                 </li>
                 );
               })}

@@ -20,6 +20,7 @@ export function GigClientForm({
   saving?: boolean;
 }) {
   const t = useTranslations("gigs");
+  const fieldId = initial?.id || "new";
   const [name, setName] = useState(initial?.name ?? "");
   const [company, setCompany] = useState(initial?.company ?? "");
   const [phone, setPhone] = useState(initial?.phone ?? "");
@@ -47,26 +48,26 @@ export function GigClientForm({
       }}
     >
       <div className="space-y-1.5">
-        <Label htmlFor="gig-client-name">{t("clientName")}</Label>
-        <Input id="gig-client-name" value={name} onChange={(e) => setName(e.target.value)} required />
+        <Label htmlFor={`gig-client-name-${fieldId}`}>{t("clientName")}</Label>
+        <Input id={`gig-client-name-${fieldId}`} value={name} onChange={(e) => setName(e.target.value)} required />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="gig-client-company">{t("clientCompany")}</Label>
-          <Input id="gig-client-company" value={company} onChange={(e) => setCompany(e.target.value)} />
+          <Label htmlFor={`gig-client-company-${fieldId}`}>{t("clientCompany")}</Label>
+          <Input id={`gig-client-company-${fieldId}`} value={company} onChange={(e) => setCompany(e.target.value)} />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="gig-client-phone">{t("clientPhone")}</Label>
-          <Input id="gig-client-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <Label htmlFor={`gig-client-phone-${fieldId}`}>{t("clientPhone")}</Label>
+          <Input id={`gig-client-phone-${fieldId}`} value={phone} onChange={(e) => setPhone(e.target.value)} />
         </div>
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="gig-client-email">{t("clientEmail")}</Label>
-        <Input id="gig-client-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Label htmlFor={`gig-client-email-${fieldId}`}>{t("clientEmail")}</Label>
+        <Input id={`gig-client-email-${fieldId}`} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="gig-client-notes">{t("notes")}</Label>
-        <Input id="gig-client-notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <Label htmlFor={`gig-client-notes-${fieldId}`}>{t("notes")}</Label>
+        <Input id={`gig-client-notes-${fieldId}`} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </div>
       <div className="flex flex-wrap gap-2">
         <Button type="submit" className="rounded-full" disabled={saving || !name.trim()}>
