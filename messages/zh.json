@@ -716,7 +716,7 @@
   },
   "fixedCosts": {
     "title": "固定账单",
-    "subtitle": "到期默认自动入账。若某一期你点了「确认逾期」，则只取消这一期入账，其它期次不受影响。",
+    "subtitle": "房租、水电煤、会员、保险等按周期到期的收支。到期默认自动入账；若某一期你点了「确认逾期」，则只取消这一期入账，其它期次不受影响。",
     "thisMonth": "{month}",
     "expensePlanned": "本月支出计划",
     "expensePosted": "已写入总账",
@@ -743,7 +743,7 @@
     "overdueMarkOk": "已标记该期逾期，不会自动入账。",
     "rulesTitle": "全部规则",
     "rulesSubtitle": "编辑规则不会取消自动入账；删除规则后不再生成新流水。",
-    "rulesEmpty": "还没有固定账单规则。",
+    "rulesEmpty": "还没有固定账单规则。可先添加房租、水电煤、会员等周期收支。",
     "addBill": "添加固定账单",
     "goTransactions": "打开记账",
     "status": {

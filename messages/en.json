@@ -716,7 +716,7 @@
   },
   "fixedCosts": {
     "title": "Fixed bills",
-    "subtitle": "Due items auto-post by default. If you tap “Mark overdue” on one period, only that period is skipped—other periods keep auto-posting.",
+    "subtitle": "Recurring income and expenses like rent, utilities, memberships, and insurance. Due items auto-post by default; if you mark one period overdue, only that period is skipped.",
     "thisMonth": "{month}",
     "expensePlanned": "Planned expenses",
     "expensePosted": "Posted to ledger",
@@ -743,7 +743,7 @@
     "overdueMarkOk": "This period is marked overdue and won’t auto-post.",
     "rulesTitle": "All rules",
     "rulesSubtitle": "Editing a rule keeps auto-posting; deleting stops future entries.",
-    "rulesEmpty": "No fixed-bill rules yet.",
+    "rulesEmpty": "No fixed-bill rules yet. Start with rent, utilities, memberships, and similar recurring items.",
     "addBill": "Add fixed bill",
     "goTransactions": "Open transactions",
     "status": {
