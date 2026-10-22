@@ -16,6 +16,7 @@
     "houseRenovation": "房屋装修",
     "travel": "旅行",
     "fixedCosts": "固定账单",
+    "gigs": "接单",
     "dressup": "宅宴",
     "art": "艺术",
     "menu": "菜单",
@@ -42,6 +43,9 @@
     },
     "meetings": {
       "lead": "朋友档案、见面感受与资金往来：礼金与借贷写入总账。"
+    },
+    "gigs": {
+      "lead": "接单工作台：客户、项目分期回款、成本与利润；可记入总账。"
     }
   },
   "banquetParty": {
@@ -712,6 +716,90 @@
       "interiorFinish": "内装精装",
       "solarWaterHeater": "太阳能热水器",
       "yardPaving": "庭院铺装"
+    }
+  },
+  "gigs": {
+    "workspaceBadge": "工作台",
+    "title": "接单",
+    "subtitle": "客户 · 项目分期回款 · 成本利润。进入后专注接单；可随时返回咔账首页。",
+    "backToKash": "返回咔账",
+    "tabUnpaid": "未收款",
+    "tabProjects": "项目",
+    "tabClients": "客户",
+    "loading": "加载中…",
+    "retry": "重试",
+    "loadError": "加载失败，请稍后重试。",
+    "saveError": "保存失败，请稍后重试。",
+    "ledgerError": "写入总账失败，请稍后重试。",
+    "schemaMissing": "请先在 Supabase 执行迁移 20261022170000_studio_gigs.sql。",
+    "totalReceivable": "待收回款",
+    "unpaidEmpty": "暂无未收款。创建项目并设置分期后，待收会出现在这里。",
+    "newProject": "新建项目",
+    "newClient": "新建客户",
+    "needClientFirst": "请先添加客户。",
+    "projectsEmpty": "还没有项目。先建客户，再开项目。",
+    "clientsEmpty": "还没有客户。添加后即可创建接单项目。",
+    "confirmDeleteProject": "确定删除该项目？分期与成本会一并删除。",
+    "confirmDeleteClient": "确定删除该客户？其下项目也会删除。",
+    "delete": "删除",
+    "save": "保存",
+    "cancel": "取消",
+    "clientName": "客户名称",
+    "clientCompany": "公司 / 工作室",
+    "clientPhone": "电话",
+    "clientEmail": "邮箱",
+    "notes": "备注",
+    "noClientMeta": "暂无联系方式",
+    "projectName": "项目名称",
+    "client": "客户",
+    "noClientsYet": "请先创建客户",
+    "vertical": "业态",
+    "status": "状态",
+    "currency": "币种",
+    "contractTotal": "合同总额",
+    "templateHint": "将按业态生成分期模板，金额可按总额自动拆分；之后可在项目里改。",
+    "unknownClient": "未知客户",
+    "backToList": "← 返回列表",
+    "received": "已收",
+    "receivable": "待收",
+    "profit": "利润（已收−成本）",
+    "costTotal": "成本合计",
+    "installments": "分期回款",
+    "dueOn": "到期",
+    "outstanding": "尚欠",
+    "markPaid": "标记已收",
+    "markPaidAndLedger": "已收并记入总账",
+    "onLedger": "已在总账",
+    "costs": "项目成本",
+    "costName": "成本项",
+    "amount": "金额",
+    "addCost": "添加成本",
+    "costsEmpty": "暂无成本。外包、素材、差旅可记在这里。",
+    "logToLedger": "记入总账",
+    "verticals": {
+      "design": "设计",
+      "development": "开发",
+      "training": "私教 / 培训",
+      "consulting": "顾问",
+      "other": "其他"
+    },
+    "statuses": {
+      "quote": "报价中",
+      "active": "进行中",
+      "done": "已完成",
+      "cancelled": "已取消"
+    },
+    "installmentStatus": {
+      "pending": "待收",
+      "partial": "部分已收",
+      "paid": "已收清"
+    },
+    "aging": {
+      "notDue": "未到期",
+      "d0_30": "逾期 1–30 天",
+      "d31_60": "逾期 31–60 天",
+      "d60plus": "逾期 60 天以上",
+      "noDue": "未设到期日"
     }
   },
   "fixedCosts": {
@@ -1571,6 +1659,16 @@
         "资金往来：礼金发出/收到、借出借入与还款，写入总账",
         "朋友页可看借贷余额与礼金净值",
         "交往建议可下拉添加或自定义"
+      ]
+    },
+    "gigs": {
+      "lead": "接单工作台：客户、项目、分期回款与成本利润；可选写入总账。",
+      "bullets": [
+        "客户档案与项目绑定",
+        "设计/开发/私教/顾问等业态分期模板",
+        "未收款与账龄一览",
+        "项目成本与已收利润",
+        "收款/成本可记入咔账总账"
       ]
     },
     "aiAssistant": {

@@ -27,6 +27,7 @@ const PUBLIC_PATHS = new Set([
   "/house-renovation",
   "/travel",
   "/meetings",
+  "/gigs",
   "/import-dressup",
   "/unlock-dressup",
   "/dressup-plus-ping",

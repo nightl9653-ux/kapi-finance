@@ -30,6 +30,7 @@ export function AppHeader({ initialAuth }: { initialAuth?: InitialAuth }) {
     { href: `/${locale}/fixed-costs`, label: t("fixedCosts") },
     { href: `/${locale}/quick-record`, label: t("quickRecord") },
     { href: `/${locale}/meetings`, label: t("meetings") },
+    { href: `/${locale}/gigs`, label: t("gigs") },
     { href: `/${locale}/banquet-party`, label: t("banquetParty") },
     { href: `/${locale}/travel`, label: t("travel") },
   ];

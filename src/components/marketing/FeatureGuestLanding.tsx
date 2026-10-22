@@ -12,6 +12,7 @@ export type GuestFeatureKey =
   | "houseRenovation"
   | "travel"
   | "meetings"
+  | "gigs"
   | "aiAssistant"
   | "reports"
   | "settings";

@@ -16,6 +16,7 @@
     "houseRenovation": "Home renovation",
     "travel": "Travel",
     "fixedCosts": "Fixed bills",
+    "gigs": "Gigs",
     "dressup": "Manor",
     "art": "Art",
     "menu": "Menu",
@@ -42,6 +43,9 @@
     },
     "meetings": {
       "lead": "Friend profiles, meetup notes, and money flows that post to the ledger."
+    },
+    "gigs": {
+      "lead": "Client gigs: projects, installment receivables, costs and profit—optional ledger posting."
     }
   },
   "banquetParty": {
@@ -712,6 +716,90 @@
       "interiorFinish": "Interior finish",
       "solarWaterHeater": "Solar water heater",
       "yardPaving": "Yard paving"
+    }
+  },
+  "gigs": {
+    "workspaceBadge": "Workspace",
+    "title": "Gigs",
+    "subtitle": "Clients, installment receivables, costs and profit. Stay focused here; return to Kash anytime.",
+    "backToKash": "Back to Kash",
+    "tabUnpaid": "Unpaid",
+    "tabProjects": "Projects",
+    "tabClients": "Clients",
+    "loading": "Loading…",
+    "retry": "Retry",
+    "loadError": "Could not load. Please try again.",
+    "saveError": "Could not save. Please try again.",
+    "ledgerError": "Could not post to the ledger. Please try again.",
+    "schemaMissing": "Run migration 20261022170000_studio_gigs.sql in Supabase first.",
+    "totalReceivable": "Outstanding",
+    "unpaidEmpty": "Nothing outstanding. Create a project with installments to track receivables here.",
+    "newProject": "New project",
+    "newClient": "New client",
+    "needClientFirst": "Add a client first.",
+    "projectsEmpty": "No projects yet. Add a client, then create a project.",
+    "clientsEmpty": "No clients yet. Add one to start taking gigs.",
+    "confirmDeleteProject": "Delete this project? Installments and costs will be removed.",
+    "confirmDeleteClient": "Delete this client? Their projects will be deleted too.",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "clientName": "Client name",
+    "clientCompany": "Company / studio",
+    "clientPhone": "Phone",
+    "clientEmail": "Email",
+    "notes": "Notes",
+    "noClientMeta": "No contact details",
+    "projectName": "Project name",
+    "client": "Client",
+    "noClientsYet": "Create a client first",
+    "vertical": "Vertical",
+    "status": "Status",
+    "currency": "Currency",
+    "contractTotal": "Contract total",
+    "templateHint": "Installment labels follow the vertical; amounts split from the total. You can edit them on the project.",
+    "unknownClient": "Unknown client",
+    "backToList": "← Back to list",
+    "received": "Received",
+    "receivable": "Outstanding",
+    "profit": "Profit (received − costs)",
+    "costTotal": "Costs total",
+    "installments": "Installments",
+    "dueOn": "Due",
+    "outstanding": "Still due",
+    "markPaid": "Mark paid",
+    "markPaidAndLedger": "Paid & post to ledger",
+    "onLedger": "On ledger",
+    "costs": "Project costs",
+    "costName": "Cost item",
+    "amount": "Amount",
+    "addCost": "Add cost",
+    "costsEmpty": "No costs yet. Log outsourcing, materials, or travel here.",
+    "logToLedger": "Log to ledger",
+    "verticals": {
+      "design": "Design",
+      "development": "Development",
+      "training": "Training / coaching",
+      "consulting": "Consulting",
+      "other": "Other"
+    },
+    "statuses": {
+      "quote": "Quote",
+      "active": "Active",
+      "done": "Done",
+      "cancelled": "Cancelled"
+    },
+    "installmentStatus": {
+      "pending": "Pending",
+      "partial": "Partial",
+      "paid": "Paid"
+    },
+    "aging": {
+      "notDue": "Not due",
+      "d0_30": "1–30 days overdue",
+      "d31_60": "31–60 days overdue",
+      "d60plus": "60+ days overdue",
+      "noDue": "No due date"
     }
   },
   "fixedCosts": {
@@ -1571,6 +1659,16 @@
         "Money flows: gifts, loans, and repayments posted to the ledger",
         "See loan balance and gift net on each friend",
         "Relationship tips from a dropdown or custom notes"
+      ]
+    },
+    "gigs": {
+      "lead": "A gig workspace: clients, projects, installment receivables, costs and profit—optional ledger posting.",
+      "bullets": [
+        "Client profiles linked to projects",
+        "Installment templates for design, dev, training, consulting",
+        "Unpaid and aging overview",
+        "Project costs and profit on amounts received",
+        "Post receipts and costs to the Kash ledger"
       ]
     },
     "aiAssistant": {
