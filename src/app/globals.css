@@ -136,3 +136,15 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  body:has(.gig-quote-root) header,
+  body:has(.gig-quote-root) footer,
+  body:has(.gig-quote-root) .gig-quote-no-print {
+    display: none !important;
+  }
+  body:has(.gig-quote-root) main {
+    max-width: none;
+    padding: 0;
+  }
+}

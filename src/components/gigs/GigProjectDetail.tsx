@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { GigProjectForm } from "@/components/gigs/GigProjectForm";
+import { GigQuoteSheet } from "@/components/gigs/GigQuoteSheet";
 import { NudgeControls } from "@/components/gigs/NudgeControls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,7 @@ export function GigProjectDetail({
   const [timeNote, setTimeNote] = useState("");
   const [editingTimeId, setEditingTimeId] = useState<string | null>(null);
   const [editingProject, setEditingProject] = useState(false);
+  const [showingQuote, setShowingQuote] = useState(false);
   const [editingInstallmentId, setEditingInstallmentId] = useState<string | null>(null);
   const [editingCostId, setEditingCostId] = useState<string | null>(null);
 
@@ -264,6 +266,10 @@ export function GigProjectDetail({
       ? t("timeHintHours")
       : t("timeHintHoursOptional");
 
+  if (showingQuote) {
+    return <GigQuoteSheet project={project} client={client} onClose={() => setShowingQuote(false)} />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -276,9 +282,14 @@ export function GigProjectDetail({
             {client?.name ?? t("unknownClient")} · {t(`verticals.${project.vertical}`)} · {t(`statuses.${project.status}`)}
           </p>
         </div>
-        <Button type="button" variant="outline" className="rounded-full" disabled={busy} onClick={() => setEditingProject(true)}>
-          {t("editProject")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" className="rounded-full" disabled={busy} onClick={() => setShowingQuote(true)}>
+            {t("quoteOpen")}
+          </Button>
+          <Button type="button" variant="outline" className="rounded-full" disabled={busy} onClick={() => setEditingProject(true)}>
+            {t("editProject")}
+          </Button>
+        </div>
       </div>
 
       {editingProject ? (
