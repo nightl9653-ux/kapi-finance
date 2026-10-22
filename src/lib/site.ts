@@ -4,9 +4,9 @@ export const SITE_NAME_EN = "Kash";
 export const SITE_NAME_ZH = "咔账";
 
 export const SITE_DESCRIPTION_EN =
-  "Family finance planning: goals, transactions, AI receipt scan, voice entry, budgets, and Dream Theater visualizations.";
+  "See what each client still owes, and what a job earned after costs.";
 export const SITE_DESCRIPTION_ZH =
-  "家庭财务规划：目标管理、记账、AI 扫单与语音记账、预算与梦想剧场。";
+  "客户还欠多少，这单扣掉成本赚了多少。";
 
 /** Override with NEXT_PUBLIC_SUPPORT_EMAIL in production. */
 export const SUPPORT_EMAIL =

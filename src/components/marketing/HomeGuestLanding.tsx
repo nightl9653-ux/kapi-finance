@@ -15,13 +15,13 @@ export async function HomeGuestLanding({ locale }: { locale: "zh" | "en" }) {
         <p className="mt-3 max-w-2xl text-base text-muted-foreground">{t("heroSubtitle")}</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
-            href={`/${locale}/auth?next=${encodeURIComponent(`/${locale}`)}`}
+            href={`/${locale}/auth?next=${encodeURIComponent(`/${locale}/gigs`)}`}
             className={cn(buttonVariants({ size: "lg" }), "rounded-full")}
           >
             {ta("signUp")}
           </Link>
           <Link
-            href={`/${locale}/auth?next=${encodeURIComponent(`/${locale}`)}`}
+            href={`/${locale}/auth?next=${encodeURIComponent(`/${locale}/gigs`)}`}
             className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-full")}
           >
             {ta("signIn")}

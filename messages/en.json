@@ -1702,13 +1702,13 @@
     "readTerms": "Read Terms of Service (sanctions section)"
   },
   "footer": {
-    "tagline": "Kash helps households plan goals, track spending, and use AI-assisted budgeting.",
+    "tagline": "See what each client still owes, and what a job earned after costs.",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
     "pricing": "Pricing",
     "copied": "Copied {email}. Send mail from your own inbox.",
     "copyFail": "Could not copy. Email {email} manually.",
-    "copyright": "© {year} Kash · Family Finance"
+    "copyright": "© {year} Kash"
   },
   "guestLanding": {
     "badge": "Sign in to use this feature",
@@ -1821,15 +1821,15 @@
     }
   },
   "homeLanding": {
-    "heroTitle": "Family finance planning that stays simple",
-    "heroSubtitle": "Goals, calendar dashboard, multi-currency transactions, reports, and Dream Theater—built for households, not spreadsheets. AI scan, voice, and assistant are Plus.",
+    "heroTitle": "What each client still owes",
+    "heroSubtitle": "And what the job earned after costs. Track installments, unpaid amounts, and project costs.",
     "viewPricing": "See Plus plans",
     "learnMore": "Learn more",
     "features": [
       {
-        "title": "Goals & fund pool",
-        "body": "Prioritize savings targets and allocate monthly net income across goals.",
-        "href": "/goals"
+        "title": "Gigs",
+        "body": "Clients, installments, unpaid amounts, and quotes. Profit is cash received minus costs.",
+        "href": "/gigs"
       },
       {
         "title": "Transactions",
@@ -1837,21 +1837,21 @@
         "href": "/transactions"
       },
       {
-        "title": "Quick record",
-        "body": "Screenshot or voice → AI pre-fill → confirm and save (Plus).",
-        "href": "/quick-record"
+        "title": "Connections",
+        "body": "Friends, meetups, gifts, and loans.",
+        "href": "/meetings"
       },
       {
-        "title": "AI assistant",
-        "body": "Chat for guidance and generate monthly budget plans (Plus).",
-        "href": "/ai-assistant"
+        "title": "Fixed bills",
+        "body": "Rent, memberships, insurance, and other recurring items.",
+        "href": "/fixed-costs"
       }
     ]
   },
   "legalPrivacy": {
     "title": "Privacy Policy",
     "updated": "Last updated: June 1, 2026",
-    "intro": "This policy describes how Kash · Family Finance (“Kash”, “we”) handles information when you use our web app. Contact: support@919145.xyz. Use from sanctioned or otherwise restricted jurisdictions is not permitted—see our Terms of Service.",
+    "intro": "This policy describes how Kash (“Kash”, “we”) handles information when you use our web app. Contact: support@919145.xyz. Use from sanctioned or otherwise restricted jurisdictions is not permitted—see our Terms of Service.",
     "sections": [
       {
         "title": "Information we collect",
@@ -1916,14 +1916,14 @@
   },
   "legalTerms": {
     "title": "Terms of Service",
-    "updated": "Last updated: September 11, 2026",
-    "intro": "These terms govern your use of Kash · Family Finance. Kash is for personal and household bookkeeping only, not company or commercial accounting. By creating an account or using the app, you agree to them—including strict restrictions on sanctioned, embargoed, and other prohibited regions. Questions: support@919145.xyz.",
+    "updated": "Last updated: October 23, 2026",
+    "intro": "These terms govern your use of Kash. Kash is for personal bookkeeping and for tracking what clients owe you and what a job earned after costs. It does not replace company accounts or statutory books. By creating an account or using the app, you agree to them—including strict restrictions on sanctioned, embargoed, and other prohibited regions. Questions: support@919145.xyz.",
     "sections": [
       {
         "title": "The service",
         "paragraphs": [
-          "Kash provides personal and household finance tools: transaction tracking, goals, reports, AI-assisted entry, budgeting chat, and optional Plus membership features.",
-          "Kash is intended only for personal and household day-to-day spending, budgets, and goals. It is not for company, sole-proprietor, or other commercial bookkeeping, tax filing, audit, payroll, or statutory accounts. If you use Kash for those purposes, you do so at your own risk.",
+          "Kash provides personal bookkeeping and gig tracking: clients, installments, unpaid amounts, and profit as cash received minus costs. Goals, travel, and parties remain available.",
+          "Kash is not for company, sole-proprietor, or other commercial bookkeeping, tax filing, audit, payroll, or statutory accounts. If you use Kash for those purposes, you do so at your own risk.",
           "Features may change; we strive to keep core bookkeeping available on the Free plan as described on the pricing page.",
           "Kash is not a bank, broker, accountant, tax advisor, or licensed financial planner. Outputs are informational only and are not accounting, audit, or legal advice."
         ]

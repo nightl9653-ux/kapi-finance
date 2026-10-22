@@ -1,7 +1,7 @@
 {
-  "name": "Kash · Family Finance",
+  "name": "Kash",
   "short_name": "Kash",
-  "description": "Family finance planning and bookkeeping PWA",
+  "description": "See what each client still owes, and what a job earned after costs.",
   "start_url": "/en",
   "scope": "/",
   "display": "standalone",
