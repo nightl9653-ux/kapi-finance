@@ -348,7 +348,9 @@ export function GigProjectDetail({
       </div>
       <p className="text-xs text-muted-foreground">
         {t("costTotal")}: {money(projectCostTotal(project))}
-        {timeQtyTotal > 0 ? ` · ${t("timeInvested", { qty: formatTimeQuantity(timeQtyTotal), unit: timeUnit })}` : ""}
+        {timeQtyTotal > 0
+          ? ` · ${t(sessions ? "sessionsTaught" : "timeInvested", { qty: formatTimeQuantity(timeQtyTotal), unit: timeUnit })}`
+          : ""}
         {sessionsLeft != null
           ? ` · ${t("sessionsRemaining", { qty: formatTimeQuantity(sessionsLeft), unit: timeUnit })}`
           : ""}
@@ -474,10 +476,6 @@ export function GigProjectDetail({
       </section>
 
       <section className="space-y-3">
-        <div>
-          <h3 className="text-base font-medium">{timeTitle}</h3>
-          <p className="mt-1 text-xs text-muted-foreground">{timeHint}</p>
-        </div>
         {sessions ? (
           <SessionQuotaField
             key={project.sessionQuota ?? "none"}
@@ -488,10 +486,21 @@ export function GigProjectDetail({
               void persist({ ...project, sessionQuota: next });
             }}
           />
+        ) : (
+          <div>
+            <h3 className="text-base font-medium">{timeTitle}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">{timeHint}</p>
+          </div>
+        )}
+        {sessions ? (
+          <div>
+            <h3 className="text-base font-medium">{t("timeTitleSessions")}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">{t("timeHintSessions")}</p>
+          </div>
         ) : null}
         <div className="flex flex-wrap items-end gap-2 rounded-xl border bg-white/50 p-3">
           <div className="space-y-1">
-            <Label htmlFor="gig-time-qty">{t("timeQuantity")}</Label>
+            <Label htmlFor="gig-time-qty">{sessions ? t("timeQuantitySessions") : t("timeQuantity")}</Label>
             <Input
               id="gig-time-qty"
               type="number"
@@ -519,6 +528,7 @@ export function GigProjectDetail({
                   <li key={entry.id}>
                     <TimeLogEditor
                       entry={entry}
+                      quantityLabel={sessions ? t("timeQuantitySessions") : t("timeQuantity")}
                       busy={busy}
                       onCancel={() => setEditingTimeId(null)}
                       onSave={(next) => void saveTime(next)}
@@ -631,11 +641,13 @@ export function GigProjectDetail({
 
 function TimeLogEditor({
   entry,
+  quantityLabel,
   busy,
   onCancel,
   onSave,
 }: {
   entry: GigTimeLog;
+  quantityLabel: string;
   busy: boolean;
   onCancel: () => void;
   onSave: (next: GigTimeLog) => void;
@@ -648,7 +660,7 @@ function TimeLogEditor({
   return (
     <div className="flex flex-wrap items-end gap-2 rounded-xl border bg-white/70 p-3">
       <div className="space-y-1">
-        <Label htmlFor={`time-qty-${entry.id}`}>{t("timeQuantity")}</Label>
+        <Label htmlFor={`time-qty-${entry.id}`}>{quantityLabel}</Label>
         <Input
           id={`time-qty-${entry.id}`}
           type="number"

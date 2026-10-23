@@ -418,7 +418,7 @@ export function GigsApp({ userId }: { userId: string }) {
                     unknownClient: t("unknownClient"),
                     time:
                       projectTimeQuantity(p) > 0
-                        ? t("timeInvested", {
+                        ? t(timeUnitForVertical(p.vertical) === "sessions" ? "sessionsTaught" : "timeInvested", {
                             qty: formatTimeQuantity(projectTimeQuantity(p)),
                             unit:
                               timeUnitForVertical(p.vertical) === "sessions"
