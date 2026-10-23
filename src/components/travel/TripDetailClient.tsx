@@ -39,6 +39,7 @@ export function TripDetailClient({
   const locale = useLocale();
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [itemName, setItemName] = useState("");
   const [itemCategory, setItemCategory] = useState<TravelItemCategory>("transport");
   const [itemAmount, setItemAmount] = useState("");
@@ -68,29 +69,69 @@ export function TripDetailClient({
     onTripUpdated(list);
   };
 
-  const addItem = () => {
+  const clearItemDraft = () => {
+    setEditingItemId(null);
+    setItemName("");
+    setItemCategory("transport");
+    setItemAmount("");
+    setItemQty("1");
+    setItemNote("");
+    setAdding(false);
+  };
+
+  const openAdd = () => {
+    setEditingItemId(null);
+    setItemName("");
+    setItemCategory("transport");
+    setItemAmount("");
+    setItemQty("1");
+    setItemNote("");
+    setError(null);
+    setAdding(true);
+  };
+
+  const beginEdit = (item: TravelItem) => {
+    if (item.transactionId) return;
+    setEditingItemId(item.id);
+    setItemName(item.name);
+    setItemCategory(item.category);
+    setItemAmount(String(item.amount));
+    setItemQty(String(item.quantity));
+    setItemNote(item.note ?? "");
+    setError(null);
+    setAdding(true);
+  };
+
+  const saveItem = () => {
     const amount = Number(itemAmount);
     const quantity = Number(itemQty);
     if (!itemName.trim() || !Number.isFinite(amount) || amount < 0) {
       setError(t("invalidItem"));
       return;
     }
+    const quantitySafe = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+    const note = itemNote.trim() || undefined;
     startTransition(async () => {
       setError(null);
-      const item: TravelItem = {
-        id: newTravelId(),
-        name: itemName.trim(),
-        category: itemCategory,
-        amount,
-        quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
-        note: itemNote.trim() || undefined,
-      };
-      await persist({ ...trip, items: [...trip.items, item], updatedAt: new Date().toISOString() });
-      setItemName("");
-      setItemAmount("");
-      setItemQty("1");
-      setItemNote("");
-      setAdding(false);
+      const items = editingItemId
+        ? trip.items.map((row) =>
+            row.id === editingItemId
+              ? { ...row, name: itemName.trim(), category: itemCategory, amount, quantity: quantitySafe, note }
+              : row,
+          )
+        : [
+            ...trip.items,
+            {
+              id: newTravelId(),
+              name: itemName.trim(),
+              category: itemCategory,
+              amount,
+              quantity: quantitySafe,
+              note,
+            },
+          ];
+      await persist({ ...trip, items, updatedAt: new Date().toISOString() });
+      clearItemDraft();
     });
   };
 
@@ -235,13 +276,14 @@ export function TripDetailClient({
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-medium">{t("itemsTitle")}</h2>
-        <Button type="button" className="rounded-full" onClick={() => setAdding((v) => !v)}>
+        <Button type="button" className="rounded-full" onClick={() => (adding ? clearItemDraft() : openAdd())}>
           {adding ? t("cancel") : t("addItem")}
         </Button>
       </div>
 
       {adding ? (
         <div className="space-y-3 rounded-2xl border bg-white/70 p-4">
+          {editingItemId ? <p className="text-sm font-medium">{t("editItemTitle")}</p> : null}
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="travel-item-name">{t("itemName")}</Label>
@@ -294,7 +336,7 @@ export function TripDetailClient({
               <Input id="travel-item-note" value={itemNote} onChange={(e) => setItemNote(e.target.value)} />
             </div>
           </div>
-          <Button type="button" className="rounded-full" disabled={pending} onClick={addItem}>
+          <Button type="button" className="rounded-full" disabled={pending} onClick={saveItem}>
             {t("saveItem")}
           </Button>
         </div>
@@ -322,12 +364,10 @@ export function TripDetailClient({
                   </p>
                   <p className="mt-0.5 text-sm tabular-nums">
                     {formatProjectMoney(line, currency)}
-                    {item.quantity !== 1 ? (
-                      <span className="text-muted-foreground">
-                        {" "}
-                        ({item.quantity} × {formatProjectMoney(item.amount, currency)})
-                      </span>
-                    ) : null}
+                    <span className="text-muted-foreground">
+                      {" "}
+                      ({item.quantity} × {formatProjectMoney(item.amount, currency)})
+                    </span>
                     <span className={cn("ml-2 text-xs", logged ? "text-emerald-700" : "text-amber-700")}>
                       {logged ? t("loggedToTransactions") : t("pending")}
                     </span>
@@ -335,6 +375,18 @@ export function TripDetailClient({
                   {item.note ? <p className="mt-1 text-xs text-muted-foreground">{item.note}</p> : null}
                 </div>
                 <div className="flex shrink-0 gap-1">
+                  {!logged ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                      disabled={pending}
+                      onClick={() => beginEdit(item)}
+                    >
+                      {t("editItem")}
+                    </Button>
+                  ) : null}
                   {!logged ? (
                     <Button
                       type="button"

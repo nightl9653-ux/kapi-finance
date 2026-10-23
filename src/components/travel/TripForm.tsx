@@ -7,8 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BASE_CURRENCY, PROJECT_CURRENCIES, coerceCurrency } from "@/lib/fx";
-import { itemsFromTemplate, type TravelTemplateId } from "@/lib/travel/templates";
+import { endDateFromTripDays, inclusiveTripDays } from "@/lib/local-date";
+import {
+  TRAVEL_TEMPLATES,
+  clampPartySize,
+  clampTripDays,
+  getTravelTemplate,
+  itemsFromTemplate,
+  type TravelTemplateId,
+} from "@/lib/travel/templates";
 import { newTravelId, type TravelTrip } from "@/lib/travel/types";
+
+const weekendDefaults = getTravelTemplate("weekend");
 
 export function TripForm({
   mode,
@@ -34,7 +44,53 @@ export function TripForm({
   const [templateId, setTemplateId] = useState<TravelTemplateId | "blank">(
     mode === "create" ? "weekend" : "blank",
   );
+  const [days, setDays] = useState(String(weekendDefaults.defaultDays));
+  const [people, setPeople] = useState(String(weekendDefaults.defaultPeople));
   const [submitting, setSubmitting] = useState(false);
+
+  const usesTemplate = mode === "create" && templateId !== "blank";
+
+  const applySpan = (start: string, dayCount: number) => {
+    const end = endDateFromTripDays(start, dayCount);
+    if (end) setEndDate(end);
+  };
+
+  const onTemplate = (id: TravelTemplateId | "blank") => {
+    setTemplateId(id);
+    if (id === "blank") return;
+    const tpl = getTravelTemplate(id);
+    setDays(String(tpl.defaultDays));
+    setPeople(String(tpl.defaultPeople));
+    if (startDate) applySpan(startDate, tpl.defaultDays);
+  };
+
+  const onDays = (raw: string) => {
+    setDays(raw);
+    const n = Number(raw);
+    if (!startDate || !Number.isFinite(n) || n < 1) return;
+    applySpan(startDate, clampTripDays(n));
+  };
+
+  const onPeople = (raw: string) => {
+    setPeople(raw);
+  };
+
+  const onStart = (value: string) => {
+    setStartDate(value);
+    if (!usesTemplate || !value) return;
+    const n = clampTripDays(Number(days), getTravelTemplate(templateId).defaultDays);
+    applySpan(value, n);
+  };
+
+  const onEnd = (value: string) => {
+    setEndDate(value);
+    if (!usesTemplate || !startDate || !value) return;
+    const n = inclusiveTripDays(startDate, value);
+    if (n == null) return;
+    const clamped = clampTripDays(n);
+    setDays(String(clamped));
+    if (clamped !== n) applySpan(startDate, clamped);
+  };
 
   const submit = async () => {
     const trimmed = name.trim();
@@ -43,6 +99,9 @@ export function TripForm({
     try {
       const now = new Date().toISOString();
       const cap = budgetCap.trim() ? Number(budgetCap) : undefined;
+      const tpl = usesTemplate ? getTravelTemplate(templateId) : undefined;
+      const dayCount = clampTripDays(Number(days), tpl?.defaultDays ?? 1);
+      const party = clampPartySize(Number(people), tpl?.defaultPeople ?? 1);
       const trip: TravelTrip = {
         id: initial?.id ?? newTravelId(),
         name: trimmed,
@@ -52,10 +111,9 @@ export function TripForm({
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         notes: notes.trim() || undefined,
-        items:
-          mode === "create" && templateId !== "blank"
-            ? itemsFromTemplate(templateId)
-            : (initial?.items ?? []),
+        items: tpl
+          ? itemsFromTemplate(tpl.id, { days: dayCount, people: party }, (key) => t(`templateItems.${key}`))
+          : (initial?.items ?? []),
         createdAt: initial?.createdAt ?? now,
         updatedAt: now,
         completedAt: initial?.completedAt,
@@ -105,11 +163,11 @@ export function TripForm({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="trip-start">{t("startDate")}</Label>
-          <Input id="trip-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          <Input id="trip-start" type="date" value={startDate} onChange={(e) => onStart(e.target.value)} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="trip-end">{t("endDate")}</Label>
-          <Input id="trip-end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          <Input id="trip-end" type="date" value={endDate} onChange={(e) => onEnd(e.target.value)} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="trip-cap">{t("budgetCap")}</Label>
@@ -130,14 +188,45 @@ export function TripForm({
               id="trip-template"
               className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 text-sm"
               value={templateId}
-              onChange={(e) => setTemplateId(e.target.value as TravelTemplateId | "blank")}
+              onChange={(e) => onTemplate(e.target.value as TravelTemplateId | "blank")}
             >
-              <option value="weekend">{t("templateWeekend")}</option>
-              <option value="family">{t("templateFamily")}</option>
-              <option value="business">{t("templateBusiness")}</option>
+              {TRAVEL_TEMPLATES.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>
+                  {t(tpl.labelKey)}
+                </option>
+              ))}
               <option value="blank">{t("templateBlank")}</option>
             </select>
           </div>
+        ) : null}
+        {usesTemplate ? (
+          <>
+            <div className="space-y-1.5">
+              <Label htmlFor="trip-days">{t("tripDays")}</Label>
+              <Input
+                id="trip-days"
+                type="number"
+                min={1}
+                max={60}
+                step={1}
+                value={days}
+                onChange={(e) => onDays(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="trip-people">{t("partySize")}</Label>
+              <Input
+                id="trip-people"
+                type="number"
+                min={1}
+                max={30}
+                step={1}
+                value={people}
+                onChange={(e) => onPeople(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground sm:col-span-2">{t("scaleHint")}</p>
+          </>
         ) : null}
         <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor="trip-notes">{t("notes")}</Label>
