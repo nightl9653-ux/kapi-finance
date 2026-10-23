@@ -84,13 +84,15 @@ function MaterialRow({
       </div>
       <div className="text-right text-sm">
         <p className="tabular-nums">
-          {m.quantity} × {formatProjectMoney(m.price, currency)} = {formatProjectMoney(m.quantity * m.price, currency)}
+          {m.price > 0
+            ? `${m.quantity} × ${formatProjectMoney(m.price, currency)} = ${formatProjectMoney(m.quantity * m.price, currency)}`
+            : t("priceUnset")}
         </p>
         <div className="mt-1 flex flex-wrap justify-end gap-2">
           <span className={cn("text-xs", m.transactionId ? "text-emerald-700" : "text-amber-700")}>
             {m.transactionId ? t("purchased") : t("pending")}
           </span>
-          {onLogExpense && !m.transactionId ? (
+          {onLogExpense && !m.transactionId && m.price > 0 ? (
             <button
               type="button"
               disabled={logging}

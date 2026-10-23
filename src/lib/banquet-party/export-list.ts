@@ -89,8 +89,8 @@ export function buildPartyExportRows(party: Party, t: TFn, labels: ListExportLab
       m.name,
       categoryLabel(t, m.category),
       m.quantity,
-      csvMoney(m.price),
-      csvMoney(m.quantity * m.price),
+      m.price > 0 ? csvMoney(m.price) : "",
+      m.price > 0 ? csvMoney(m.quantity * m.price) : "",
       isPurchased(m) ? labels.statusPurchased : labels.statusPending,
       ...(hasNotes ? [materialNote(m)] : []),
     ]),
@@ -116,8 +116,8 @@ export function buildPartyExportRows(party: Party, t: TFn, labels: ListExportLab
       m.name,
       categoryLabel(t, m.category),
       String(m.quantity),
-      moneyPrint(m.price),
-      moneyPrint(m.quantity * m.price),
+      m.price > 0 ? moneyPrint(m.price) : "",
+      m.price > 0 ? moneyPrint(m.quantity * m.price) : "",
       isPurchased(m) ? labels.statusPurchased : labels.statusPending,
     ];
     if (hasNotes) row.push(materialNote(m));
