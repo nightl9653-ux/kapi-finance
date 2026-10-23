@@ -16,11 +16,15 @@ import {
   installmentOutstanding,
   markInstallmentPaid,
   nudgeInstallment,
+  parseSessionQuota,
   projectContractTotal,
   projectCostTotal,
+  projectHourlyProfit,
   projectProfit,
   projectReceivableTotal,
   projectReceivedTotal,
+  projectSessionProfit,
+  projectSessionsRemaining,
   projectTimeQuantity,
   timeUnitForVertical,
 } from "@/lib/gigs/money";
@@ -70,6 +74,7 @@ export function GigProjectDetail({
 
   function saveErrorText(err: unknown): string {
     const code = gigsErrorCode(err);
+    if (code === "session_schema") return t("sessionSchemaMissing");
     if (code === "time_schema") return t("timeSchemaMissing");
     if (code === "schema") return t("schemaMissing");
     return t("saveError");
@@ -268,6 +273,9 @@ export function GigProjectDetail({
   }
 
   const money = (n: number) => formatProjectMoney(n, project.currency);
+  const hourlyProfit = projectHourlyProfit(project);
+  const sessionProfit = projectSessionProfit(project);
+  const sessionsLeft = projectSessionsRemaining(project);
   const sessions = timeUnitForVertical(project.vertical) === "sessions";
   const timeUnit = sessions ? t("timeUnitSessions") : t("timeUnitHours");
   const timeQtyTotal = projectTimeQuantity(project);
@@ -329,11 +337,21 @@ export function GigProjectDetail({
         <SummaryCard label={t("contractTotal")} value={money(projectContractTotal(project))} />
         <SummaryCard label={t("received")} value={money(projectReceivedTotal(project))} tone="emerald" />
         <SummaryCard label={t("receivable")} value={money(projectReceivableTotal(project))} tone="amber" />
-        <SummaryCard label={t("profit")} value={money(projectProfit(project))} />
+        <SummaryCard
+          label={t("profit")}
+          value={money(projectProfit(project))}
+          hints={[
+            hourlyProfit == null ? null : t("hourlyProfit", { amount: money(hourlyProfit) }),
+            sessionProfit == null ? null : t("sessionProfit", { amount: money(sessionProfit) }),
+          ].filter((line): line is string => line != null)}
+        />
       </div>
       <p className="text-xs text-muted-foreground">
         {t("costTotal")}: {money(projectCostTotal(project))}
         {timeQtyTotal > 0 ? ` · ${t("timeInvested", { qty: formatTimeQuantity(timeQtyTotal), unit: timeUnit })}` : ""}
+        {sessionsLeft != null
+          ? ` · ${t("sessionsRemaining", { qty: formatTimeQuantity(sessionsLeft), unit: timeUnit })}`
+          : ""}
       </p>
 
       <section className="space-y-3">
@@ -460,6 +478,17 @@ export function GigProjectDetail({
           <h3 className="text-base font-medium">{timeTitle}</h3>
           <p className="mt-1 text-xs text-muted-foreground">{timeHint}</p>
         </div>
+        {sessions ? (
+          <SessionQuotaField
+            key={project.sessionQuota ?? "none"}
+            quota={project.sessionQuota}
+            disabled={busy}
+            onSave={(next) => {
+              if (next === project.sessionQuota) return;
+              void persist({ ...project, sessionQuota: next });
+            }}
+          />
+        ) : null}
         <div className="flex flex-wrap items-end gap-2 rounded-xl border bg-white/50 p-3">
           <div className="space-y-1">
             <Label htmlFor="gig-time-qty">{t("timeQuantity")}</Label>
@@ -772,13 +801,66 @@ function CostEditor({
   );
 }
 
+function SessionQuotaField({
+  quota,
+  disabled,
+  onSave,
+}: {
+  quota?: number;
+  disabled?: boolean;
+  onSave: (next: number | undefined) => void;
+}) {
+  const t = useTranslations("gigs");
+  const [draft, setDraft] = useState(quota == null ? "" : formatTimeQuantity(quota));
+
+  function commit() {
+    if (!draft.trim()) {
+      if (quota != null) onSave(undefined);
+      return;
+    }
+    const parsed = parseSessionQuota(draft);
+    if (parsed == null) {
+      setDraft(quota == null ? "" : formatTimeQuantity(quota));
+      return;
+    }
+    if (parsed === quota) return;
+    onSave(parsed);
+  }
+
+  return (
+    <div className="space-y-1">
+      <Label htmlFor="gig-session-quota">{t("sessionQuota")}</Label>
+      <Input
+        id="gig-session-quota"
+        type="number"
+        min={0}
+        step="0.01"
+        className="h-8 w-28"
+        value={draft}
+        disabled={disabled}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          }
+        }}
+      />
+      <p className="text-xs text-muted-foreground">{t("sessionQuotaHint")}</p>
+    </div>
+  );
+}
+
 function SummaryCard({
   label,
   value,
+  hints,
   tone,
 }: {
   label: string;
   value: string;
+  hints?: string[];
   tone?: "emerald" | "amber";
 }) {
   const toneClass =
@@ -791,6 +873,11 @@ function SummaryCard({
     <div className={`rounded-2xl border p-3 ${toneClass}`}>
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-lg font-semibold tabular-nums">{value}</p>
+      {hints?.map((line) => (
+        <p key={line} className="mt-1 text-xs text-muted-foreground tabular-nums">
+          {line}
+        </p>
+      ))}
     </div>
   );
 }

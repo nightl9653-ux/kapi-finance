@@ -64,6 +64,8 @@ export type GigProject = {
   installments: GigInstallment[];
   costs: GigCost[];
   timeLogs: GigTimeLog[];
+  /** 私教约定节数。空则不算还剩几节。 */
+  sessionQuota?: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -92,6 +94,7 @@ export type GigProjectRow = {
   installments: GigInstallment[];
   costs: GigCost[];
   time_logs?: GigTimeLog[];
+  session_quota?: number | string | null;
   created_at: string;
   updated_at: string;
 };

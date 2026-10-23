@@ -852,6 +852,13 @@
     "received": "Received",
     "receivable": "Outstanding",
     "profit": "Profit (received − costs)",
+    "hourlyProfit": "Effective hourly {amount}",
+    "sessionProfit": "Per lesson {amount}",
+    "sessionsRemaining": "{qty} {unit} left",
+    "sessionQuota": "Lessons agreed",
+    "sessionQuotaPlaceholder": "e.g. 12",
+    "sessionQuotaHint": "Leave blank to skip lessons left. The 12-lesson package fills in 12, and you can change it after saving.",
+    "sessionSchemaMissing": "Run migration 20261023090000_studio_project_session_quota.sql in Supabase first.",
     "costTotal": "Costs total",
     "installments": "Installments",
     "addInstallment": "Add installment",
@@ -1787,7 +1794,7 @@
         "Opening packages such as a brand design pack or 12 lessons",
         "Mark an unpaid installment received and set its due date from the list, with aging and follow-ups due today",
         "Project costs and profit on amounts received",
-        "Dev hours and coaching lessons record your own time",
+        "Design, development, and consulting log hours and see effective hourly profit. Coaching logs lessons and can show earnings per lesson and lessons left. Time is not subtracted from profit",
         "A quote from the installments, ready to print or save as PDF",
         "Post receipts and costs to the Kash ledger"
       ]

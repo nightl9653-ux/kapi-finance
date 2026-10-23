@@ -39,9 +39,10 @@ const TAB_KEY = "kapi-gigs-tab";
 
 function saveErrorText(
   err: unknown,
-  t: (key: "timeSchemaMissing" | "schemaMissing" | "saveError") => string,
+  t: (key: "sessionSchemaMissing" | "timeSchemaMissing" | "schemaMissing" | "saveError") => string,
 ): string {
   const code = gigsErrorCode(err);
+  if (code === "session_schema") return t("sessionSchemaMissing");
   if (code === "time_schema") return t("timeSchemaMissing");
   if (code === "schema") return t("schemaMissing");
   return t("saveError");

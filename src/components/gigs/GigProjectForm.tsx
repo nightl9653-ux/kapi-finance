@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BASE_CURRENCY, type Currency } from "@/lib/fx";
+import { formatTimeQuantity, parseSessionQuota } from "@/lib/gigs/money";
 import {
   defaultPackageForVertical,
   makeInstallmentsFromPackage,
@@ -50,6 +51,9 @@ export function GigProjectForm({
     initial ? String(initial.installments.reduce((s, i) => s + i.amount, 0) || "") : "",
   );
   const [notes, setNotes] = useState(initial?.notes ?? "");
+  const [sessionQuota, setSessionQuota] = useState(
+    initial?.sessionQuota != null ? formatTimeQuantity(initial.sessionQuota) : "",
+  );
 
   const canSubmit = name.trim() && clientId;
   const packages = packagesForVertical(vertical);
@@ -61,6 +65,10 @@ export function GigProjectForm({
     setPackageId(id);
     setName((current) => (nameFromPackage || !current.trim() ? label : current));
     setNameFromPackage((fromPackage) => fromPackage || !name.trim());
+    const pkg = packageById(id);
+    if (pkg?.vertical === "training") {
+      setSessionQuota(pkg.sessions != null ? String(pkg.sessions) : "");
+    }
   }
 
   return (
@@ -91,6 +99,7 @@ export function GigProjectForm({
           installments,
           costs: initial?.costs ?? [],
           timeLogs: initial?.timeLogs ?? [],
+          sessionQuota: vertical === "training" ? parseSessionQuota(sessionQuota) : undefined,
           createdAt: initial?.createdAt || now,
           updatedAt: now,
         });
@@ -166,6 +175,21 @@ export function GigProjectForm({
           </div>
           <p className="text-xs text-muted-foreground">{t(`packages.${packageId}.hint`)}</p>
           <p className="text-xs text-muted-foreground">{t("templateHint")}</p>
+        </div>
+      ) : null}
+      {vertical === "training" ? (
+        <div className="space-y-1.5">
+          <Label htmlFor="gig-project-session-quota">{t("sessionQuota")}</Label>
+          <Input
+            id="gig-project-session-quota"
+            type="number"
+            min={0}
+            step="0.01"
+            value={sessionQuota}
+            onChange={(e) => setSessionQuota(e.target.value)}
+            placeholder={t("sessionQuotaPlaceholder")}
+          />
+          <p className="text-xs text-muted-foreground">{t("sessionQuotaHint")}</p>
         </div>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-3">

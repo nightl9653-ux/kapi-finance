@@ -8,6 +8,8 @@ export type GigOpeningPackage = {
   ratios: number[];
   /** 无翻译时写入项目的分期名 */
   labels: string[];
+  /** 私教约定节数。课时包不填，由用户自己写。 */
+  sessions?: number;
 };
 
 export const GIG_PACKAGES: GigOpeningPackage[] = [
@@ -32,6 +34,7 @@ export const GIG_PACKAGES: GigOpeningPackage[] = [
     vertical: "training",
     ratios: [0.25, 0.25, 0.25, 0.25],
     labels: ["第 1–3 节", "第 4–6 节", "第 7–9 节", "第 10–12 节"],
+    sessions: 12,
   },
   { id: "consultTwo", vertical: "consulting", ratios: [0.5, 0.5], labels: ["首期", "尾款"] },
   { id: "consultOnce", vertical: "consulting", ratios: [1], labels: ["全款"] },

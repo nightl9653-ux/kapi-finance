@@ -51,6 +51,39 @@ export function projectProfit(project: GigProject): number {
   return round2(projectReceivedTotal(project) - projectCostTotal(project));
 }
 
+/** 折合时薪 = 利润 ÷ 小时。不改利润。私教按节记，不算；没记小时则没有这个数。 */
+export function projectHourlyProfit(project: GigProject): number | null {
+  if (timeUnitForVertical(project.vertical) !== "hours") return null;
+  const hours = projectTimeQuantity(project);
+  if (!(hours > 0)) return null;
+  return round2(projectProfit(project) / hours);
+}
+
+/** 约定节数。空、0 或非数字视为没约定。 */
+export function parseSessionQuota(raw: unknown): number | undefined {
+  if (typeof raw === "string" && !raw.trim()) return undefined;
+  if (raw == null) return undefined;
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return undefined;
+  return round2(n);
+}
+
+/** 这一节赚多少 = 利润 ÷ 已上节数。不改利润。没记课时则没有这个数。 */
+export function projectSessionProfit(project: GigProject): number | null {
+  if (timeUnitForVertical(project.vertical) !== "sessions") return null;
+  const sessions = projectTimeQuantity(project);
+  if (!(sessions > 0)) return null;
+  return round2(projectProfit(project) / sessions);
+}
+
+/** 还剩几节 = 约定节数 − 已上节数。没约定则没有这个数。上超了可以为负。 */
+export function projectSessionsRemaining(project: GigProject): number | null {
+  if (timeUnitForVertical(project.vertical) !== "sessions") return null;
+  const quota = parseSessionQuota(project.sessionQuota);
+  if (quota == null) return null;
+  return round2(quota - projectTimeQuantity(project));
+}
+
 export type UnpaidRow = {
   projectId: string;
   projectName: string;

@@ -852,6 +852,13 @@
     "received": "已收",
     "receivable": "待收",
     "profit": "利润（已收−成本）",
+    "hourlyProfit": "折合时薪 {amount}",
+    "sessionProfit": "这一节赚多少 {amount}",
+    "sessionsRemaining": "还剩 {qty} {unit}",
+    "sessionQuota": "约定节数",
+    "sessionQuotaPlaceholder": "例如 12",
+    "sessionQuotaHint": "留空则不算还剩几节。选「私教 12 节」时写成 12，保存后仍可改。",
+    "sessionSchemaMissing": "请先在 Supabase 执行迁移 20261023090000_studio_project_session_quota.sql。",
     "costTotal": "成本合计",
     "installments": "分期回款",
     "addInstallment": "添加分期",
@@ -1787,7 +1794,7 @@
         "品牌设计包、私教 12 节等开单模板",
         "未收款可直接标记已收、填写到期日，并看账龄与今天该催",
         "项目成本与已收利润",
-        "开发工时与私教课时，只记自己投入的时间",
+        "开发、设计、顾问记小时并看折合时薪；私教记课时，可看这一节赚多少和还剩几节。时间不从利润里扣",
         "按分期生成报价单，可打印或存为 PDF",
         "收款/成本可记入咔账总账"
       ]

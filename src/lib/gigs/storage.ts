@@ -1,5 +1,6 @@
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { coerceCurrency } from "@/lib/fx";
+import { parseSessionQuota } from "@/lib/gigs/money";
 import {
   GIG_INSTALLMENT_STATUSES,
   GIG_PROJECT_STATUSES,
@@ -21,9 +22,10 @@ import {
 const CLIENTS_TABLE = "studio_clients";
 const PROJECTS_TABLE = "studio_projects";
 
-export function gigsErrorCode(err: unknown): "time_schema" | "schema" | "other" {
+export function gigsErrorCode(err: unknown): "session_schema" | "time_schema" | "schema" | "other" {
   const code = err instanceof Error ? (err as Error & { code?: string }).code : undefined;
   const msg = err instanceof Error ? err.message : "";
+  if (/session_quota/i.test(msg)) return "session_schema";
   if (/time_logs/i.test(msg)) return "time_schema";
   if (
     code === "42P01" ||
@@ -144,6 +146,7 @@ export function projectFromRow(row: GigProjectRow): GigProject {
     installments,
     costs,
     timeLogs,
+    sessionQuota: parseSessionQuota(row.session_quota),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -218,6 +221,8 @@ export async function upsertProject(userId: string, project: GigProject): Promis
     time_logs: (project.timeLogs ?? [])
       .map((entry) => normalizeTimeLog(entry))
       .filter((entry): entry is GigTimeLog => entry !== null),
+    session_quota:
+      project.vertical === "training" ? (parseSessionQuota(project.sessionQuota) ?? null) : null,
     updated_at: new Date().toISOString(),
   };
 
