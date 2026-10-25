@@ -51,6 +51,45 @@ export function projectProfit(project: GigProject): number {
   return round2(projectReceivedTotal(project) - projectCostTotal(project));
 }
 
+export type ProfitRankRow = {
+  project: GigProject;
+  profit: number;
+  rank: number;
+};
+
+export type ProfitBoard = {
+  currency: string;
+  rows: ProfitRankRow[];
+};
+
+/** 未取消项目按利润从高到低。每种币种一张榜，不跨币种比较。 */
+export function profitLeaderboards(projects: GigProject[]): ProfitBoard[] {
+  const groups = new Map<string, GigProject[]>();
+  for (const project of projects) {
+    if (project.status === "cancelled") continue;
+    const list = groups.get(project.currency) ?? [];
+    list.push(project);
+    groups.set(project.currency, list);
+  }
+  return [...groups.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([currency, list]) => {
+      const sorted = [...list].sort((a, b) => {
+        const byProfit = projectProfit(b) - projectProfit(a);
+        if (byProfit !== 0) return byProfit;
+        return a.name.localeCompare(b.name);
+      });
+      return {
+        currency,
+        rows: sorted.map((project, index) => ({
+          project,
+          profit: projectProfit(project),
+          rank: index + 1,
+        })),
+      };
+    });
+}
+
 /** 折合时薪 = 利润 ÷ 小时。不改利润。私教按节记，不算；没记小时则没有这个数。 */
 export function projectHourlyProfit(project: GigProject): number | null {
   if (timeUnitForVertical(project.vertical) !== "hours") return null;

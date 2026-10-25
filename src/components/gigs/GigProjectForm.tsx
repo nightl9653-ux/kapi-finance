@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BASE_CURRENCY, type Currency } from "@/lib/fx";
+import { BASE_CURRENCY, PROJECT_CURRENCIES, coerceCurrency } from "@/lib/fx";
 import { formatTimeQuantity, parseSessionQuota } from "@/lib/gigs/money";
 import {
   defaultPackageForVertical,
@@ -46,7 +46,7 @@ export function GigProjectForm({
   const [vertical, setVertical] = useState<GigVertical>(initial?.vertical ?? "design");
   const [packageId, setPackageId] = useState(initialPackageId);
   const [status, setStatus] = useState<GigProjectStatus>(initial?.status ?? "active");
-  const [currency, setCurrency] = useState<string>(initial?.currency ?? BASE_CURRENCY);
+  const [currency, setCurrency] = useState(coerceCurrency(initial?.currency ?? BASE_CURRENCY));
   const [totalHint, setTotalHint] = useState(
     initial ? String(initial.installments.reduce((s, i) => s + i.amount, 0) || "") : "",
   );
@@ -57,8 +57,6 @@ export function GigProjectForm({
 
   const canSubmit = name.trim() && clientId;
   const packages = packagesForVertical(vertical);
-
-  const currencies = useMemo(() => ["USD", "CNY", "HKD", "EUR", "JPY"] as Currency[], []);
 
   function choosePackage(id: string) {
     const label = t(`packages.${id}.name`);
@@ -93,7 +91,7 @@ export function GigProjectForm({
           clientId,
           name: name.trim(),
           vertical,
-          currency: (currencies.includes(currency as Currency) ? currency : BASE_CURRENCY) as Currency,
+          currency: coerceCurrency(currency),
           status,
           notes: notes.trim() || undefined,
           installments,
@@ -214,9 +212,9 @@ export function GigProjectForm({
             id="gig-project-currency"
             className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm"
             value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
+            onChange={(e) => setCurrency(coerceCurrency(e.target.value))}
           >
-            {currencies.map((c) => (
+            {PROJECT_CURRENCIES.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>

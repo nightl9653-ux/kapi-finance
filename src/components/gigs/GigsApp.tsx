@@ -23,6 +23,9 @@ import {
   isIsoDate,
   markInstallmentPaid,
   nudgeInstallment,
+  profitLeaderboards,
+  projectHourlyProfit,
+  projectSessionProfit,
   projectTimeQuantity,
   setInstallmentDueOn,
   sumUnpaidByCurrency,
@@ -33,7 +36,7 @@ import { deleteClient, deleteProject, gigsErrorCode, loadGigsStore, upsertClient
 import { isoToday, type GigClient, type GigProject, type GigsStore } from "@/lib/gigs/types";
 import { cn } from "@/lib/utils";
 
-type Tab = "unpaid" | "projects" | "clients";
+type Tab = "unpaid" | "projects" | "clients" | "ranking";
 
 const TAB_KEY = "kapi-gigs-tab";
 
@@ -74,7 +77,7 @@ export function GigsApp({ userId }: { userId: string }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(TAB_KEY);
-      if (saved === "unpaid" || saved === "projects" || saved === "clients") setTab(saved);
+      if (saved === "unpaid" || saved === "projects" || saved === "clients" || saved === "ranking") setTab(saved);
     } catch {
       /* ignore */
     }
@@ -123,6 +126,7 @@ export function GigsApp({ userId }: { userId: string }) {
     });
   }, [unpaid, today]);
   const chaseCount = orderedUnpaid.filter((row) => isChaseDue(row.nextNudgeOn, today)).length;
+  const profitBoards = useMemo(() => profitLeaderboards(store.projects), [store.projects]);
 
   async function saveDueOn(row: UnpaidRow, dueOn: string) {
     const project = store.projects.find((p) => p.id === row.projectId);
@@ -230,6 +234,7 @@ export function GigsApp({ userId }: { userId: string }) {
             ["unpaid", t("tabUnpaid")],
             ["projects", t("tabProjects")],
             ["clients", t("tabClients")],
+            ["ranking", t("tabRanking")],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -430,6 +435,62 @@ export function GigsApp({ userId }: { userId: string }) {
                 />
               ))}
             </ul>
+          )}
+        </section>
+      ) : null}
+
+      {!loading && tab === "ranking" ? (
+        <section className="space-y-4">
+          <p className="text-xs text-muted-foreground">{t("rankHint")}</p>
+          {profitBoards.length === 0 ? (
+            <p className="rounded-2xl border border-dashed bg-white/50 p-6 text-sm text-muted-foreground">{t("rankEmpty")}</p>
+          ) : (
+            profitBoards.map((board) => (
+              <div key={board.currency} className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">{board.currency}</p>
+                <ol className="space-y-2">
+                  {board.rows.map((row) => {
+                    const hourly = projectHourlyProfit(row.project);
+                    const perSession = projectSessionProfit(row.project);
+                    const rate =
+                      hourly != null
+                        ? t("hourlyProfit", { amount: formatProjectMoney(hourly, board.currency) })
+                        : perSession != null
+                          ? t("sessionProfit", { amount: formatProjectMoney(perSession, board.currency) })
+                          : null;
+                    return (
+                      <li key={row.project.id}>
+                        <button
+                          type="button"
+                          className="flex w-full items-center gap-2 rounded-xl border bg-white/70 px-4 py-3 text-left"
+                          onClick={() => setActiveProjectId(row.project.id)}
+                        >
+                          <span className="w-6 shrink-0 text-sm tabular-nums text-muted-foreground">{row.rank}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-medium">{row.project.name}</span>
+                            <span className="block text-xs text-muted-foreground">
+                              {clientById.get(row.project.clientId)?.name ?? t("unknownClient")}
+                              {` · ${t(`verticals.${row.project.vertical}`)}`}
+                            </span>
+                          </span>
+                          <span className="text-right">
+                            <span
+                              className={cn(
+                                "block text-sm font-semibold tabular-nums",
+                                row.profit < 0 && "text-rose-800",
+                              )}
+                            >
+                              {formatProjectMoney(row.profit, board.currency)}
+                            </span>
+                            {rate ? <span className="block text-xs text-muted-foreground">{rate}</span> : null}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            ))
           )}
         </section>
       ) : null}
